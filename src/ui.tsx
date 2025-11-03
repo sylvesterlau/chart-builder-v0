@@ -19,22 +19,28 @@ function Plugin() {
   const [count, setCount] = useState<number | null>(5);
   const [countString, setCountString] = useState("5");
 
-  const [itemA, setItemA] = useState<number | null>(null);
-  const [itemALabel, setItemALabel] = useState<string>("");
-  const [itemB, setItemB] = useState<number | null>(null);
-  const [itemBLabel, setItemBLabel] = useState<string>("");
-  const [itemC, setItemC] = useState<number | null>(null);
-  const [itemCLabel, setItemCLabel] = useState<string>("");
-  const [itemD, setItemD] = useState<number | null>(null);
-  const [itemDLabel, setItemDLabel] = useState<string>("");
-  const [itemE, setItemE] = useState<number | null>(null);
-  const [itemELabel, setItemELabel] = useState<string>("");
+  // 使用 number 类型（不允许 null）并设置默认值为 0
+  const [itemA, setItemA] = useState<number>(0),
+    [itemALabel, setItemALabel] = useState<string>(""),
+    [itemB, setItemB] = useState<number>(0),
+    [itemBLabel, setItemBLabel] = useState<string>(""),
+    [itemC, setItemC] = useState<number>(0),
+    [itemCLabel, setItemCLabel] = useState<string>(""),
+    [itemD, setItemD] = useState<number>(0),
+    [itemDLabel, setItemDLabel] = useState<string>(""),
+    [itemE, setItemE] = useState<number>(0),
+    [itemELabel, setItemELabel] = useState<string>("");
+
+  // 处理数值输入的包装函数，确保空值时返回 0
+  const handleNumericInput = useCallback((setter: (value: number) => void) => {
+    return (value: number | null) => setter(value ?? 0);
+  }, []);
 
   const handleGenerateButtonClick = useCallback(
     function () {
-      // 构建包含 label 和 value 的数组并打印到控制台
+      // 构建包含 label 和 value 的数组
       const chartData = {
-        chartData: [
+        data: [
           { label: itemALabel, value: itemA },
           { label: itemBLabel, value: itemB },
           { label: itemCLabel, value: itemC },
@@ -42,7 +48,8 @@ function Plugin() {
           { label: itemELabel, value: itemE },
         ],
       };
-      console.log("ChartData:", chartData);
+      // 触发主线程事件，传递数据
+      emit("SUBMIT_CHART_DATA", chartData);
     },
     [
       itemA,
@@ -57,13 +64,19 @@ function Plugin() {
       itemELabel,
     ]
   );
+
+  //test button
+  const handleTestButtonClick = useCallback(function () {
+    // emit("TEST_BTN");
+  }, []);
+
   return (
     <Container space="medium">
       <VerticalSpace space="medium" />
       <h2>Chart builder v0</h2>
       <VerticalSpace space="large" />
 
-      {/* input field  */}
+      {/* input field stack */}
       <Stack space="extraSmall">
         {/* Item A */}
         <Text>Item A</Text>
@@ -74,8 +87,8 @@ function Plugin() {
             placeholder="Label A"
           />
           <TextboxNumeric
-            onNumericValueInput={setItemA}
-            value={itemA !== null ? String(itemA) : ""}
+            onNumericValueInput={handleNumericInput(setItemA)}
+            value={String(itemA)}
             placeholder="Value"
           />
         </Columns>
@@ -90,8 +103,8 @@ function Plugin() {
             placeholder="Label B"
           />
           <TextboxNumeric
-            onNumericValueInput={setItemB}
-            value={itemB !== null ? String(itemB) : ""}
+            onNumericValueInput={handleNumericInput(setItemB)}
+            value={String(itemB)}
             placeholder="Value"
           />
         </Columns>
@@ -106,8 +119,8 @@ function Plugin() {
             placeholder="Label C"
           />
           <TextboxNumeric
-            onNumericValueInput={setItemC}
-            value={itemC !== null ? String(itemC) : ""}
+            onNumericValueInput={handleNumericInput(setItemC)}
+            value={String(itemC)}
             placeholder="Value"
           />
         </Columns>
@@ -122,8 +135,8 @@ function Plugin() {
             placeholder="Label D"
           />
           <TextboxNumeric
-            onNumericValueInput={setItemD}
-            value={itemD !== null ? String(itemD) : ""}
+            onNumericValueInput={handleNumericInput(setItemD)}
+            value={String(itemD)}
             placeholder="Value"
           />
         </Columns>
@@ -138,8 +151,8 @@ function Plugin() {
             placeholder="Label E"
           />
           <TextboxNumeric
-            onNumericValueInput={setItemE}
-            value={itemE !== null ? String(itemE) : ""}
+            onNumericValueInput={handleNumericInput(setItemE)}
+            value={String(itemE)}
             placeholder="Value"
           />
         </Columns>
@@ -152,6 +165,9 @@ function Plugin() {
       <Columns space="extraSmall">
         <Button fullWidth onClick={handleGenerateButtonClick}>
           Generate
+        </Button>
+        <Button disabled fullWidth onClick={handleTestButtonClick}>
+          TEST Btn
         </Button>
       </Columns>
       <VerticalSpace space="small" />
