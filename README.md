@@ -1,4 +1,4 @@
-# Preact Rectangles (slim)
+# Chart builder v0 (slim)
 
 This is a slim copy of the original `preact-rectangles` plugin containing only the minimal files needed to inspect, build or transfer the project.
 
