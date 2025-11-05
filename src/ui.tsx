@@ -13,23 +13,18 @@ import { emit } from "@create-figma-plugin/utilities";
 import { h } from "preact";
 import { useCallback, useState } from "preact/hooks";
 
-import { CloseHandler, CreateRectanglesHandler } from "./types";
-
 function Plugin() {
-  const [count, setCount] = useState<number | null>(5);
-  const [countString, setCountString] = useState("5");
-
   // 使用 number 类型（不允许 null）并设置默认值为 0
-  const [itemA, setItemA] = useState<number>(0),
-    [itemALabel, setItemALabel] = useState<string>(""),
-    [itemB, setItemB] = useState<number>(0),
-    [itemBLabel, setItemBLabel] = useState<string>(""),
-    [itemC, setItemC] = useState<number>(0),
-    [itemCLabel, setItemCLabel] = useState<string>(""),
-    [itemD, setItemD] = useState<number>(0),
-    [itemDLabel, setItemDLabel] = useState<string>(""),
+  const [itemA, setItemA] = useState<number>(10),
+    [itemALabel, setItemALabel] = useState<string>("A"),
+    [itemB, setItemB] = useState<number>(22),
+    [itemBLabel, setItemBLabel] = useState<string>("B"),
+    [itemC, setItemC] = useState<number>(30),
+    [itemCLabel, setItemCLabel] = useState<string>("C"),
+    [itemD, setItemD] = useState<number>(48),
+    [itemDLabel, setItemDLabel] = useState<string>("D"),
     [itemE, setItemE] = useState<number>(0),
-    [itemELabel, setItemELabel] = useState<string>("");
+    [itemELabel, setItemELabel] = useState<string>("E");
 
   // 处理数值输入的包装函数，确保空值时返回 0
   const handleNumericInput = useCallback((setter: (value: number) => void) => {
