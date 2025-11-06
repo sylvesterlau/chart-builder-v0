@@ -12,19 +12,20 @@ import {
 import { emit } from "@create-figma-plugin/utilities";
 import { h } from "preact";
 import { useCallback, useState } from "preact/hooks";
+import { sampleData } from "./config";
 
 function Plugin() {
-  // 使用 number 类型（不允许 null）并设置默认值为 0
-  const [itemA, setItemA] = useState<number>(10),
-    [itemALabel, setItemALabel] = useState<string>("A"),
-    [itemB, setItemB] = useState<number>(22),
-    [itemBLabel, setItemBLabel] = useState<string>("B"),
-    [itemC, setItemC] = useState<number>(30),
-    [itemCLabel, setItemCLabel] = useState<string>("C"),
-    [itemD, setItemD] = useState<number>(48),
-    [itemDLabel, setItemDLabel] = useState<string>("D"),
+  // 初始化所有值为空
+  const [itemA, setItemA] = useState<number>(0),
+    [itemALabel, setItemALabel] = useState<string>(""),
+    [itemB, setItemB] = useState<number>(0),
+    [itemBLabel, setItemBLabel] = useState<string>(""),
+    [itemC, setItemC] = useState<number>(0),
+    [itemCLabel, setItemCLabel] = useState<string>(""),
+    [itemD, setItemD] = useState<number>(0),
+    [itemDLabel, setItemDLabel] = useState<string>(""),
     [itemE, setItemE] = useState<number>(0),
-    [itemELabel, setItemELabel] = useState<string>("E");
+    [itemELabel, setItemELabel] = useState<string>("");
 
   // 处理数值输入的包装函数，确保空值时返回 0
   const handleNumericInput = useCallback((setter: (value: number) => void) => {
@@ -60,9 +61,20 @@ function Plugin() {
     ]
   );
 
-  //test button
-  const handleTestButtonClick = useCallback(function () {
-    // emit("TEST_BTN");
+  // 使用示例数据
+  const handleUseSampleData = useCallback(function () {
+    // 使用设备使用分布数据作为示例
+    const data = sampleData.spending.data;
+    setItemALabel(data[0].label);
+    setItemA(data[0].value);
+    setItemBLabel(data[1].label);
+    setItemB(data[1].value);
+    setItemCLabel(data[2].label);
+    setItemC(data[2].value);
+    setItemDLabel(data[3].label);
+    setItemD(data[3].value);
+    setItemELabel(data[4].label);
+    setItemE(data[4].value);
   }, []);
 
   return (
@@ -157,14 +169,14 @@ function Plugin() {
       <VerticalSpace space="extraLarge" />
 
       {/* button group */}
-      <Columns space="extraSmall">
+      <Stack space="extraSmall">
+        <Button secondary fullWidth onClick={handleUseSampleData}>
+          Use sample data
+        </Button>
         <Button fullWidth onClick={handleGenerateButtonClick}>
           Generate
         </Button>
-        <Button disabled fullWidth onClick={handleTestButtonClick}>
-          TEST Btn
-        </Button>
-      </Columns>
+      </Stack>
       <VerticalSpace space="small" />
     </Container>
   );

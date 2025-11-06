@@ -1,17 +1,7 @@
-import {
-  on,
-  once,
-  showUI,
-  convertHexColorToRgbColor,
-} from "@create-figma-plugin/utilities";
+import { on, once, showUI } from "@create-figma-plugin/utilities";
 
-import { CloseHandler, CreateRectanglesHandler } from "./types";
-
-//config donut slice style
-const chartName = "Semi-donut Chart",
-  donutSize = 318,
-  donutRatio = 0.88,
-  colorSequence = ["#347893", "#E76E84", "#518827", "#EC7046", "#509EBC"];
+import { CloseHandler } from "./types";
+import { chartConfig, dataVisColor } from "./config";
 
 export default function () {
   // create donut slice
@@ -19,26 +9,23 @@ export default function () {
     startPercent: number,
     endPercent: number,
     layerName: string,
-    hexColor: string = colorSequence[0]
+    hexColor: string = dataVisColor[0]
   ): EllipseNode | null {
     if (endPercent - startPercent <= 0) {
       return null;
     }
     const slice = figma.createEllipse();
     slice.name = layerName;
-    slice.resize(donutSize, donutSize);
+    slice.resize(chartConfig.size, chartConfig.size);
     // 颜色
-    const defaultColor = { r: 0.204, g: 0.471, b: 0.576 };
-    const cleanHexColor = hexColor.replace("#", "");
-    const convertedColor = cleanHexColor
-      ? convertHexColorToRgbColor(cleanHexColor)
-      : null;
+    const defaultColor = figma.util.rgb("#DB0011");
+    const convertedColor = figma.util.rgb(hexColor);
     const fillColor = convertedColor || defaultColor;
     slice.fills = [{ type: "SOLID", color: fillColor }];
     slice.arcData = {
       startingAngle: -Math.PI * (1 - startPercent / 100),
       endingAngle: -Math.PI * (1 - endPercent / 100),
-      innerRadius: donutRatio,
+      innerRadius: chartConfig.ratio,
     };
     return slice;
   }
@@ -82,15 +69,15 @@ export default function () {
 
     // 创建 frame 并将所有 slice 放入其中
     const frame = figma.createFrame();
-    frame.name = chartName;
-    frame.resize(donutSize, donutSize / 2);
-    frame.x = figma.viewport.center.x - donutSize / 2;
-    frame.y = figma.viewport.center.y - donutSize / 2;
+    frame.name = chartConfig.name;
+    frame.resize(chartConfig.size, chartConfig.size / 2);
+    frame.x = figma.viewport.center.x - chartConfig.size / 2;
+    frame.y = figma.viewport.center.y - chartConfig.size / 2;
 
     const slices: EllipseNode[] = [];
     transformedData.forEach((item: TransformedChartItem, index: number) => {
       const layerName = `${item.label} (${item.value})`;
-      const color = colorSequence[index % colorSequence.length];
+      const color = dataVisColor[index % dataVisColor.length];
       const slice = createDonutSlice(
         item.startPercent,
         item.endPercent,
