@@ -7,16 +7,30 @@ export const chartConfig = {
 };
 
 export const dataVisColor = [
-  "#347893",
-  "#E76E84",
-  "#518827",
-  "#EC7046",
-  "#509EBC",
+  {
+    key: "semantic.color.fill.dataVis.general.01",
+    value: "#347893",
+  },
+  {
+    key: "semantic.color.fill.dataVis.general.02",
+    value: "#E76E84",
+  },
+  {
+    key: "semantic.color.fill.dataVis.general.03",
+    value: "#518827",
+  },
+  {
+    key: "semantic.color.fill.dataVis.general.04",
+    value: "#EC7046",
+  },
+  {
+    key: "semantic.color.fill.dataVis.general.05",
+    value: "#509EBC",
+  },
 ];
 
-// 示例数据
+// chart sample data
 export const sampleData = {
-  // 收入来源分布
   spending: {
     data: [
       { label: "Shopping", value: 5020 },

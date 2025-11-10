@@ -15,7 +15,6 @@ import { useCallback, useState } from "preact/hooks";
 import { sampleData } from "./config";
 
 function Plugin() {
-  // 初始化所有值为空
   const [itemA, setItemA] = useState<number>(0),
     [itemALabel, setItemALabel] = useState<string>(""),
     [itemB, setItemB] = useState<number>(0),
@@ -34,7 +33,6 @@ function Plugin() {
 
   const handleGenerateButtonClick = useCallback(
     function () {
-      // 构建包含 label 和 value 的数组
       const chartData = {
         data: [
           { label: itemALabel, value: itemA },
@@ -44,7 +42,7 @@ function Plugin() {
           { label: itemELabel, value: itemE },
         ],
       };
-      // 触发主线程事件，传递数据
+      // send data to main.ts
       emit("SUBMIT_CHART_DATA", chartData);
     },
     [
@@ -61,9 +59,8 @@ function Plugin() {
     ]
   );
 
-  // 使用示例数据
+  // use sample data
   const handleUseSampleData = useCallback(function () {
-    // 使用设备使用分布数据作为示例
     const data = sampleData.spending.data;
     setItemALabel(data[0].label);
     setItemA(data[0].value);
@@ -75,6 +72,11 @@ function Plugin() {
     setItemD(data[3].value);
     setItemELabel(data[4].label);
     setItemE(data[4].value);
+  }, []);
+
+  const handleTestBtnClick = useCallback(function () {
+    // emit an event to main.ts to check variable collections
+    emit("TEST_Click");
   }, []);
 
   return (
@@ -176,8 +178,11 @@ function Plugin() {
         <Button fullWidth onClick={handleGenerateButtonClick}>
           Generate
         </Button>
+        <VerticalSpace space="extraSmall" />
+        <Button fullWidth secondary onClick={handleTestBtnClick}>
+          Test
+        </Button>
       </Stack>
-      <VerticalSpace space="small" />
     </Container>
   );
 }
