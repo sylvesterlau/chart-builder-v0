@@ -180,7 +180,7 @@ function Plugin() {
         </Button>
         <VerticalSpace space="extraSmall" />
         <Button fullWidth secondary onClick={handleTestBtnClick}>
-          Test
+          View TeamLib Collections Key (DEV)
         </Button>
       </Stack>
     </Container>

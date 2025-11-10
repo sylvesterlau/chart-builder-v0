@@ -1,94 +1,125 @@
 import { on, showUI } from "@create-figma-plugin/utilities";
-import { chartConfig, dataVisColor } from "./config";
+import { chartConfig, dataVisColor, teamLibrary } from "./config";
 import {
   dotToSlash,
   checkCollectionExists,
   checkVariableExists,
+  bindVariableKeyToPaint,
   transformToPercents,
   TransformedChartItem,
 } from "./helpers";
 
+// types for chart data
+interface ChartDataItem {
+  label: string;
+  value: number;
+  // stored variable key (string) or null if none
+  colorToken?: string | null;
+}
+
+interface ChartData {
+  data: ChartDataItem[];
+}
+
 export default function () {
   // create donut slice
-  function createDonutSlice(
+  async function createDonutSlice(
     startPercent: number,
     endPercent: number,
     layerName: string,
-    hexColor: string = dataVisColor[0].value,
-    variable?: Variable | null
-  ): EllipseNode | null {
+    hexColor: string = chartConfig.defaultColor,
+    variableKey?: string | null
+  ): Promise<EllipseNode | null> {
     if (endPercent - startPercent <= 0) {
       return null;
     }
     const slice = figma.createEllipse();
     slice.name = layerName;
     slice.resize(chartConfig.size, chartConfig.size);
-
-    const defaultColor = figma.util.rgb("#DB0011");
-    const convertedColor = figma.util.rgb(hexColor);
-    const fillColor = convertedColor || defaultColor;
-    slice.fills = [{ type: "SOLID", color: fillColor }];
-
-    // 如果传入 variable，尝试把变量绑定到 fill（使用 immutable paints API）
-    if (variable) {
-      try {
-        // 克隆 fills 数组（immutable）
-        let fillsCopy: Paint[];
-        if (typeof (globalThis as any).structuredClone === "function") {
-          fillsCopy = (globalThis as any).structuredClone(slice.fills);
-        } else {
-          fillsCopy = JSON.parse(JSON.stringify(slice.fills));
-        }
-
-        // @ts-ignore - typings may not include this helper
-        const boundPaint = figma.variables.setBoundVariableForPaint(
-          fillsCopy[0] as any,
-          "color",
-          variable as any
-        );
-
-        fillsCopy[0] = boundPaint;
-        slice.fills = fillsCopy;
-      } catch (err) {
-        console.error("Failed to bind variable to slice fill:", err);
-        // 回退为使用变量当前值（非绑定）
-        try {
-          const modeId = Object.keys(variable.valuesByMode)[0];
-          const val = variable.valuesByMode[modeId] as any;
-          if (val && typeof val === "object" && "r" in val) {
-            slice.fills = [
-              { type: "SOLID", color: { r: val.r, g: val.g, b: val.b } },
-            ];
-          }
-        } catch (e) {
-          console.error("Fallback painting for slice failed:", e);
-        }
-      }
-    }
     slice.arcData = {
       startingAngle: -Math.PI * (1 - startPercent / 100),
       endingAngle: -Math.PI * (1 - endPercent / 100),
       innerRadius: chartConfig.ratio,
     };
+
+    const convertedColor = figma.util.rgb(hexColor);
+    const fillColor = convertedColor;
+    slice.fills = [{ type: "SOLID", color: fillColor }];
+
+    // 如果传入 variableKey（string），使用 helpers.bindVariableKeyToPaint 统一处理导入与绑定
+    if (variableKey && typeof variableKey === "string") {
+      try {
+        const boundPaint = await bindVariableKeyToPaint(
+          variableKey,
+          slice.fills[0] as SolidPaint
+        );
+        slice.fills = [boundPaint];
+      } catch (err) {
+        console.error("createDonutSlice: bindVariableKeyToPaint failed", err);
+      }
+    }
+
     return slice;
   }
 
   //chart data submit handler
-  async function handleSubmit(chartData: any) {
-    var sum: number = 0;
-    chartData.data.forEach((item: { label: string; value: number }) => {
+  async function handleSubmit(chartData: ChartData) {
+    //check sum > 0
+    let sum: number = 0;
+    chartData.data.forEach((item: ChartDataItem) => {
       sum += item.value;
     });
-
-    if (sum === 0) {
-      figma.notify("Sum of values is 0. Cannot create chart.");
+    if (sum <= 0) {
+      figma.notify("Please enter correct value for items");
       return;
     }
+
+    // check Theme collection by ID
+    const themeColKey = teamLibrary.coreToolKit.collectionKey; // "Theme" collection key
+    const libraryCollections =
+      await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync();
+    const themeColExists =
+      Array.isArray(libraryCollections) &&
+      !!libraryCollections.find((col: any) => col.key === themeColKey);
+    if (!themeColExists) {
+      figma.notify(
+        "📚Hive Design Toolkit is missing. Please check Team Library."
+      );
+      return;
+    }
+
+    //check dataVis token exis in Theme collection
+    const varsInThemeCol =
+      await figma.teamLibrary.getVariablesInLibraryCollectionAsync(themeColKey);
+    console.log("Variables in Theme Col:", varsInThemeCol);
+
+    dataVisColor.forEach((colorData, index) => {
+      const tokenPath = dotToSlash(colorData.key);
+      const foundVar = varsInThemeCol.find((v) => {
+        const name = v.name || "";
+        return name === tokenPath;
+      });
+
+      if (foundVar) {
+        // check if variable has key
+        if (!foundVar.key) {
+          console.log(`${index}: ${tokenPath} : variable has no key`);
+          return;
+        }
+        console.log(`${index}:${tokenPath} : ${foundVar.key}`);
+        // only store the variable key (simpler, lighter)
+        chartData.data[index].colorToken = foundVar.key;
+      } else {
+        console.log(`${index}:${tokenPath} not found`);
+      }
+    });
 
     // Transform data with helper
     const transformedData: TransformedChartItem[] = transformToPercents(
       chartData.data
     );
+
+    console.log("Transformed Data:", transformedData);
 
     // create frame to hold slices
     const frame = figma.createFrame();
@@ -105,26 +136,12 @@ export default function () {
       const layerName = `${item.label} (${item.value})`;
       const colorData = dataVisColor[index % dataVisColor.length];
 
-      // try to find corresponding variable by token path
-      let variable: Variable | null = null;
-      try {
-        if (colorData && colorData.key) {
-          const tokenPath = dotToSlash(colorData.key);
-          const varRes = await checkVariableExists(tokenPath, "Theme", true);
-          if (varRes.exists && varRes.variable) {
-            variable = varRes.variable;
-          }
-        }
-      } catch (err) {
-        console.error("Variable lookup failed for", colorData, err);
-      }
-
-      const slice = createDonutSlice(
+      const slice = await createDonutSlice(
         item.startPercent,
         item.endPercent,
         layerName,
         colorData.value,
-        variable
+        item.colorToken ?? null
       );
       if (slice) {
         // 居中于 frame
@@ -143,7 +160,7 @@ export default function () {
   async function handleTest() {
     const libraryCollections =
       await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync();
-    console.log("Library Collections:", libraryCollections);
+    console.log("Team Lib collections:", libraryCollections);
   }
 
   on("SUBMIT_CHART_DATA", handleSubmit);
@@ -153,6 +170,6 @@ export default function () {
   // UI window size
   showUI({
     width: 360,
-    height: 480,
+    height: 520,
   });
 }

@@ -3,7 +3,7 @@ export const chartConfig = {
   name: "Semi-donut Chart",
   size: 318,
   ratio: 0.88,
-  defaultColor: { r: 0.204, g: 0.471, b: 0.576 },
+  defaultColor: "#DB0011",
 };
 
 export const dataVisColor = [
@@ -40,4 +40,9 @@ export const sampleData = {
       { label: "Other", value: 231 },
     ],
   },
+};
+
+//team library collection key
+export const teamLibrary = {
+  coreToolKit: { collectionKey: "cf4b280d2af66fa420c0a3ca3902811fc6caf326" },
 };
