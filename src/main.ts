@@ -141,83 +141,9 @@ export default function () {
 
   // test handler
   async function handleTest() {
-    // 创建矩形并设置默认填充
-    const rect = figma.createRectangle();
-    rect.name = "Test Variable Fill";
-    rect.resize(100, 100);
-    rect.x = figma.viewport.center.x - 100;
-    rect.y = figma.viewport.center.y - 50;
-    rect.fills = [{ type: "SOLID", color: chartConfig.defaultColor }];
-
-    // 先将矩形加入页面（部分 API 需要节点已在文档中）
-    figma.currentPage.appendChild(rect);
-
-    const collectionName = "Theme";
-    const varNameDot = "semantic.color.fill.dataVis.general.04";
-    const varName = dotToSlash(varNameDot);
-
-    try {
-      const varRes = await checkVariableExists(varName, collectionName, true);
-      if (!varRes.exists || !varRes.variable) {
-        figma.notify(`Variable not found: ${varName} in ${collectionName}`);
-        return;
-      }
-
-      const variable = varRes.variable;
-
-      // 绑定 variable 到 paint（根据官方示例使用 immutable paints API）
-      try {
-        // 克隆 fills 数组（immutable）
-        let fillsCopy: Paint[];
-        if (typeof (globalThis as any).structuredClone === "function") {
-          fillsCopy = (globalThis as any).structuredClone(rect.fills);
-        } else {
-          // fallback deep clone
-          fillsCopy = JSON.parse(JSON.stringify(rect.fills));
-        }
-
-        // 使用官方 sync helper 将变量绑定到 paint 对象的 color 属性
-        // @ts-ignore - typings may not include this helper and paint types may differ
-        // @ts-ignore
-        const boundPaint = figma.variables.setBoundVariableForPaint(
-          fillsCopy[0] as any,
-          "color",
-          variable as any
-        );
-
-        fillsCopy[0] = boundPaint;
-        rect.fills = fillsCopy;
-
-        figma.currentPage.selection = [rect];
-        figma.viewport.scrollAndZoomIntoView([rect]);
-        figma.notify(`Bound variable "${variable.name}" to rectangle fill.`);
-      } catch (bindErr) {
-        console.error("Binding variable failed:", bindErr);
-        // 回退：尝试使用变量当前值作为填充（非绑定）
-        try {
-          const modeId = Object.keys(variable.valuesByMode)[0];
-          const val = variable.valuesByMode[modeId] as any;
-          if (val && typeof val === "object" && "r" in val) {
-            rect.fills = [
-              { type: "SOLID", color: { r: val.r, g: val.g, b: val.b } },
-            ];
-            figma.notify(
-              "绑定变量失败，已使用变量当前值作为填充（非绑定）。详情见控制台。"
-            );
-          } else {
-            figma.notify("绑定变量失败，且无法读取变量值。详情见控制台。");
-          }
-        } catch (e) {
-          console.error("Fallback painting failed:", e);
-          figma.notify(
-            "绑定变量失败，回退操作也失败。查看控制台获取更多信息。"
-          );
-        }
-      }
-    } catch (err) {
-      console.error("handleTest error:", err);
-      figma.notify("Error binding variable. 查看控制台获取详情。");
-    }
+    const libraryCollections =
+      await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync();
+    console.log("Library Collections:", libraryCollections);
   }
 
   on("SUBMIT_CHART_DATA", handleSubmit);
