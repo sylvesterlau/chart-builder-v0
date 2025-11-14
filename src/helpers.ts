@@ -1,3 +1,5 @@
+import { chartConfig } from "./config";
+
 // convert token key dots to slashes
 export function dotToSlash(token: string): string {
   if (typeof token !== "string") return String(token);
@@ -110,23 +112,19 @@ export async function checkVariableExists(
     throw err;
   }
 }
-export default {
-  dotToSlash,
-  checkCollectionExists,
-  checkVariableExists,
-};
-// Bind a team variable (by key) to a SolidPaint and return the bound paint (or a fallback SolidPaint)
+
+// Bind a team variable to a SolidPaint
 export async function bindVariableKeyToPaint(
   variableKey: string | null,
-  basePaint?: Paint
+  basePaint: Paint
 ): Promise<Paint> {
-  // default base paint
+  // default base paint (use chartConfig.defaultColor from config)
   const defaultSolid: SolidPaint = {
     type: "SOLID",
-    color: { r: 0.858823529, g: 0, b: 0.066666667 },
+    color: figma.util.rgb(chartConfig.defaultColor),
   };
   const paintToUse: SolidPaint =
-    basePaint && (basePaint as SolidPaint).type === "SOLID"
+    (basePaint as SolidPaint).type === "SOLID"
       ? (basePaint as SolidPaint)
       : defaultSolid;
   if (!variableKey) return paintToUse;
@@ -142,16 +140,14 @@ export async function bindVariableKeyToPaint(
     importedVar = { key: variableKey };
   }
   try {
-    // Clone paint (immutable pattern)
-    let paintClone: SolidPaint;
-    if (typeof (globalThis as any).structuredClone === "function") {
-      paintClone = (globalThis as any).structuredClone(paintToUse);
-    } else {
-      paintClone = JSON.parse(JSON.stringify(paintToUse));
-    }
+    // deep clone paint to avoid mutating shared fills
+    const clonedPaint: Paint =
+      typeof (globalThis as any).structuredClone === "function"
+        ? (globalThis as any).structuredClone(paintToUse)
+        : JSON.parse(JSON.stringify(paintToUse));
     // @ts-ignore - setBoundVariableForPaint may not be in typings
     const bound = figma.variables.setBoundVariableForPaint(
-      paintClone as any,
+      clonedPaint as any,
       "color",
       importedVar as any
     );
@@ -180,3 +176,9 @@ export async function bindVariableKeyToPaint(
     return paintToUse;
   }
 }
+
+export default {
+  dotToSlash,
+  checkCollectionExists,
+  checkVariableExists,
+};

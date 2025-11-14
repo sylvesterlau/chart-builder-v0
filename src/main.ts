@@ -10,7 +10,6 @@ import {
 interface ChartDataItem {
   label: string;
   value: number;
-  // stored variable key (string) or null if none
   colorToken?: string | null;
 }
 interface ChartData {
@@ -58,41 +57,36 @@ export default function () {
     label: string,
     value: string,
     variableKey?: string | null
-  ) {
+  ): Promise<InstanceNode | null> {
     const compKey = teamLibrary.dataVis.legend.compKey;
-    let importedComponent = await figma.importComponentByKeyAsync(compKey);
-    let legend = importedComponent.createInstance();
-    //set properties
-    legend.setProperties({ "Label text#9473:3": label });
-    legend.setProperties({ "Value text#1734:2": value });
-    //find rect node
-    const indicatorLayerName = ".Legend indicator"; //Layer name for indicator
-    const shapeLayerName = "Shape";
-    const indicatorNode = legend.findOne(
-      (node) => node.name === indicatorLayerName
+    const importedComponent = await figma.importComponentByKeyAsync(compKey);
+    const legend = importedComponent.createInstance();
+
+    // set properties
+    legend.setProperties({
+      "Label text#9473:3": label,
+      "Value text#1734:2": value,
+    });
+
+    //find "Shape" node with parent .Legend indicator
+    const shapeNode = legend.findOne(
+      (node) =>
+        node.name === "Shape" && node.parent?.name === ".Legend indicator"
     );
-    var shapeNode;
-    if (indicatorNode && indicatorNode.type === "INSTANCE") {
-      shapeNode = indicatorNode.findOne((node) => node.name === shapeLayerName);
-      if (shapeNode && "fills" in shapeNode) {
-        //found Shape in .Legend indicator
-        const newFills = JSON.parse(JSON.stringify(shapeNode.fills));
-        if (variableKey && typeof variableKey === "string") {
-          try {
-            const boundPaint = await bindVariableKeyToPaint(
-              variableKey,
-              newFills[0] as SolidPaint
-            );
-            shapeNode.fills = [boundPaint];
-          } catch (err) {
-            console.error(
-              "createDonutSlice: bindVariableKeyToPaint failed",
-              err
-            );
-          }
-        }
-      }
+
+    // if no shape or no fills, or no variableKey, return directly
+    if (!shapeNode || !("fills" in shapeNode) || !variableKey) {
+      return legend;
     }
+
+    try {
+      const basePaint = (shapeNode.fills as Paint[])[0] as SolidPaint;
+      const boundPaint = await bindVariableKeyToPaint(variableKey, basePaint);
+      shapeNode.fills = [boundPaint];
+    } catch (err) {
+      console.error("createLegend: bindVariableKeyToPaint failed", err);
+    }
+
     return legend;
   }
   //chart data submit handler
@@ -145,21 +139,26 @@ export default function () {
     const transformedData: TransformedChartItem[] = transformToPercents(
       chartData.data
     );
-    // console.log("Transformed Data:", transformedData);
     // create chart frame to hold slices
     const chartFrame = figma.createFrame();
-    chartFrame.name = chartConfig.name;
-    chartFrame.resize(chartConfig.size, chartConfig.size / 2);
-    chartFrame.x = figma.viewport.center.x - chartConfig.size / 2;
-    chartFrame.y = figma.viewport.center.y - chartConfig.size / 2;
+    Object.assign(chartFrame, {
+      name: chartConfig.name,
+      resize: (chartConfig.size, chartConfig.size / 2),
+      x: figma.viewport.center.x - chartConfig.size / 2,
+      y: figma.viewport.center.y - chartConfig.size / 2,
+    });
+
     //create legend frame
     const legendList = figma.createFrame();
-    legendList.name = "Legends";
-    legendList.x = chartFrame.x;
-    legendList.y = chartFrame.y + 159;
-    legendList.layoutMode = "VERTICAL";
-    legendList.primaryAxisSizingMode = "AUTO"; //height = hug
-    legendList.counterAxisSizingMode = "AUTO"; // width = hug
+    Object.assign(legendList, {
+      name: "Legends",
+      x: chartFrame.x,
+      y: chartFrame.y + 159,
+      layoutMode: "VERTICAL",
+      primaryAxisSizingMode: "AUTO", // height = hug
+      counterAxisSizingMode: "AUTO", // width = hug
+    });
+
     // use indexed for loop (compatible with older TS targets)
     for (let i = 0; i < transformedData.length; i++) {
       const item = transformedData[i];
@@ -190,13 +189,16 @@ export default function () {
     }
     //create final frame
     const finalFrame = figma.createFrame();
-    finalFrame.name = "Semi-donut chart + legend";
-    finalFrame.x = figma.viewport.center.x;
-    finalFrame.y = figma.viewport.center.y;
-    finalFrame.layoutMode = "VERTICAL";
-    finalFrame.primaryAxisSizingMode = "AUTO"; //height = hug
-    finalFrame.counterAxisSizingMode = "AUTO"; // width = hug
-    finalFrame.counterAxisAlignItems = "CENTER";
+    Object.assign(finalFrame, {
+      name: "Semi-donut chart + legend",
+      x: figma.viewport.center.x,
+      y: figma.viewport.center.y,
+      layoutMode: "VERTICAL",
+      primaryAxisSizingMode: "AUTO", //height : hug
+      counterAxisSizingMode: "AUTO", // width : hug
+      counterAxisAlignItems: "CENTER",
+    });
+
     finalFrame.appendChild(chartFrame);
     finalFrame.appendChild(legendList);
     figma.currentPage.appendChild(finalFrame);
@@ -225,9 +227,6 @@ export default function () {
   on("SUBMIT_CHART_DATA", handleSubmit);
   on("INSPECT_LIBRARY", handleInspectLibKey);
   on("INSPECT_COMP", handleInspectCompKey);
-  on("CREATE_INSTANCE", () => {
-    console.log(createLegend("Name", "123"));
-  });
   // UI window size
   showUI({
     width: 360,
