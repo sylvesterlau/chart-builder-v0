@@ -5,7 +5,6 @@ export const chartConfig = {
   ratio: 0.88,
   defaultColor: "#DB0011",
 };
-
 export const dataVisColor = [
   {
     key: "semantic.color.fill.dataVis.general.01",
@@ -28,7 +27,6 @@ export const dataVisColor = [
     value: "#509EBC",
   },
 ];
-
 // chart sample data
 export const sampleData = {
   spending: {
@@ -41,8 +39,14 @@ export const sampleData = {
     ],
   },
 };
-
 //team library collection key
 export const teamLibrary = {
-  coreToolKit: { collectionKey: "cf4b280d2af66fa420c0a3ca3902811fc6caf326" },
+  coreToolKit: {
+    collectionKey: "fec4283aa350a349f70764fc8e255b6b715e7ed1",
+  },
+  dataVis: {
+    legend: {
+      compKey: "fcfb9896b3b383b521e4b4e7177859cd97e0c1ff",
+    },
+  },
 };

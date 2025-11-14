@@ -13,7 +13,6 @@ import { emit } from "@create-figma-plugin/utilities";
 import { h } from "preact";
 import { useCallback, useState } from "preact/hooks";
 import { sampleData } from "./config";
-
 function Plugin() {
   const [itemA, setItemA] = useState<number>(0),
     [itemALabel, setItemALabel] = useState<string>(""),
@@ -25,12 +24,10 @@ function Plugin() {
     [itemDLabel, setItemDLabel] = useState<string>(""),
     [itemE, setItemE] = useState<number>(0),
     [itemELabel, setItemELabel] = useState<string>("");
-
   // 处理数值输入的包装函数，确保空值时返回 0
   const handleNumericInput = useCallback((setter: (value: number) => void) => {
     return (value: number | null) => setter(value ?? 0);
   }, []);
-
   const handleGenerateButtonClick = useCallback(
     function () {
       const chartData = {
@@ -58,7 +55,6 @@ function Plugin() {
       itemELabel,
     ]
   );
-
   // use sample data
   const handleUseSampleData = useCallback(function () {
     const data = sampleData.spending.data;
@@ -73,18 +69,20 @@ function Plugin() {
     setItemELabel(data[4].label);
     setItemE(data[4].value);
   }, []);
-
-  const handleTestBtnClick = useCallback(function () {
-    // emit an event to main.ts to check variable collections
-    emit("TEST_Click");
+  const handleInspectBtnClick = useCallback(function () {
+    emit("INSPECT_LIBRARY");
   }, []);
-
+  const handleInpectCompClick = useCallback(function () {
+    emit("INSPECT_COMP");
+  }, []);
+  const handleCreateInstanceClick = useCallback(function () {
+    emit("CREATE_INSTANCE");
+  }, []);
   return (
     <Container space="medium">
       <VerticalSpace space="medium" />
-      <h2>Chart builder v0</h2>
+      <h2>Semi-donut chart</h2>
       <VerticalSpace space="large" />
-
       {/* input field stack */}
       <Stack space="extraSmall">
         {/* Item A */}
@@ -102,7 +100,6 @@ function Plugin() {
           />
         </Columns>
         <VerticalSpace space="extraSmall" />
-
         {/* Item B */}
         <Text>Item B</Text>
         <Columns space="extraSmall">
@@ -118,7 +115,6 @@ function Plugin() {
           />
         </Columns>
         <VerticalSpace space="extraSmall" />
-
         {/* Item C */}
         <Text>Item C</Text>
         <Columns space="extraSmall">
@@ -134,7 +130,6 @@ function Plugin() {
           />
         </Columns>
         <VerticalSpace space="extraSmall" />
-
         {/* Item D */}
         <Text>Item D</Text>
         <Columns space="extraSmall">
@@ -150,7 +145,6 @@ function Plugin() {
           />
         </Columns>
         <VerticalSpace space="extraSmall" />
-
         {/* Item E */}
         <Text>Item E</Text>
         <Columns space="extraSmall">
@@ -167,9 +161,7 @@ function Plugin() {
         </Columns>
         <VerticalSpace space="extraSmall" />
       </Stack>
-
       <VerticalSpace space="extraLarge" />
-
       {/* button group */}
       <Stack space="extraSmall">
         <Button secondary fullWidth onClick={handleUseSampleData}>
@@ -179,12 +171,17 @@ function Plugin() {
           Generate
         </Button>
         <VerticalSpace space="extraSmall" />
-        <Button fullWidth secondary onClick={handleTestBtnClick}>
-          View TeamLib Collections Key (DEV)
+        <Button secondary onClick={handleInspectBtnClick}>
+          Inspect Collections Key
+        </Button>
+        <Button secondary onClick={handleInpectCompClick}>
+          Check Instance detail
+        </Button>
+        <Button secondary onClick={handleCreateInstanceClick}>
+          Create Legend Instance
         </Button>
       </Stack>
     </Container>
   );
 }
-
 export default render(Plugin);
