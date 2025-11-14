@@ -75,9 +75,6 @@ function Plugin() {
   const handleInpectCompClick = useCallback(function () {
     emit("INSPECT_COMP");
   }, []);
-  const handleCreateInstanceClick = useCallback(function () {
-    emit("CREATE_INSTANCE");
-  }, []);
   return (
     <Container space="medium">
       <VerticalSpace space="medium" />
@@ -176,9 +173,6 @@ function Plugin() {
         </Button>
         <Button secondary onClick={handleInpectCompClick}>
           Check Instance detail
-        </Button>
-        <Button secondary onClick={handleCreateInstanceClick}>
-          Create Legend Instance
         </Button>
       </Stack>
     </Container>
