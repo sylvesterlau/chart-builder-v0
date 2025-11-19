@@ -117,7 +117,7 @@ export default function () {
     const varsInThemeCol =
       await figma.teamLibrary.getVariablesInLibraryCollectionAsync(themeColKey);
     dataVisColor.forEach((colorData, index) => {
-      const tokenPath = dotToSlash(colorData.key);
+      const tokenPath = dotToSlash(colorData.name);
       const foundVar = varsInThemeCol.find((v) => {
         const name = v.name || "";
         return name === tokenPath;
@@ -141,9 +141,9 @@ export default function () {
     );
     // create chart frame to hold slices
     const chartFrame = figma.createFrame();
+    chartFrame.resize(chartConfig.size, chartConfig.size / 2);
     Object.assign(chartFrame, {
       name: chartConfig.name,
-      resize: (chartConfig.size, chartConfig.size / 2),
       x: figma.viewport.center.x - chartConfig.size / 2,
       y: figma.viewport.center.y - chartConfig.size / 2,
     });
@@ -152,8 +152,6 @@ export default function () {
     const legendList = figma.createFrame();
     Object.assign(legendList, {
       name: "Legends",
-      x: chartFrame.x,
-      y: chartFrame.y + 159,
       layoutMode: "VERTICAL",
       primaryAxisSizingMode: "AUTO", // height = hug
       counterAxisSizingMode: "AUTO", // width = hug
@@ -172,7 +170,6 @@ export default function () {
         item.colorToken ?? null
       );
       if (slice) {
-        // 居中于 frame
         slice.x = 0;
         slice.y = 0;
         chartFrame.appendChild(slice);

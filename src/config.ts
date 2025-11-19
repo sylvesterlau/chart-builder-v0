@@ -7,24 +7,29 @@ export const chartConfig = {
 };
 export const dataVisColor = [
   {
-    key: "semantic.color.fill.dataVis.general.01",
+    name: "semantic.color.fill.dataVis.general.01",
     value: "#347893",
+    key: "4b0f4cc56fce48aab4632a4fd5feb3757319ac93",
   },
   {
-    key: "semantic.color.fill.dataVis.general.02",
+    name: "semantic.color.fill.dataVis.general.02",
     value: "#E76E84",
+    key: "701879c9787a87019898f2af7c6071f6d5a700a1",
   },
   {
-    key: "semantic.color.fill.dataVis.general.03",
+    name: "semantic.color.fill.dataVis.general.03",
     value: "#518827",
+    key: "1b012516a0c37279d64c78991d2df967d262f8d3",
   },
   {
-    key: "semantic.color.fill.dataVis.general.04",
+    name: "semantic.color.fill.dataVis.general.04",
     value: "#EC7046",
+    key: "76f80cda16c8af864ca6d85d35f470e899d2494a",
   },
   {
-    key: "semantic.color.fill.dataVis.general.05",
+    name: "semantic.color.fill.dataVis.general.05",
     value: "#509EBC",
+    key: "253877542492b9b9aa6a9eb3cdf7b06c49cf2cce",
   },
 ];
 // chart sample data
