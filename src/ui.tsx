@@ -23,7 +23,8 @@ function Plugin() {
     [itemD, setItemD] = useState<number>(0),
     [itemDLabel, setItemDLabel] = useState<string>(""),
     [itemE, setItemE] = useState<number>(0),
-    [itemELabel, setItemELabel] = useState<string>("");
+    [itemELabel, setItemELabel] = useState<string>(""),
+    [tokenPath, setTokenPath] = useState<string>("");
   // 处理数值输入的包装函数，确保空值时返回 0
   const handleNumericInput = useCallback((setter: (value: number) => void) => {
     return (value: number | null) => setter(value ?? 0);
@@ -75,6 +76,13 @@ function Plugin() {
   const handleInpectCompClick = useCallback(function () {
     emit("INSPECT_COMP");
   }, []);
+
+  const handleTokenLookupClick = useCallback(
+    function () {
+      emit("LOOKUP_TOKEN", tokenPath);
+    },
+    [tokenPath]
+  );
   return (
     <Container space="medium">
       <VerticalSpace space="medium" />
@@ -173,6 +181,19 @@ function Plugin() {
         </Button>
         <Button secondary onClick={handleInpectCompClick}>
           Check Instance detail
+        </Button>
+      </Stack>
+      <VerticalSpace space="medium" />
+      {/* Token Lookup Tool */}
+      <Stack space="extraSmall">
+        <Text>Token Lookup Tool</Text>
+        <Textbox
+          onValueInput={setTokenPath}
+          value={tokenPath}
+          placeholder="Enter token path (e.g. semantic.color.fill.dataVis.general.01)"
+        />
+        <Button secondary onClick={handleTokenLookupClick}>
+          Find Token Key
         </Button>
       </Stack>
     </Container>

@@ -221,9 +221,44 @@ export default function () {
       console.log("Node info:", selection);
     }
   }
+
+  // token lookup handler
+  async function handleTokenLookup(tokenPath: string) {
+    try {
+      const themeColKey = teamLibrary.coreToolKit.collectionKey;
+      const varsInThemeCol =
+        await figma.teamLibrary.getVariablesInLibraryCollectionAsync(
+          themeColKey
+        );
+
+      // Convert token path to slash format for matching
+      const searchPath = dotToSlash(tokenPath);
+
+      const foundVar = varsInThemeCol.find((v) => {
+        const name = v.name || "";
+        return name === searchPath;
+      });
+
+      if (foundVar && foundVar.key) {
+        figma.notify(`Token found: ${foundVar.key}`);
+        console.log(`Token "${tokenPath}" -> Key: ${foundVar.key}`);
+      } else {
+        figma.notify(`Token "${tokenPath}" not found in theme collection`);
+        console.log(
+          `Available tokens:`,
+          varsInThemeCol.map((v) => v.name)
+        );
+      }
+    } catch (err) {
+      console.error("Token lookup failed:", err);
+      figma.notify("Token lookup failed. Check console for details.");
+    }
+  }
+
   on("SUBMIT_CHART_DATA", handleSubmit);
   on("INSPECT_LIBRARY", handleInspectLibKey);
   on("INSPECT_COMP", handleInspectCompKey);
+  on("LOOKUP_TOKEN", handleTokenLookup);
   // UI window size
   showUI({
     width: 360,
