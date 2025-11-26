@@ -19,17 +19,21 @@ function Plugin() {
     setCurrentPage("home");
   };
 
-  return (
-    <Container space="medium">
-      {currentPage === "home" && <HomePage onNavigate={navigateToPage} />}
-      {currentPage === "checkCollection" && (
-        <CheckCollectionPage onBack={navigateToHome} />
-      )}
-      {currentPage === "checkNode" && <CheckNodePage onBack={navigateToHome} />}
-      {currentPage === "checkToken" && (
-        <CheckTokenPage onBack={navigateToHome} />
-      )}
-    </Container>
-  );
+  const renderPage = () => {
+    switch (currentPage) {
+      case "home":
+        return <HomePage onNavigate={navigateToPage} />;
+      case "checkCollection":
+        return <CheckCollectionPage onBack={navigateToHome} />;
+      case "checkNode":
+        return <CheckNodePage onBack={navigateToHome} />;
+      case "checkToken":
+        return <CheckTokenPage onBack={navigateToHome} />;
+      default:
+        return <HomePage onNavigate={navigateToPage} />; // 默认渲染 HomePage
+    }
+  };
+
+  return <Container space="medium">{renderPage()}</Container>;
 }
 export default render(Plugin);
