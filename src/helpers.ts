@@ -5,112 +5,14 @@ export function dotToSlash(token: string): string {
   if (typeof token !== "string") return String(token);
   return token.replace(/\./g, "/");
 }
-// transformed chart item with percent data
-export interface TransformedChartItem {
-  label: string;
-  value: number;
-  startPercent: number;
-  endPercent: number;
-  // store variable key (string) instead of full Variable object
-  colorToken?: string | null;
-}
-export function transformToPercents(
-  items: { label: string; value: number; colorToken?: string | null }[]
-): TransformedChartItem[] {
-  const sum = items.reduce((s, it) => s + (it.value || 0), 0);
-  if (sum === 0) return [];
-  let startPercent = 0;
-  return items.map((item) => {
-    const endPercent = Math.round((item.value / sum) * 100);
-    const result: TransformedChartItem = {
-      label: item.label,
-      value: item.value,
-      startPercent: startPercent,
-      endPercent: startPercent + endPercent,
-      colorToken: item.colorToken ?? null,
-    };
-    startPercent = result.endPercent;
-    return result;
-  });
-}
 //check local collection existence
-interface CollectionCheckResult {
-  exists: boolean;
-  collection?: VariableCollection;
-  availableCollections: string[];
-}
-export async function checkCollectionExists(
-  name: string,
-  exact: boolean = false
-): Promise<CollectionCheckResult> {
-  try {
-    const collections =
-      await figma.variables.getLocalVariableCollectionsAsync();
-    const availableCollections = collections.map((c) => c.name || "(unnamed)");
-    // 查找匹配的集合
-    const found = collections.find((c) =>
-      exact
-        ? c.name === name
-        : c.name?.toLowerCase().includes(name.toLowerCase())
-    );
-    return {
-      exists: !!found,
-      collection: found,
-      availableCollections,
-    };
-  } catch (err) {
-    console.error("Error checking variable collections:", err);
-    throw err;
-  }
-}
+
 // check local variable in a collection
 interface VariableCheckResult {
   exists: boolean;
   variable?: Variable;
   collection?: VariableCollection;
   availableVariables: string[];
-}
-export async function checkVariableExists(
-  variableName: string,
-  collectionName: string,
-  exact: boolean = false
-): Promise<VariableCheckResult> {
-  try {
-    // 首先检查 collection 是否存在
-    const collectionResult = await checkCollectionExists(collectionName, true);
-    if (!collectionResult.exists || !collectionResult.collection) {
-      return {
-        exists: false,
-        availableVariables: [],
-      };
-    }
-    const collection = collectionResult.collection;
-    // 获取 collection 中的所有变量（使用异步方法）
-    const variablePromises = collection.variableIds.map((id) =>
-      figma.variables.getVariableByIdAsync(id)
-    );
-    // 等待所有变量加载完成
-    const variables = (await Promise.all(variablePromises)).filter(
-      (v): v is Variable => v !== null
-    );
-    // 获取所有变量名称用于显示
-    const availableVariables = variables.map((v) => v.name);
-    // 查找匹配的变量
-    const found = variables.find((v) =>
-      exact
-        ? v.name === variableName
-        : v.name.toLowerCase().includes(variableName.toLowerCase())
-    );
-    return {
-      exists: !!found,
-      variable: found,
-      collection,
-      availableVariables,
-    };
-  } catch (err) {
-    console.error("Error checking variable:", err);
-    throw err;
-  }
 }
 
 // Bind a team variable to a SolidPaint
@@ -176,9 +78,3 @@ export async function bindVariableKeyToPaint(
     return paintToUse;
   }
 }
-
-export default {
-  dotToSlash,
-  checkCollectionExists,
-  checkVariableExists,
-};
