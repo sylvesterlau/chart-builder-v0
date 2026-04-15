@@ -1,122 +1,74 @@
-import { chartConfig } from "./config";
-
-// convert token key dots to slashes
+// helpers.ts for reused function
+import { chartConfig, dataVisColor } from "./config";
+import { ChartData } from "./types";
+// Convert token name dots to slashes
 export function dotToSlash(token: string): string {
   if (typeof token !== "string") return String(token);
   return token.replace(/\./g, "/");
 }
-// transformed chart item with percent data
+// Split integer and decimal, with thousands separator
+export function splitNumber(
+  value: number,
+  thousandsSep: Boolean = true,
+): { integer: string; decimal: string } {
+  const fixed = value.toFixed(2);
+  const [int, dec] = fixed.split(".");
+  let formattedInt = int;
+  // add , as thousands separator
+  if (thousandsSep) {
+    formattedInt = int.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  }
+  return {
+    integer: formattedInt,
+    decimal: dec || "00",
+  };
+}
+// Calculate sum
+export function getSum(chartData: ChartData) {
+  let sum: number = 0;
+  chartData.data.forEach((item) => {
+    sum += item.value;
+  });
+  return sum;
+}
+// Transformed chart item with percent data
 export interface TransformedChartItem {
   label: string;
   value: number;
+  exactPercent: number;
   startPercent: number;
   endPercent: number;
-  // store variable key (string) instead of full Variable object
   colorToken?: string | null;
 }
 export function transformToPercents(
-  items: { label: string; value: number; colorToken?: string | null }[]
+  items: { label: string; value: number; colorToken?: string | null }[],
 ): TransformedChartItem[] {
+  //add datavis color variable key to array
+  dataVisColor.forEach((dColor, index) => {
+    items[index].colorToken = dColor.key;
+  });
   const sum = items.reduce((s, it) => s + (it.value || 0), 0);
   if (sum === 0) return [];
   let startPercent = 0;
   return items.map((item) => {
-    const endPercent = Math.round((item.value / sum) * 100);
+    const exactPercent = (item.value / sum) * 100;
+    const endPercent = Math.round((startPercent + exactPercent) * 100) / 100;
     const result: TransformedChartItem = {
       label: item.label,
       value: item.value,
-      startPercent: startPercent,
-      endPercent: startPercent + endPercent,
+      exactPercent: exactPercent,
+      startPercent: Math.round(startPercent * 100) / 100,
+      endPercent: endPercent,
       colorToken: item.colorToken ?? null,
     };
     startPercent = result.endPercent;
     return result;
   });
 }
-//check local collection existence
-interface CollectionCheckResult {
-  exists: boolean;
-  collection?: VariableCollection;
-  availableCollections: string[];
-}
-export async function checkCollectionExists(
-  name: string,
-  exact: boolean = false
-): Promise<CollectionCheckResult> {
-  try {
-    const collections =
-      await figma.variables.getLocalVariableCollectionsAsync();
-    const availableCollections = collections.map((c) => c.name || "(unnamed)");
-    // 查找匹配的集合
-    const found = collections.find((c) =>
-      exact
-        ? c.name === name
-        : c.name?.toLowerCase().includes(name.toLowerCase())
-    );
-    return {
-      exists: !!found,
-      collection: found,
-      availableCollections,
-    };
-  } catch (err) {
-    console.error("Error checking variable collections:", err);
-    throw err;
-  }
-}
-// check local variable in a collection
-interface VariableCheckResult {
-  exists: boolean;
-  variable?: Variable;
-  collection?: VariableCollection;
-  availableVariables: string[];
-}
-export async function checkVariableExists(
-  variableName: string,
-  collectionName: string,
-  exact: boolean = false
-): Promise<VariableCheckResult> {
-  try {
-    // 首先检查 collection 是否存在
-    const collectionResult = await checkCollectionExists(collectionName, true);
-    if (!collectionResult.exists || !collectionResult.collection) {
-      return {
-        exists: false,
-        availableVariables: [],
-      };
-    }
-    const collection = collectionResult.collection;
-    // 获取 collection 中的所有变量（使用异步方法）
-    const variablePromises = collection.variableIds.map((id) =>
-      figma.variables.getVariableByIdAsync(id)
-    );
-    // 等待所有变量加载完成
-    const variables = (await Promise.all(variablePromises)).filter(
-      (v): v is Variable => v !== null
-    );
-    // 获取所有变量名称用于显示
-    const availableVariables = variables.map((v) => v.name);
-    // 查找匹配的变量
-    const found = variables.find((v) =>
-      exact
-        ? v.name === variableName
-        : v.name.toLowerCase().includes(variableName.toLowerCase())
-    );
-    return {
-      exists: !!found,
-      variable: found,
-      collection,
-      availableVariables,
-    };
-  } catch (err) {
-    console.error("Error checking variable:", err);
-    throw err;
-  }
-}
-
 // Bind a team variable to a SolidPaint
 export async function bindVariableKeyToPaint(
   variableKey: string | null,
-  basePaint: Paint
+  basePaint: Paint,
 ): Promise<Paint> {
   // default base paint (use chartConfig.defaultColor from config)
   const defaultSolid: SolidPaint = {
@@ -135,7 +87,7 @@ export async function bindVariableKeyToPaint(
     // import may fail (permissions/team library), fall back to using key object
     console.warn(
       "bindVariableKeyToPaint: importVariableByKeyAsync failed",
-      err
+      err,
     );
     importedVar = { key: variableKey };
   }
@@ -149,13 +101,13 @@ export async function bindVariableKeyToPaint(
     const bound = figma.variables.setBoundVariableForPaint(
       clonedPaint as any,
       "color",
-      importedVar as any
+      importedVar as any,
     );
     return bound as Paint;
   } catch (err) {
     console.error(
       "bindVariableKeyToPaint: setBoundVariableForPaint failed",
-      err
+      err,
     );
     // try to read color from importedVar.valuesByMode
     try {
@@ -172,13 +124,33 @@ export async function bindVariableKeyToPaint(
     } catch (e) {
       console.error("bindVariableKeyToPaint: fallback read failed", e);
     }
-    // final fallback
     return paintToUse;
   }
 }
-
-export default {
-  dotToSlash,
-  checkCollectionExists,
-  checkVariableExists,
-};
+// token lookup handler
+export async function getTokenVarKey(collectionKey: string, tokenPath: string) {
+  try {
+    const varsInThemeCol =
+      await figma.teamLibrary.getVariablesInLibraryCollectionAsync(
+        collectionKey,
+      );
+    const tokenName = dotToSlash(tokenPath);
+    const foundVar = varsInThemeCol.find((v) => {
+      const name = v.name || "";
+      return name === tokenName;
+    });
+    if (foundVar && foundVar.key) {
+      figma.notify(`Token found: ${foundVar.key}`);
+      console.log(`Token "${tokenPath}" -> Key: ${foundVar.key}`);
+    } else {
+      figma.notify(`Token "${tokenPath}" not found in theme collection`);
+      console.log(
+        `Available tokens:`,
+        varsInThemeCol.map((v) => v.name),
+      );
+    }
+  } catch (err) {
+    console.error("Token lookup failed:", err);
+    figma.notify("Token lookup failed. Check console for details.");
+  }
+}

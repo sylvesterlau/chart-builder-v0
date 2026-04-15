@@ -1,11 +1,9 @@
-import { EventHandler } from '@create-figma-plugin/utilities'
-
-export interface CreateRectanglesHandler extends EventHandler {
-  name: 'CREATE_RECTANGLES'
-  handler: (count: number) => void
+// Define types for chart data
+export interface ChartDataItem {
+  label: string;
+  value: number;
+  colorToken?: string | null;
 }
-
-export interface CloseHandler extends EventHandler {
-  name: 'CLOSE'
-  handler: () => void
+export interface ChartData {
+  data: ChartDataItem[];
 }

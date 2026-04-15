@@ -18,8 +18,8 @@
     "editorType": [
       "figma"
     ],
-    "id": "chart-builder-v0",
-    "name": "Chart Builder V0 by Hive",
+    "id": "chart-builder",
+    "name": "Chart Builder",
     "main": "src/main.ts",
     "ui": "src/ui.tsx",
     "documentAccess": "dynamic-page",

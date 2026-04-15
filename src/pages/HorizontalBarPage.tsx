@@ -1,0 +1,170 @@
+import {
+  Button,
+  Stack,
+  VerticalSpace,
+  Text,
+  Textbox,
+  Container,
+  Columns,
+  TextboxNumeric,
+} from "@create-figma-plugin/ui";
+import { emit } from "@create-figma-plugin/utilities";
+import { h } from "preact";
+import { useCallback, useState } from "preact/hooks";
+import { sampleData } from "../config";
+interface HorizontalBarPageProps {
+  onBack: () => void;
+}
+function HorizontalBarPage({ onBack }: HorizontalBarPageProps) {
+  const [itemA, setItemA] = useState<number>(0),
+    [itemALabel, setItemALabel] = useState<string>(""),
+    [itemB, setItemB] = useState<number>(0),
+    [itemBLabel, setItemBLabel] = useState<string>(""),
+    [itemC, setItemC] = useState<number>(0),
+    [itemCLabel, setItemCLabel] = useState<string>(""),
+    [itemD, setItemD] = useState<number>(0),
+    [itemDLabel, setItemDLabel] = useState<string>(""),
+    [itemE, setItemE] = useState<number>(0),
+    [itemELabel, setItemELabel] = useState<string>("");
+  // Numeric input void -> 0
+  const handleNumericInput = useCallback((setter: (value: number) => void) => {
+    return (value: number | null) => setter(value ?? 0);
+  }, []);
+  const handleGenerateButtonClick = useCallback(
+    function () {
+      const formData = {
+        data: [
+          { label: itemALabel, value: itemA },
+          { label: itemBLabel, value: itemB },
+          { label: itemCLabel, value: itemC },
+          { label: itemDLabel, value: itemD },
+          { label: itemELabel, value: itemE },
+        ],
+      };
+      // send form data to main.ts
+      emit("SUBMIT_HORIZONTAL_BAR_CHART_DATA", formData);
+    },
+    [
+      itemA,
+      itemALabel,
+      itemB,
+      itemBLabel,
+      itemC,
+      itemCLabel,
+      itemD,
+      itemDLabel,
+      itemE,
+      itemELabel,
+    ],
+  );
+  // use sample data
+  const handleUseSampleData = useCallback(function () {
+    const data = sampleData.spending.data;
+    setItemALabel(data[0].label);
+    setItemA(data[0].value);
+    setItemBLabel(data[1].label);
+    setItemB(data[1].value);
+    setItemCLabel(data[2].label);
+    setItemC(data[2].value);
+    setItemDLabel(data[3].label);
+    setItemD(data[3].value);
+    setItemELabel(data[4].label);
+    setItemE(data[4].value);
+  }, []);
+  return (
+    <Container space="medium">
+      <VerticalSpace space="small" />
+      <Button secondary onClick={onBack}>
+        ← Back
+      </Button>
+      <VerticalSpace space="medium" />
+      <h2>Horizontal bar chart</h2>
+      <VerticalSpace space="large" />
+      {/* input field stack */}
+      <Stack space="extraSmall">
+        <Text>Item A</Text>
+        <Columns space="extraSmall">
+          <Textbox
+            onValueInput={setItemALabel}
+            value={itemALabel}
+            placeholder="Label A"
+          />
+          <TextboxNumeric
+            onNumericValueInput={handleNumericInput(setItemA)}
+            value={String(itemA)}
+            placeholder="Value"
+          />
+        </Columns>
+        <VerticalSpace space="extraSmall" />
+        <Text>Item B</Text>
+        <Columns space="extraSmall">
+          <Textbox
+            onValueInput={setItemBLabel}
+            value={itemBLabel}
+            placeholder="Label B"
+          />
+          <TextboxNumeric
+            onNumericValueInput={handleNumericInput(setItemB)}
+            value={String(itemB)}
+            placeholder="Value"
+          />
+        </Columns>
+        <VerticalSpace space="extraSmall" />
+        <Text>Item C</Text>
+        <Columns space="extraSmall">
+          <Textbox
+            onValueInput={setItemCLabel}
+            value={itemCLabel}
+            placeholder="Label C"
+          />
+          <TextboxNumeric
+            onNumericValueInput={handleNumericInput(setItemC)}
+            value={String(itemC)}
+            placeholder="Value"
+          />
+        </Columns>
+        <VerticalSpace space="extraSmall" />
+        <Text>Item D</Text>
+        <Columns space="extraSmall">
+          <Textbox
+            onValueInput={setItemDLabel}
+            value={itemDLabel}
+            placeholder="Label D"
+          />
+          <TextboxNumeric
+            onNumericValueInput={handleNumericInput(setItemD)}
+            value={String(itemD)}
+            placeholder="Value"
+          />
+        </Columns>
+        <VerticalSpace space="extraSmall" />
+        <Text>Item E</Text>
+        <Columns space="extraSmall">
+          <Textbox
+            onValueInput={setItemELabel}
+            value={itemELabel}
+            placeholder="Label E"
+          />
+          <TextboxNumeric
+            onNumericValueInput={handleNumericInput(setItemE)}
+            value={String(itemE)}
+            placeholder="Value"
+          />
+        </Columns>
+        <VerticalSpace space="extraSmall" />
+      </Stack>
+      <VerticalSpace space="medium" />
+      {/* button group */}
+      <Stack space="extraSmall">
+        <Button secondary fullWidth onClick={handleUseSampleData}>
+          Use sample data
+        </Button>
+        <Button fullWidth onClick={handleGenerateButtonClick}>
+          Generate
+        </Button>
+        <VerticalSpace space="extraSmall" />
+      </Stack>
+    </Container>
+  );
+}
+export default HorizontalBarPage;
