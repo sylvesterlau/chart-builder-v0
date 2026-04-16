@@ -2,20 +2,19 @@ import { on, showUI } from "@create-figma-plugin/utilities";
 import { pluginUI, chartConfig, teamLibrary } from "./config";
 import { ChartData } from "./types";
 import {
-  bindVariableKeyToPaint,
   transformToPercents,
   TransformedChartItem,
   getSum,
+  getTokenVarKey,
 } from "./helpers";
 import {
   createSemiDonutSlice,
-  createHorBar,
   createLegend,
-  checkThemeCol,
   createLegendList,
   createFinalFrame,
   createTotalValueFrame,
 } from "./utils/figmaOperations";
+import { drawHorBarChart } from "./utils/drawHorBarChart";
 const themeColKey = teamLibrary.coreToolKit.collectionKey; // "Theme" collection key
 export default function () {
   // Semi donut chart
@@ -98,69 +97,21 @@ export default function () {
   }
   // Horizontal bar chart
   async function handleHorizontalBarChartData(chartData: ChartData) {
-    // check Theme collection by ID
-    checkThemeCol(themeColKey);
-    //check if form value sum > 0
-    let sum: number = getSum(chartData);
-    if (sum <= 0) {
-      figma.notify("Please enter correct value for items");
+    await drawHorBarChart(chartData, legendList, themeColKey);
+  }
+  // Token key lookup
+  async function handleLookupTokenVarKey(tokenPath: string) {
+    if (!tokenPath || !tokenPath.trim()) {
+      figma.notify("Please enter a token path");
       return;
     }
-    // Transform data with helper
-    const transformedData: TransformedChartItem[] = transformToPercents(
-      chartData.data,
-    );
-    // create chart frame
-    const chartFrame = figma.createFrame();
-    chartFrame.fills = [];
-    chartFrame.resize(358, 12);
-    Object.assign(chartFrame, {
-      name: "Horizontal Bar Chart area",
-      layoutMode: "HORIZONTAL",
-      primaryAxisSizingMode: "AUTO", // height = hug
-      itemSpacing: 2,
-    });
-    // use indexed for loop (compatible with older TS targets)
-    for (let i = 0; i < transformedData.length; i++) {
-      const item = transformedData[i];
-      const layerName = `${item.label} (${item.value})`;
-      let isFirstSlice = i == 0 ? true : false;
-      if (item.value > 0) {
-        const bar = await createHorBar(
-          item.startPercent,
-          item.endPercent,
-          item.exactPercent,
-          layerName,
-          chartConfig.defaultColor,
-          isFirstSlice,
-          item.colorToken ?? null,
-        );
-        if (bar) {
-          chartFrame.appendChild(bar);
-        }
-        const legend = await createLegend(
-          item.label,
-          item.value,
-          item.exactPercent,
-          item.colorToken ?? null,
-        );
-        if (legend) {
-          legendList.appendChild(legend);
-        }
-      }
-    }
-    //create final frame
-    const finalFrame = await createFinalFrame();
-    finalFrame.appendChild(chartFrame);
-    finalFrame.appendChild(legendList);
-    figma.currentPage.appendChild(finalFrame);
-    figma.currentPage.selection = [finalFrame];
-    figma.viewport.scrollAndZoomIntoView([finalFrame]);
+    await getTokenVarKey(tokenPath);
   }
   //Legend frame
   const legendList = createLegendList();
   on("SUBMIT_SEMI_DONUT_CHART_DATA", handleSemiDonutChartData);
   on("SUBMIT_HORIZONTAL_BAR_CHART_DATA", handleHorizontalBarChartData);
+  on("LOOKUP_TOKEN_VAR_KEY", handleLookupTokenVarKey);
   // UI window size
   showUI({
     width: pluginUI.size.width,

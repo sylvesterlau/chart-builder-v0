@@ -36,28 +36,28 @@ export const teamLibrary = {
 // Data Vis color tokens
 export const dataVisColor = [
   {
-    name: "semantic.color.fill.dataVis.general.01",
-    key: "4b0f4cc56fce48aab4632a4fd5feb3757319ac93", // variable key in Figma Team Library
-    value: "#347893", // fallback color, not used
+    name: "dataVis.general.01",
+    key: "875460d9abc2d89a5bb76a9a7a2e9e43d4516efa", // variable key in Figma Team Library
+    value: "#347893", // fallback color
   },
   {
-    name: "semantic.color.fill.dataVis.general.02",
-    key: "701879c9787a87019898f2af7c6071f6d5a700a1",
+    name: "dataVis.general.02",
+    key: "ade3677d0cf6c19280ba43cc438d6112af0657c6",
     value: "#E76E84",
   },
   {
-    name: "semantic.color.fill.dataVis.general.03",
-    key: "1b012516a0c37279d64c78991d2df967d262f8d3",
+    name: "dataVis.general.03",
+    key: "2a18acdfd9be77b1f87f24a271bac3674196e6c7",
     value: "#518827",
   },
   {
-    name: "semantic.color.fill.dataVis.general.04",
-    key: "76f80cda16c8af864ca6d85d35f470e899d2494a",
+    name: "dataVis.general.04",
+    key: "af459e2d6f04e6f778fdadfa0392569f5404a6d6",
     value: "#EC7046",
   },
   {
-    name: "semantic.color.fill.dataVis.general.05",
-    key: "253877542492b9b9aa6a9eb3cdf7b06c49cf2cce",
+    name: "dataVis.general.05",
+    key: "61f03e307c88fd771dba5d5be8bb1062455e1f2a",
     value: "#509EBC",
   },
 ];

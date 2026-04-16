@@ -10,7 +10,7 @@ import {
 import { h } from "preact";
 import List from "../components/List";
 interface HomePageProps {
-  onNavigate: (page: "semiDonut" | "horizontalBar") => void;
+  onNavigate: (page: "semiDonut" | "horizontalBar" | "util") => void;
 }
 function HomePage({ onNavigate }: HomePageProps) {
   return (
@@ -38,6 +38,11 @@ function HomePage({ onNavigate }: HomePageProps) {
           icon={<IconArc24 />}
           title="Pie chart (coming soon)"
           disable={true}
+        />
+        <List
+          icon={<IconLine24 />}
+          title="Util page"
+          onClick={() => onNavigate("util")}
         />
       </div>
     </Container>

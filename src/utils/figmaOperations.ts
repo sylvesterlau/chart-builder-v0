@@ -54,43 +54,7 @@ export async function createSemiDonutSlice(
   }
   return slice;
 }
-// Draw horizontal bar
-export async function createHorBar(
-  startPercent: number,
-  endPercent: number,
-  exactPercent: number,
-  layerName: string = "bar",
-  hexColor: string = chartConfig.defaultColor,
-  isFirst: Boolean = false,
-  variableKey?: string | null,
-): Promise<RectangleNode | null> {
-  if (endPercent - startPercent <= 0) {
-    return null;
-  }
-  const bar = figma.createRectangle();
-  const barWidth = (exactPercent * 358) / 100 - 2;
-  bar.resize(barWidth, 12);
-  Object.assign(bar, {
-    x: startPercent,
-    name: layerName,
-  });
-  const convertedColor = figma.util.rgb(hexColor);
-  const fillColor = convertedColor;
-  bar.fills = [{ type: "SOLID", color: fillColor }];
-  // if variableKey（string), use bindVariableKeyToPaint
-  if (variableKey && typeof variableKey === "string") {
-    try {
-      const boundPaint = await bindVariableKeyToPaint(
-        variableKey,
-        bar.fills[0] as SolidPaint,
-      );
-      bar.fills = [boundPaint];
-    } catch (err) {
-      console.error("createHorizontalBar: bindVariableKeyToPaint failed", err);
-    }
-  }
-  return bar;
-}
+
 //Create lengend component
 export async function createLegend(
   label: string,
@@ -98,9 +62,15 @@ export async function createLegend(
   percentage?: number | null,
   variableKey?: string | null,
 ): Promise<InstanceNode | null> {
-  const compKey = teamLibrary.dataVis.legendBD.compKey;
-  const importedComponent = await figma.importComponentByKeyAsync(compKey);
-  const legend = importedComponent.createInstance();
+  let legend: InstanceNode;
+  try {
+    const compKey = teamLibrary.dataVis.legendBD.compKey;
+    const importedComponent = await figma.importComponentByKeyAsync(compKey);
+    legend = importedComponent.createInstance();
+  } catch (err) {
+    console.error("createLegend: import component failed", err);
+    return null;
+  }
   if (percentage) {
     let fixedPercent = percentage.toFixed(2);
     label = label + ` (${fixedPercent}%)`;

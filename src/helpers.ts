@@ -127,27 +127,53 @@ export async function bindVariableKeyToPaint(
     return paintToUse;
   }
 }
-// token lookup handler
-export async function getTokenVarKey(collectionKey: string, tokenPath: string) {
+// token lookup handler (search all available library collections)
+export async function getTokenVarKey(tokenPath: string) {
   try {
-    const varsInThemeCol =
-      await figma.teamLibrary.getVariablesInLibraryCollectionAsync(
-        collectionKey,
-      );
     const tokenName = dotToSlash(tokenPath);
-    const foundVar = varsInThemeCol.find((v) => {
-      const name = v.name || "";
-      return name === tokenName;
-    });
-    if (foundVar && foundVar.key) {
-      figma.notify(`Token found: ${foundVar.key}`);
-      console.log(`Token "${tokenPath}" -> Key: ${foundVar.key}`);
-    } else {
-      figma.notify(`Token "${tokenPath}" not found in theme collection`);
+    const collections =
+      await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync();
+    const matches: Array<{
+      key: string;
+      name: string;
+      collectionName: string;
+      libraryName?: string;
+    }> = [];
+    for (let i = 0; i < collections.length; i++) {
+      const collection = collections[i];
+      const varsInCollection =
+        await figma.teamLibrary.getVariablesInLibraryCollectionAsync(
+          collection.key,
+        );
+      for (let j = 0; j < varsInCollection.length; j++) {
+        const v = varsInCollection[j];
+        if ((v.name || "") === tokenName && v.key) {
+          matches.push({
+            key: v.key,
+            name: v.name || tokenName,
+            collectionName: (collection as any).name || "Unknown Collection",
+            libraryName: (collection as any).libraryName,
+          });
+        }
+      }
+    }
+    if (matches.length === 1) {
+      const match = matches[0];
+      figma.notify(`Token found: ${match.key}`);
       console.log(
-        `Available tokens:`,
-        varsInThemeCol.map((v) => v.name),
+        `Token "${tokenPath}" -> Key: ${match.key} (Collection: ${match.collectionName})`,
       );
+    } else if (matches.length > 1) {
+      figma.notify(`Found ${matches.length} matches. Check console.`);
+      console.log(`Multiple matches found for "${tokenPath}":`);
+      matches.forEach((m, idx) => {
+        console.log(
+          `${idx + 1}. key=${m.key}, collection=${m.collectionName}, library=${m.libraryName || "Unknown Library"}`,
+        );
+      });
+    } else {
+      figma.notify(`Token "${tokenPath}" not found in any collection`);
+      console.log(`Token "${tokenPath}" not found in any available collection`);
     }
   } catch (err) {
     console.error("Token lookup failed:", err);
