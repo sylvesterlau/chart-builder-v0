@@ -13,10 +13,14 @@ import {
   createLegendList,
   createFinalFrame,
   createTotalValueFrame,
+  loadLegendFonts,
 } from "./utils/figmaOperations";
 import { drawHorBarChart } from "./utils/drawHorBarChart";
 const themeColKey = teamLibrary.coreToolKit.collectionKey; // "Theme" collection key
 export default function () {
+  function handleResizePluginUiWindow(size: { width: number; height: number }) {
+    figma.ui.resize(size.width, size.height);
+  }
   // Semi donut chart
   async function handleSemiDonutChartData(chartData: ChartData) {
     // check Theme collection by ID
@@ -27,6 +31,9 @@ export default function () {
       figma.notify("Please enter correct value for items");
       return;
     }
+    await figma.currentPage.loadAsync();
+    await loadLegendFonts();
+    const legendList = createLegendList();
     // Transform data with helper
     const transformedData: TransformedChartItem[] = transformToPercents(
       chartData.data,
@@ -97,7 +104,7 @@ export default function () {
   }
   // Horizontal bar chart
   async function handleHorizontalBarChartData(chartData: ChartData) {
-    await drawHorBarChart(chartData, legendList, themeColKey);
+    await drawHorBarChart(chartData);
   }
   // Token key lookup
   async function handleLookupTokenVarKey(tokenPath: string) {
@@ -107,11 +114,10 @@ export default function () {
     }
     await getTokenVarKey(tokenPath);
   }
-  //Legend frame
-  const legendList = createLegendList();
   on("SUBMIT_SEMI_DONUT_CHART_DATA", handleSemiDonutChartData);
   on("SUBMIT_HORIZONTAL_BAR_CHART_DATA", handleHorizontalBarChartData);
   on("LOOKUP_TOKEN_VAR_KEY", handleLookupTokenVarKey);
+  on("RESIZE_PLUGIN_UI_WINDOW", handleResizePluginUiWindow);
   // UI window size
   showUI({
     width: pluginUI.size.width,

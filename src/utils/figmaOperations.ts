@@ -1,6 +1,11 @@
 // Figma operations
 import { chartConfig, semanticToken, teamLibrary } from "../config";
-import { bindVariableKeyToPaint, dotToSlash, splitNumber } from "../helpers";
+import {
+  bindVariableKeyToPaint,
+  dotToSlash,
+  formatLegendPercentageDisplay,
+  splitNumber,
+} from "../helpers";
 // check Theme collection by ID
 export async function checkThemeCol(colID: string) {
   const libraryCollections =
@@ -55,57 +60,246 @@ export async function createSemiDonutSlice(
   return slice;
 }
 
-//Create lengend component
-export async function createLegend(
+function formatLegendValue(value: number, prefix: string, suffix: string) {
+  const formattedValue = value.toFixed(2);
+  const prefixText = prefix.trim();
+  const suffixText = suffix.trim();
+  return `${prefixText}${formattedValue}${suffixText ? ` ${suffixText}` : ""}`;
+}
+
+export async function loadLegendFonts() {
+  await figma.loadFontAsync({ family: "Inter", style: "Regular" });
+  await figma.loadFontAsync({ family: "Inter", style: "Medium" });
+  await figma.loadFontAsync({ family: "Inter", style: "Semi Bold" });
+}
+
+export async function loadChartTitleFont() {
+  await figma.loadFontAsync({ family: "Inter", style: "Medium" });
+}
+
+export function createChartTitle(title: string): FrameNode | null {
+  const trimmedTitle = title.trim();
+  if (!trimmedTitle) {
+    return null;
+  }
+
+  const titleFrame = figma.createFrame();
+  const titleNode = figma.createText();
+
+  titleFrame.fills = [];
+  titleFrame.resize(390, 46);
+  Object.assign(titleFrame, {
+    name: "chart title",
+    layoutMode: "HORIZONTAL",
+    primaryAxisSizingMode: "FIXED",
+    counterAxisSizingMode: "AUTO",
+    counterAxisAlignItems: "CENTER",
+    paddingLeft: 16,
+    paddingRight: 16,
+    paddingTop: 8,
+    paddingBottom: 8,
+    layoutAlign: "STRETCH",
+  });
+
+  titleNode.name = trimmedTitle;
+  titleNode.fontName = { family: "Inter", style: "Medium" };
+  titleNode.fontSize = 23;
+  titleNode.lineHeight = { unit: "PIXELS", value: 30 };
+  titleNode.characters = trimmedTitle;
+  titleNode.layoutGrow = 1;
+  titleNode.fills = [
+    {
+      type: "SOLID",
+      color: figma.util.rgb("#333333"),
+    },
+  ];
+
+  titleFrame.appendChild(titleNode);
+  return titleFrame;
+}
+
+//Create legend item
+export function createLegend(
   label: string,
   value: number,
   percentage?: number | null,
-  variableKey?: string | null,
-): Promise<InstanceNode | null> {
-  let legend: InstanceNode;
-  try {
-    const compKey = teamLibrary.dataVis.legendBD.compKey;
-    const importedComponent = await figma.importComponentByKeyAsync(compKey);
-    legend = importedComponent.createInstance();
-  } catch (err) {
-    console.error("createLegend: import component failed", err);
-    return null;
+  _variableKey?: string | null,
+  hexColor: string = "#347893",
+  showPercentage: boolean = true,
+  valuePrefix: string = "",
+  valueSuffix: string = "HKD",
+  tileLayout: "leftAndRight" | "topAndBottom" = "leftAndRight",
+): FrameNode | null {
+  const legend = figma.createFrame();
+  const shapeNode = figma.createRectangle();
+  shapeNode.name = "Shape";
+  shapeNode.resize(14, 14);
+  shapeNode.fills = [
+    {
+      type: "SOLID",
+      color: figma.util.rgb(hexColor),
+    },
+  ];
+
+  let inlineLabelText = label;
+  if (
+    tileLayout === "leftAndRight" &&
+    showPercentage &&
+    percentage !== null &&
+    percentage !== undefined
+  ) {
+    inlineLabelText = `${label} (${formatLegendPercentageDisplay(percentage)}%)`;
   }
-  if (percentage) {
-    let fixedPercent = percentage.toFixed(2);
-    label = label + ` (${fixedPercent}%)`;
-  }
-  // set properties
-  legend.setProperties({
-    "Label text#9473:3": label,
-    "Action#10519:0": false,
+
+  const valueTextInline = formatLegendValue(value, valuePrefix, valueSuffix);
+  const percentText =
+    showPercentage &&
+    percentage !== null &&
+    percentage !== undefined
+      ? `(${formatLegendPercentageDisplay(percentage)}%)`
+      : null;
+
+  const isStacked = tileLayout === "topAndBottom";
+
+  legend.fills = [];
+  legend.resize(390, isStacked ? 56 : 44);
+  Object.assign(legend, {
+    name: "legend 1",
+    layoutMode: "HORIZONTAL",
+    primaryAxisSizingMode: "FIXED",
+    counterAxisSizingMode: "AUTO",
+    counterAxisAlignItems: isStacked ? "MIN" : "CENTER",
+    itemSpacing: 8,
+    paddingLeft: 16,
+    paddingRight: 16,
+    paddingTop: 12,
+    paddingBottom: 12,
+    layoutAlign: "STRETCH",
   });
-  legend.layoutAlign = "STRETCH"; // width fill container
-  //find "Shape" node with parent .Legend indicator
-  const shapeNode = legend.findOne(
-    (node) =>
-      node.name === "Shape" && node.parent?.name === ".Legend indicator",
-  );
-  // if no shape or no fills, or no variableKey, return directly
-  if (!shapeNode || !("fills" in shapeNode) || !variableKey) {
-    return legend;
-  }
-  try {
-    const basePaint = (shapeNode.fills as Paint[])[0] as SolidPaint;
-    const boundPaint = await bindVariableKeyToPaint(variableKey, basePaint);
-    shapeNode.fills = [boundPaint];
-  } catch (err) {
-    console.error("createLegend: bindVariableKeyToPaint failed", err);
-  }
-  // Set balance display value
-  const bdInstance = legend.findOne((node) => node.name === "Balance display");
-  if (bdInstance && bdInstance.type === "INSTANCE") {
-    const { integer, decimal } = splitNumber(value);
-    bdInstance.setProperties({
-      "Balance integer#1942:28": integer,
-      "Balance decimal#1942:40": `.${decimal}`,
+
+  legend.strokes = [
+    {
+      type: "SOLID",
+      color: figma.util.rgb("#EDEDED"),
+    },
+  ];
+  legend.strokeAlign = "INSIDE";
+  legend.strokeWeight = 1;
+  legend.strokeTopWeight = 0;
+  legend.strokeRightWeight = 0;
+  legend.strokeBottomWeight = 1;
+  legend.strokeLeftWeight = 0;
+
+  if (isStacked) {
+    Object.assign(shapeNode, { layoutAlign: "MIN" });
+
+    const labelNode = figma.createText();
+    labelNode.name = label;
+    labelNode.fontName = { family: "Inter", style: "Regular" };
+    labelNode.fontSize = 14;
+    labelNode.lineHeight = { unit: "PIXELS", value: 20 };
+    labelNode.characters = label;
+    labelNode.fills = [
+      {
+        type: "SOLID",
+        color: figma.util.rgb("#333333"),
+      },
+    ];
+    Object.assign(labelNode, { layoutAlign: "STRETCH" });
+
+    const valueNode = figma.createText();
+    valueNode.name = "Legend value";
+    valueNode.fontName = { family: "Inter", style: "Semi Bold" };
+    valueNode.fontSize = 14;
+    valueNode.lineHeight = { unit: "PIXELS", value: 20 };
+    valueNode.characters = valueTextInline;
+    valueNode.fills = [
+      {
+        type: "SOLID",
+        color: figma.util.rgb("#333333"),
+      },
+    ];
+    Object.assign(valueNode, { layoutAlign: "MIN" });
+
+    const valueRow = figma.createFrame();
+    valueRow.fills = [];
+    Object.assign(valueRow, {
+      name: "Value",
+      layoutMode: "HORIZONTAL",
+      primaryAxisSizingMode: "AUTO",
+      counterAxisSizingMode: "AUTO",
+      itemSpacing: 4,
+      counterAxisAlignItems: "CENTER",
+      layoutAlign: "STRETCH",
     });
+    valueRow.appendChild(valueNode);
+    if (percentText !== null) {
+      const percentNode = figma.createText();
+      percentNode.name = "Legend percent";
+      percentNode.fontName = { family: "Inter", style: "Regular" };
+      percentNode.fontSize = 14;
+      percentNode.lineHeight = { unit: "PIXELS", value: 20 };
+      percentNode.characters = percentText;
+      percentNode.fills = [
+        {
+          type: "SOLID",
+          color: figma.util.rgb("#333333"),
+        },
+      ];
+      Object.assign(percentNode, { layoutAlign: "MIN" });
+      valueRow.appendChild(percentNode);
+    }
+
+    const textStack = figma.createFrame();
+    textStack.fills = [];
+    Object.assign(textStack, {
+      name: "Text Content",
+      layoutMode: "VERTICAL",
+      primaryAxisSizingMode: "AUTO",
+      counterAxisSizingMode: "AUTO",
+      itemSpacing: 0,
+      layoutGrow: 1,
+      layoutAlign: "STRETCH",
+    });
+
+    textStack.appendChild(labelNode);
+    textStack.appendChild(valueRow);
+
+    legend.appendChild(shapeNode);
+    legend.appendChild(textStack);
+  } else {
+    const labelNode = figma.createText();
+    labelNode.name = inlineLabelText;
+    labelNode.fontName = { family: "Inter", style: "Regular" };
+    labelNode.fontSize = 14;
+    labelNode.lineHeight = { unit: "PIXELS", value: 20 };
+    labelNode.characters = inlineLabelText;
+    labelNode.layoutGrow = 1;
+    labelNode.fills = [
+      {
+        type: "SOLID",
+        color: figma.util.rgb("#333333"),
+      },
+    ];
+
+    const valueNode = figma.createText();
+    valueNode.name = "Legend value";
+    valueNode.fontName = { family: "Inter", style: "Semi Bold" };
+    valueNode.fontSize = 14;
+    valueNode.lineHeight = { unit: "PIXELS", value: 20 };
+    valueNode.characters = valueTextInline;
+    valueNode.fills = [
+      {
+        type: "SOLID",
+        color: figma.util.rgb("#333333"),
+      },
+    ];
+
+    legend.appendChild(shapeNode);
+    legend.appendChild(labelNode);
+    legend.appendChild(valueNode);
   }
+
   return legend;
 }
 // Create legend list
@@ -175,7 +369,7 @@ export async function createTotalValueFrame(
   return totalValFrame;
 }
 // Draw final frame
-export async function createFinalFrame() {
+export function createFinalFrame() {
   const finalFrame = figma.createFrame();
   finalFrame.resize(390, 0);
   Object.assign(finalFrame, {
@@ -186,23 +380,15 @@ export async function createFinalFrame() {
     primaryAxisSizingMode: "AUTO", //height : hug
     counterAxisSizingMode: "FIXED", // width : hug
     counterAxisAlignItems: "CENTER",
+    itemSpacing: 0,
+    paddingTop: 16,
+    paddingBottom: 16,
   });
-  // bind gap token
-  const gapVar = await figma.variables.importVariableByKeyAsync(
-      semanticToken.gapNormal.key,
-    ),
-    paddingVar = await figma.variables.importVariableByKeyAsync(
-      semanticToken.paddingNormal.key,
-    );
-  finalFrame.setBoundVariable("itemSpacing", gapVar);
-  finalFrame.setBoundVariable("paddingTop", paddingVar);
-  finalFrame.setBoundVariable("paddingBottom", paddingVar);
-  //bind bg fill token
-  const basePaint = (finalFrame.fills as Paint[])[0] as SolidPaint;
-  const boundPaint = await bindVariableKeyToPaint(
-    semanticToken.bgContainerStaticStandard.key,
-    basePaint,
-  );
-  finalFrame.fills = [boundPaint];
+  finalFrame.fills = [
+    {
+      type: "SOLID",
+      color: figma.util.rgb("#ffffff"),
+    },
+  ];
   return finalFrame;
 }

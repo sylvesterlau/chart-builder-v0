@@ -4,6 +4,10 @@ export const pluginUI = {
     width: 348,
     height: 490,
   },
+  horizontalBarPageSize: {
+    width: 640,
+    height: 490,
+  },
 };
 // Semi-donut chart config
 export const chartConfig = {
@@ -43,7 +47,7 @@ export const dataVisColor = [
   {
     name: "dataVis.general.02",
     key: "ade3677d0cf6c19280ba43cc438d6112af0657c6",
-    value: "#E76E84",
+    value: "#e76e84",
   },
   {
     name: "dataVis.general.03",
@@ -53,12 +57,67 @@ export const dataVisColor = [
   {
     name: "dataVis.general.04",
     key: "af459e2d6f04e6f778fdadfa0392569f5404a6d6",
-    value: "#EC7046",
+    value: "#ec7046",
   },
   {
     name: "dataVis.general.05",
     key: "61f03e307c88fd771dba5d5be8bb1062455e1f2a",
-    value: "#509EBC",
+    value: "#509ebc",
+  },
+  {
+    name: "dataVis.general.06",
+    key: "",
+    value: "#c03954",
+  },
+  {
+    name: "dataVis.general.07",
+    key: "",
+    value: "#74a157",
+  },
+  {
+    name: "dataVis.general.08",
+    key: "",
+    value: "#c64d24",
+  },
+  {
+    name: "dataVis.general.09",
+    key: "",
+    value: "#266076",
+  },
+  {
+    name: "dataVis.general.10",
+    key: "",
+    value: "#f14e73",
+  },
+  {
+    name: "dataVis.general.11",
+    key: "",
+    value: "#356512",
+  },
+  {
+    name: "dataVis.general.12",
+    key: "",
+    value: "#ed500d",
+  },
+  {
+    name: "dataVis.general.13",
+    key: "",
+    value: "#1494c6",
+  },
+  {
+    name: "dataVis.general.14",
+    key: "",
+    value: "#933d4f",
+  },
+  {
+    name: "dataVis.general.15",
+    key: "",
+    value: "#4da90f",
+  },
+  {
+    name: "dataVis.general.16",
+    key: "",
+    value: "#94411a",
   },
 ];
 //
@@ -91,8 +150,6 @@ export const sampleData = {
       { label: "Shopping", value: 4120.23 },
       { label: "Travel", value: 2521.41 },
       { label: "Food", value: 1596.9 },
-      { label: "Subscription", value: 820.12 },
-      { label: "Other", value: 492.03 },
     ],
   },
 };
