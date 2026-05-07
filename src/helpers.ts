@@ -44,8 +44,8 @@ export function transformToPercents(
   items: { label: string; value: number; colorToken?: string | null }[],
 ): TransformedChartItem[] {
   //add datavis color variable key to array
-  dataVisColor.forEach((dColor, index) => {
-    items[index].colorToken = dColor.key;
+  items.forEach((item, index) => {
+    item.colorToken = dataVisColor[index % dataVisColor.length].key;
   });
   const sum = items.reduce((s, it) => s + (it.value || 0), 0);
   if (sum === 0) return [];
@@ -80,16 +80,12 @@ export async function bindVariableKeyToPaint(
       ? (basePaint as SolidPaint)
       : defaultSolid;
   if (!variableKey) return paintToUse;
-  let importedVar: Variable | { key: string } | null = null;
+  let importedVar: Variable | null = null;
   try {
     importedVar = await figma.variables.importVariableByKeyAsync(variableKey);
   } catch (err) {
-    // import may fail (permissions/team library), fall back to using key object
-    console.warn(
-      "bindVariableKeyToPaint: importVariableByKeyAsync failed",
-      err,
-    );
-    importedVar = { key: variableKey };
+    // Missing team-library variables should not block creating the chart.
+    return paintToUse;
   }
   try {
     // deep clone paint to avoid mutating shared fills

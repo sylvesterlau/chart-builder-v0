@@ -4,6 +4,12 @@ export interface ChartDataItem {
   value: number;
   colorToken?: string | null;
 }
+export type LegendStyle = "none" | "leftAndRight";
 export interface ChartData {
+  chartTitle?: string;
   data: ChartDataItem[];
+  legendStyle?: LegendStyle;
+  showPercentage?: boolean;
+  valuePrefix?: string;
+  valueSuffix?: string;
 }
