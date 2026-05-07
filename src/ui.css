@@ -41,21 +41,58 @@
   flex-shrink: 0;
   height: 100vh;
   overflow: hidden;
-  width: 360px;
-  padding: 16px;
+  width: 390px;
+}
+
+.horizontalBarHeader {
+  align-items: center;
+  background-color: var(--figma-color-bg);
+  box-sizing: border-box;
+  display: flex;
+  flex-shrink: 0;
+  gap: 8px;
+  padding: 2px 8px;
 }
 
 .horizontalBarBackButton {
+  align-items: center;
+  background-color: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: var(--figma-color-icon);
+  cursor: default;
+  display: flex;
   flex-shrink: 0;
+  font-size: 18px;
+  height: 40px;
+  justify-content: center;
+  line-height: 40px;
+  padding: 0;
+  width: 40px;
+}
+
+.horizontalBarBackButton:hover {
+  background-color: var(--figma-color-bg-hover);
+}
+
+.horizontalBarTypeTitle {
+  color: var(--figma-color-text);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.2;
 }
 
 .horizontalBarPreviewPanel {
-  align-items: center;
+  align-items: stretch;
   box-sizing: border-box;
   display: flex;
   flex: 1;
+  flex-direction: column;
+  justify-content: flex-start;
   min-height: 0;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 40px 32px;
 }
 
 .horizontalBarRightPanel {
@@ -67,6 +104,7 @@
   height: 100vh;
   min-width: 0;
   overflow: hidden;
+  border-left: 1px solid var(--figma-color-border);
 }
 
 .horizontalBarControls {
@@ -89,7 +127,7 @@
 .chartItemInput {
   align-items: center;
   display: flex;
-  gap: 8px;
+  gap: 4px;
   min-height: 32px;
   width: 100%;
 }
@@ -104,16 +142,39 @@
   display: flex;
   flex-shrink: 0;
   justify-content: center;
-  width: 32px;
 }
 
-.chartItemDeleteButtonWrap button {
-  color: var(--figma-color-icon) !important;
+.chartItemDeleteButton {
+  align-items: center;
+  background-color: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  box-sizing: border-box;
+  color: var(--figma-color-icon-secondary);
+  cursor: default;
+  display: flex;
+  flex-shrink: 0;
+  height: 24px;
+  justify-content: center;
+  padding: 0;
+  width: 24px;
 }
 
-.chartItemDeleteButtonWrap button:hover {
-  color: var(--figma-color-icon-danger, #db0011) !important;
+.chartItemDeleteButton:hover,
+.chartItemDeleteButton:active {
+  color: var(--figma-color-icon);
+  background-color: var(--figma-color-bg-hover);
 }
+
+.chartItemInput:hover .chartItemDeleteButton {
+  color: var(--figma-color-icon);
+}
+
+.chartItemDeleteButton:focus-visible {
+  border-color: var(--figma-color-border-selected);
+  outline: none;
+}
+
 .section-title {
   color: var(--figma-color-text);
   font-size: 14px;

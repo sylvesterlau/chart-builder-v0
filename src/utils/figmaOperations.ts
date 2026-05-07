@@ -155,6 +155,19 @@ export function createLegend(
     layoutAlign: "STRETCH", // width fill container
   });
 
+  legend.strokes = [
+    {
+      type: "SOLID",
+      color: figma.util.rgb("#EDEDED"),
+    },
+  ];
+  legend.strokeAlign = "INSIDE";
+  legend.strokeWeight = 1;
+  legend.strokeTopWeight = 0;
+  legend.strokeRightWeight = 0;
+  legend.strokeBottomWeight = 1;
+  legend.strokeLeftWeight = 0;
+
   shapeNode.name = "Shape";
   shapeNode.resize(14, 14);
   shapeNode.fills = [

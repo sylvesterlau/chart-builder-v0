@@ -129,10 +129,18 @@ function HorizontalBarPage({ onBack }: HorizontalBarPageProps) {
   return (
     <div className={styles.horizontalBarPage}>
       <div className={styles.horizontalBarLeftPanel}>
-        <div className={styles.horizontalBarBackButton}>
-          <Button secondary onClick={onBack}>
-            ← Back
-          </Button>
+        <div className={styles.horizontalBarHeader}>
+          <button
+            className={styles.horizontalBarBackButton}
+            onClick={onBack}
+            title="Back"
+            type="button"
+          >
+            ←
+          </button>
+          <Text className={styles.horizontalBarTypeTitle}>
+            Horizontal bar chart
+          </Text>
         </div>
         <div className={styles.horizontalBarPreviewPanel}>
           <HorizontalBarChartPreview
@@ -148,8 +156,6 @@ function HorizontalBarPage({ onBack }: HorizontalBarPageProps) {
       <div className={styles.horizontalBarRightPanel}>
         <div className={styles.horizontalBarControls}>
           {/* input field stack */}
-          <Text className={styles.sectionTitle}>Horizontal bar chart</Text>
-          <VerticalSpace space="medium" />
           <Text className={styles.sectionTitle}>Chart title</Text>
           <VerticalSpace space="small" />
           <Textbox

@@ -52,6 +52,9 @@ function HorizontalBarChartPreview({
         gap: "16px",
         padding: "16px 0",
         width: "100%",
+        // css transform to 80% size of the parent
+        transform: "scale(0.9)",
+        transformOrigin: "top center",
       }}
     >
       {chartTitle.trim() ? (
@@ -117,6 +120,7 @@ function HorizontalBarChartPreview({
                 key={`${label}-${index}`}
                 style={{
                   alignItems: "center",
+                  borderBottom: "1px solid #EDEDED",
                   boxSizing: "border-box",
                   display: "flex",
                   gap: "8px",

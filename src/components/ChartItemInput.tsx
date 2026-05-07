@@ -1,4 +1,4 @@
-import { IconButton, IconTrash24, Textbox } from "@create-figma-plugin/ui";
+import { IconMinusSmall24, Textbox } from "@create-figma-plugin/ui";
 import { h } from "preact";
 import { dataVisColor } from "../config";
 import styles from "../ui.css";
@@ -35,6 +35,7 @@ function ChartItemInput({
           flexShrink: 0,
           height: "12px",
           width: "12px",
+          marginRight: "2px",
         }}
       />
       <div className={styles.chartItemInputField}>
@@ -53,9 +54,21 @@ function ChartItemInput({
       </div>
       <div className={styles.chartItemDeleteButtonWrap}>
         {canDelete ? (
-          <IconButton onClick={() => onDelete(index)} title="Delete item">
-            <IconTrash24 />
-          </IconButton>
+          <div
+            className={styles.chartItemDeleteButton}
+            onClick={() => onDelete(index)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                onDelete(index);
+              }
+            }}
+            role="button"
+            tabIndex={0}
+            title="Delete item"
+          >
+            <IconMinusSmall24 />
+          </div>
         ) : null}
       </div>
     </div>
