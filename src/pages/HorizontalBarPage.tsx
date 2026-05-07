@@ -26,6 +26,7 @@ const DEFAULT_ITEM_COUNT = 3;
 const LEGEND_STYLE_OPTIONS: Array<DropdownOption> = [
   { text: "None", value: "none" },
   { text: "Left and right", value: "leftAndRight" },
+  { text: "Top and bottom", value: "topAndBottom" },
 ];
 function createEmptyItem(index: number): ChartItem {
   return { label: `Item ${index + 1}`, value: 0, valueInput: "0" };

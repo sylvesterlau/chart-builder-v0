@@ -1,5 +1,6 @@
 import { h } from "preact";
 import { dataVisColor } from "../config";
+import { formatLegendPercentageDisplay } from "../helpers";
 import { LegendStyle } from "../types";
 import { ChartItem } from "./ChartItemInput";
 
@@ -107,7 +108,7 @@ function HorizontalBarChartPreview({
           );
         })}
       </div>
-      {legendStyle === "leftAndRight" ? (
+      {legendStyle === "leftAndRight" || legendStyle === "topAndBottom" ? (
         <div
           style={{ display: "flex", flexDirection: "column", width: "100%" }}
         >
@@ -115,17 +116,102 @@ function HorizontalBarChartPreview({
             const color = dataVisColor[item.index % dataVisColor.length].value;
             const percent = total > 0 ? (item.value / total) * 100 : 0;
             const label = item.label || `Item ${item.index + 1}`;
+            const rowBase = {
+              borderBottom: "1px solid #EDEDED",
+              boxSizing: "border-box" as const,
+              padding: "12px 16px",
+              width: "100%",
+            };
+            if (legendStyle === "topAndBottom") {
+              return (
+                <div
+                  key={`${label}-${index}`}
+                  style={{
+                    alignItems: "flex-start",
+                    display: "flex",
+                    gap: "8px",
+                    ...rowBase,
+                  }}
+                >
+                  <div
+                    style={{
+                      backgroundColor: color,
+                      flexShrink: 0,
+                      height: "14px",
+                      width: "14px",
+                    }}
+                  />
+                  <div
+                    style={{
+                      display: "flex",
+                      flex: 1,
+                      flexDirection: "column",
+                      gap: "0px",
+                      minWidth: 0,
+                    }}
+                  >
+                    <div
+                      style={{
+                        color: "#333333",
+                        fontFamily: "Inter, sans-serif",
+                        fontSize: "14px",
+                        fontWeight: 400,
+                        lineHeight: "20px",
+                        width: "100%",
+                      }}
+                    >
+                      {label}
+                    </div>
+                    <div
+                      style={{
+                        alignItems: "center",
+                        color: "#333333",
+                        display: "flex",
+                        flexWrap: "wrap",
+                        fontFamily: "Inter, sans-serif",
+                        fontSize: "14px",
+                        gap: "4px",
+                        lineHeight: "20px",
+                        width: "100%",
+                      }}
+                    >
+                      <span
+                        style={{
+                          flexShrink: 0,
+                          fontWeight: 600,
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {formatLegendValue(
+                          item.value,
+                          valuePrefix,
+                          valueSuffix,
+                        )}
+                      </span>
+                      {showPercentage ? (
+                        <span
+                          style={{
+                            flexShrink: 0,
+                            fontWeight: 400,
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          ({formatLegendPercentageDisplay(percent)}%)
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+              );
+            }
             return (
               <div
                 key={`${label}-${index}`}
                 style={{
                   alignItems: "center",
-                  borderBottom: "1px solid #EDEDED",
-                  boxSizing: "border-box",
                   display: "flex",
                   gap: "8px",
-                  padding: "12px 16px",
-                  width: "100%",
+                  ...rowBase,
                 }}
               >
                 <div

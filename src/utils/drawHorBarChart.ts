@@ -59,6 +59,10 @@ export async function drawHorBarChart(chartData: ChartData) {
     await loadLegendFonts();
   }
   const legendList = shouldShowLegend ? createLegendList() : null;
+  const legendTileLayout =
+    chartData.legendStyle === "topAndBottom"
+      ? "topAndBottom"
+      : "leftAndRight";
   const chartContainerFrame = figma.createFrame();
   chartContainerFrame.fills = [];
   chartContainerFrame.resize(390, 44);
@@ -114,6 +118,7 @@ export async function drawHorBarChart(chartData: ChartData) {
           showPercentage,
           valuePrefix,
           valueSuffix,
+          legendTileLayout,
         );
         if (legend) {
           legendList.appendChild(legend);

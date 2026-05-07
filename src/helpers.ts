@@ -6,6 +6,13 @@ export function dotToSlash(token: string): string {
   if (typeof token !== "string") return String(token);
   return token.replace(/\./g, "/");
 }
+
+export function formatLegendPercentageDisplay(percentage: number): string {
+  const fixedPercentage = percentage.toFixed(1);
+  return fixedPercentage.endsWith(".0")
+    ? fixedPercentage.slice(0, -2)
+    : fixedPercentage;
+}
 // Split integer and decimal, with thousands separator
 export function splitNumber(
   value: number,

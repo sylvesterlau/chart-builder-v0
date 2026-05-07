@@ -4,7 +4,7 @@ export interface ChartDataItem {
   value: number;
   colorToken?: string | null;
 }
-export type LegendStyle = "none" | "leftAndRight";
+export type LegendStyle = "none" | "leftAndRight" | "topAndBottom";
 export interface ChartData {
   chartTitle?: string;
   data: ChartDataItem[];

@@ -1,6 +1,11 @@
 // Figma operations
 import { chartConfig, semanticToken, teamLibrary } from "../config";
-import { bindVariableKeyToPaint, dotToSlash, splitNumber } from "../helpers";
+import {
+  bindVariableKeyToPaint,
+  dotToSlash,
+  formatLegendPercentageDisplay,
+  splitNumber,
+} from "../helpers";
 // check Theme collection by ID
 export async function checkThemeCol(colID: string) {
   const libraryCollections =
@@ -55,13 +60,6 @@ export async function createSemiDonutSlice(
   return slice;
 }
 
-function formatLegendPercentage(percentage: number) {
-  const fixedPercentage = percentage.toFixed(1);
-  return fixedPercentage.endsWith(".0")
-    ? fixedPercentage.slice(0, -2)
-    : fixedPercentage;
-}
-
 function formatLegendValue(value: number, prefix: string, suffix: string) {
   const formattedValue = value.toFixed(2);
   const prefixText = prefix.trim();
@@ -71,6 +69,7 @@ function formatLegendValue(value: number, prefix: string, suffix: string) {
 
 export async function loadLegendFonts() {
   await figma.loadFontAsync({ family: "Inter", style: "Regular" });
+  await figma.loadFontAsync({ family: "Inter", style: "Medium" });
   await figma.loadFontAsync({ family: "Inter", style: "Semi Bold" });
 }
 
@@ -129,30 +128,53 @@ export function createLegend(
   showPercentage: boolean = true,
   valuePrefix: string = "",
   valueSuffix: string = "HKD",
+  tileLayout: "leftAndRight" | "topAndBottom" = "leftAndRight",
 ): FrameNode | null {
   const legend = figma.createFrame();
   const shapeNode = figma.createRectangle();
-  const labelNode = figma.createText();
-  const valueNode = figma.createText();
+  shapeNode.name = "Shape";
+  shapeNode.resize(14, 14);
+  shapeNode.fills = [
+    {
+      type: "SOLID",
+      color: figma.util.rgb(hexColor),
+    },
+  ];
 
-  if (showPercentage && percentage !== null && percentage !== undefined) {
-    label = `${label} (${formatLegendPercentage(percentage)}%)`;
+  let inlineLabelText = label;
+  if (
+    tileLayout === "leftAndRight" &&
+    showPercentage &&
+    percentage !== null &&
+    percentage !== undefined
+  ) {
+    inlineLabelText = `${label} (${formatLegendPercentageDisplay(percentage)}%)`;
   }
 
+  const valueTextInline = formatLegendValue(value, valuePrefix, valueSuffix);
+  const percentText =
+    showPercentage &&
+    percentage !== null &&
+    percentage !== undefined
+      ? `(${formatLegendPercentageDisplay(percentage)}%)`
+      : null;
+
+  const isStacked = tileLayout === "topAndBottom";
+
   legend.fills = [];
-  legend.resize(390, 44);
+  legend.resize(390, isStacked ? 56 : 44);
   Object.assign(legend, {
     name: "legend 1",
     layoutMode: "HORIZONTAL",
     primaryAxisSizingMode: "FIXED",
     counterAxisSizingMode: "AUTO",
-    counterAxisAlignItems: "CENTER",
+    counterAxisAlignItems: isStacked ? "MIN" : "CENTER",
     itemSpacing: 8,
     paddingLeft: 16,
     paddingRight: 16,
     paddingTop: 12,
     paddingBottom: 12,
-    layoutAlign: "STRETCH", // width fill container
+    layoutAlign: "STRETCH",
   });
 
   legend.strokes = [
@@ -168,43 +190,116 @@ export function createLegend(
   legend.strokeBottomWeight = 1;
   legend.strokeLeftWeight = 0;
 
-  shapeNode.name = "Shape";
-  shapeNode.resize(14, 14);
-  shapeNode.fills = [
-    {
-      type: "SOLID",
-      color: figma.util.rgb(hexColor),
-    },
-  ];
+  if (isStacked) {
+    Object.assign(shapeNode, { layoutAlign: "MIN" });
 
-  labelNode.name = label;
-  labelNode.fontName = { family: "Inter", style: "Regular" };
-  labelNode.fontSize = 14;
-  labelNode.lineHeight = { unit: "PIXELS", value: 20 };
-  labelNode.characters = label;
-  labelNode.layoutGrow = 1;
-  labelNode.fills = [
-    {
-      type: "SOLID",
-      color: figma.util.rgb("#333333"),
-    },
-  ];
+    const labelNode = figma.createText();
+    labelNode.name = label;
+    labelNode.fontName = { family: "Inter", style: "Regular" };
+    labelNode.fontSize = 14;
+    labelNode.lineHeight = { unit: "PIXELS", value: 20 };
+    labelNode.characters = label;
+    labelNode.fills = [
+      {
+        type: "SOLID",
+        color: figma.util.rgb("#333333"),
+      },
+    ];
+    Object.assign(labelNode, { layoutAlign: "STRETCH" });
 
-  valueNode.name = "Legend value";
-  valueNode.fontName = { family: "Inter", style: "Semi Bold" };
-  valueNode.fontSize = 14;
-  valueNode.lineHeight = { unit: "PIXELS", value: 20 };
-  valueNode.characters = formatLegendValue(value, valuePrefix, valueSuffix);
-  valueNode.fills = [
-    {
-      type: "SOLID",
-      color: figma.util.rgb("#333333"),
-    },
-  ];
+    const valueNode = figma.createText();
+    valueNode.name = "Legend value";
+    valueNode.fontName = { family: "Inter", style: "Semi Bold" };
+    valueNode.fontSize = 14;
+    valueNode.lineHeight = { unit: "PIXELS", value: 20 };
+    valueNode.characters = valueTextInline;
+    valueNode.fills = [
+      {
+        type: "SOLID",
+        color: figma.util.rgb("#333333"),
+      },
+    ];
+    Object.assign(valueNode, { layoutAlign: "MIN" });
 
-  legend.appendChild(shapeNode);
-  legend.appendChild(labelNode);
-  legend.appendChild(valueNode);
+    const valueRow = figma.createFrame();
+    valueRow.fills = [];
+    Object.assign(valueRow, {
+      name: "Value",
+      layoutMode: "HORIZONTAL",
+      primaryAxisSizingMode: "AUTO",
+      counterAxisSizingMode: "AUTO",
+      itemSpacing: 4,
+      counterAxisAlignItems: "CENTER",
+      layoutAlign: "STRETCH",
+    });
+    valueRow.appendChild(valueNode);
+    if (percentText !== null) {
+      const percentNode = figma.createText();
+      percentNode.name = "Legend percent";
+      percentNode.fontName = { family: "Inter", style: "Regular" };
+      percentNode.fontSize = 14;
+      percentNode.lineHeight = { unit: "PIXELS", value: 20 };
+      percentNode.characters = percentText;
+      percentNode.fills = [
+        {
+          type: "SOLID",
+          color: figma.util.rgb("#333333"),
+        },
+      ];
+      Object.assign(percentNode, { layoutAlign: "MIN" });
+      valueRow.appendChild(percentNode);
+    }
+
+    const textStack = figma.createFrame();
+    textStack.fills = [];
+    Object.assign(textStack, {
+      name: "Text Content",
+      layoutMode: "VERTICAL",
+      primaryAxisSizingMode: "AUTO",
+      counterAxisSizingMode: "AUTO",
+      itemSpacing: 0,
+      layoutGrow: 1,
+      layoutAlign: "STRETCH",
+    });
+
+    textStack.appendChild(labelNode);
+    textStack.appendChild(valueRow);
+
+    legend.appendChild(shapeNode);
+    legend.appendChild(textStack);
+  } else {
+    const labelNode = figma.createText();
+    labelNode.name = inlineLabelText;
+    labelNode.fontName = { family: "Inter", style: "Regular" };
+    labelNode.fontSize = 14;
+    labelNode.lineHeight = { unit: "PIXELS", value: 20 };
+    labelNode.characters = inlineLabelText;
+    labelNode.layoutGrow = 1;
+    labelNode.fills = [
+      {
+        type: "SOLID",
+        color: figma.util.rgb("#333333"),
+      },
+    ];
+
+    const valueNode = figma.createText();
+    valueNode.name = "Legend value";
+    valueNode.fontName = { family: "Inter", style: "Semi Bold" };
+    valueNode.fontSize = 14;
+    valueNode.lineHeight = { unit: "PIXELS", value: 20 };
+    valueNode.characters = valueTextInline;
+    valueNode.fills = [
+      {
+        type: "SOLID",
+        color: figma.util.rgb("#333333"),
+      },
+    ];
+
+    legend.appendChild(shapeNode);
+    legend.appendChild(labelNode);
+    legend.appendChild(valueNode);
+  }
+
   return legend;
 }
 // Create legend list
