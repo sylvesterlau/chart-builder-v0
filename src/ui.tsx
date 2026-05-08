@@ -4,8 +4,14 @@ import { useState } from "preact/hooks";
 import HomePage from "./pages/HomePage";
 import SemiDonutPage from "./pages/SemiDonutPage";
 import HorizontalBarPage from "./pages/HorizontalBarPage";
+import VerticalBarPage from "./pages/VerticalBarPage";
 import UtilPage from "./pages/UtilPage";
-export type Pages = "home" | "semiDonut" | "horizontalBar" | "util";
+export type Pages =
+  | "home"
+  | "semiDonut"
+  | "horizontalBar"
+  | "verticalBar"
+  | "util";
 function Plugin() {
   const [page, setPage] = useState<Pages>("home");
   const navigateToPage = (page: Pages) => {
@@ -22,6 +28,8 @@ function Plugin() {
         return <SemiDonutPage onBack={navigateToHome} />;
       case "horizontalBar":
         return <HorizontalBarPage onBack={navigateToHome} />;
+      case "verticalBar":
+        return <VerticalBarPage onBack={navigateToHome} />;
       case "util":
         return <UtilPage onBack={navigateToHome} />;
       default:

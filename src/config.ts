@@ -8,6 +8,10 @@ export const pluginUI = {
     width: 640,
     height: 490,
   },
+  verticalBarPageSize: {
+    width: 680,
+    height: 560,
+  },
 };
 // Semi-donut chart config
 export const chartConfig = {
@@ -150,6 +154,29 @@ export const sampleData = {
       { label: "Shopping", value: 4120.23 },
       { label: "Travel", value: 2521.41 },
       { label: "Food", value: 1596.9 },
+    ],
+  },
+  verticalBar: {
+    chartType: "verticalBar" as const,
+    barMode: "dual" as const,
+    periodCount: 7,
+    selectedIndex: 3,
+    width: 390,
+    height: 280,
+    yAxisTitle: "USD",
+    xAxisTitle: "Year 2023",
+    labels: ["Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+    series: [
+      {
+        name: "Product A",
+        color: "#347893",
+        values: [15320, 6320, 20300, 15320, 6320, 3000, 26880],
+      },
+      {
+        name: "Product B",
+        color: "#E76E84",
+        values: [3000, 9120, 12500, 28880, 20300, 24500, 26880],
+      },
     ],
   },
 };

@@ -19,6 +19,9 @@ declare const styles: {
   readonly "horizontalBarTypeTitle": string;
   readonly "section-title": string;
   readonly "sectionTitle": string;
+  readonly "verticalBarLeftPanel": string;
+  readonly "verticalBarPage": string;
+  readonly "verticalBarPreviewPanel": string;
 };
 export = styles;
 

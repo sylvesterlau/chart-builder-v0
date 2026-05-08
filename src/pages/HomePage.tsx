@@ -10,7 +10,9 @@ import {
 import { h } from "preact";
 import List from "../components/List";
 interface HomePageProps {
-  onNavigate: (page: "semiDonut" | "horizontalBar" | "util") => void;
+  onNavigate: (
+    page: "semiDonut" | "horizontalBar" | "verticalBar" | "util",
+  ) => void;
 }
 function HomePage({ onNavigate }: HomePageProps) {
   return (
@@ -28,6 +30,11 @@ function HomePage({ onNavigate }: HomePageProps) {
           icon={<IconLayoutAlignLeft24 />}
           title="Horizontal bar chart"
           onClick={() => onNavigate("horizontalBar")}
+        />
+        <List
+          icon={<IconLayoutAlignLeft24 />}
+          title="Vertical bar chart"
+          onClick={() => onNavigate("verticalBar")}
         />
         <List
           icon={<IconLine24 />}

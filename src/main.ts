@@ -1,6 +1,6 @@
 import { on, showUI } from "@create-figma-plugin/utilities";
 import { pluginUI, chartConfig, teamLibrary } from "./config";
-import { ChartData } from "./types";
+import { ChartData, VerticalBarChartConfig } from "./types";
 import {
   transformToPercents,
   TransformedChartItem,
@@ -16,6 +16,7 @@ import {
   loadLegendFonts,
 } from "./utils/figmaOperations";
 import { drawHorBarChart } from "./utils/drawHorBarChart";
+import { drawVerticalBarChart } from "./utils/drawVerticalBarChart";
 const themeColKey = teamLibrary.coreToolKit.collectionKey; // "Theme" collection key
 export default function () {
   function handleResizePluginUiWindow(size: { width: number; height: number }) {
@@ -106,6 +107,17 @@ export default function () {
   async function handleHorizontalBarChartData(chartData: ChartData) {
     await drawHorBarChart(chartData);
   }
+  async function handleVerticalBarChartData(
+    chartData: Partial<VerticalBarChartConfig>,
+  ) {
+    try {
+      await drawVerticalBarChart(chartData);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to create bar chart.";
+      figma.notify(message, { error: true, timeout: 4000 });
+    }
+  }
   // Token key lookup
   async function handleLookupTokenVarKey(tokenPath: string) {
     if (!tokenPath || !tokenPath.trim()) {
@@ -116,6 +128,7 @@ export default function () {
   }
   on("SUBMIT_SEMI_DONUT_CHART_DATA", handleSemiDonutChartData);
   on("SUBMIT_HORIZONTAL_BAR_CHART_DATA", handleHorizontalBarChartData);
+  on("SUBMIT_VERTICAL_BAR_CHART_DATA", handleVerticalBarChartData);
   on("LOOKUP_TOKEN_VAR_KEY", handleLookupTokenVarKey);
   on("RESIZE_PLUGIN_UI_WINDOW", handleResizePluginUiWindow);
   // UI window size

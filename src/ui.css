@@ -33,6 +33,13 @@
   width: 100%;
 }
 
+.verticalBarPage {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  width: 100%;
+}
+
 .horizontalBarLeftPanel {
   background-color: var(--figma-color-bg-secondary);
   box-sizing: border-box;
@@ -93,6 +100,28 @@
   overflow-x: hidden;
   overflow-y: auto;
   padding: 40px 32px;
+}
+
+.verticalBarLeftPanel {
+  background-color: var(--figma-color-bg-secondary);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  height: 100vh;
+  overflow: hidden;
+  width: 410px;
+}
+
+.verticalBarPreviewPanel {
+  align-items: center;
+  box-sizing: border-box;
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  min-height: 0;
+  overflow: auto;
+  padding: 24px 10px;
 }
 
 .horizontalBarRightPanel {
