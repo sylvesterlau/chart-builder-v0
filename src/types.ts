@@ -12,4 +12,6 @@ export interface ChartData {
   showPercentage?: boolean;
   valuePrefix?: string;
   valueSuffix?: string;
+  showTotalValue?: boolean;
+  totalValueTitle?: string;
 }

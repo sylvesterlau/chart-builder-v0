@@ -1,11 +1,5 @@
 // Figma operations
-import { chartConfig, semanticToken, teamLibrary } from "../config";
-import {
-  bindVariableKeyToPaint,
-  dotToSlash,
-  formatLegendPercentageDisplay,
-  splitNumber,
-} from "../helpers";
+import { formatLegendPercentageDisplay } from "../helpers";
 // check Theme collection by ID
 export async function checkThemeCol(colID: string) {
   const libraryCollections =
@@ -20,46 +14,6 @@ export async function checkThemeCol(colID: string) {
     return;
   }
 }
-// Draw semi donut slice
-export async function createSemiDonutSlice(
-  startPercent: number,
-  endPercent: number,
-  layerName: string = "slice",
-  hexColor: string = chartConfig.defaultColor,
-  isFirst: Boolean = false,
-  variableKey?: string | null,
-): Promise<EllipseNode | null> {
-  if (endPercent - startPercent <= 0) {
-    return null;
-  }
-  const slice = figma.createEllipse();
-  // if it's not the first slice, add 2px gap between slices
-  let gap = isFirst ? 0 : 0.5;
-  slice.name = layerName;
-  slice.resize(chartConfig.size, chartConfig.size);
-  slice.arcData = {
-    startingAngle: -Math.PI * (1 - (startPercent + gap) / 100),
-    endingAngle: -Math.PI * (1 - endPercent / 100),
-    innerRadius: chartConfig.ratio,
-  };
-  const convertedColor = figma.util.rgb(hexColor);
-  const fillColor = convertedColor;
-  slice.fills = [{ type: "SOLID", color: fillColor }];
-  // if variableKey（string), use bindVariableKeyToPaint
-  if (variableKey && typeof variableKey === "string") {
-    try {
-      const boundPaint = await bindVariableKeyToPaint(
-        variableKey,
-        slice.fills[0] as SolidPaint,
-      );
-      slice.fills = [boundPaint];
-    } catch (err) {
-      console.error("createDonutSlice: bindVariableKeyToPaint failed", err);
-    }
-  }
-  return slice;
-}
-
 function formatLegendValue(value: number, prefix: string, suffix: string) {
   const formattedValue = value.toFixed(2);
   const prefixText = prefix.trim();
@@ -313,60 +267,6 @@ export function createLegendList() {
     layoutAlign: "STRETCH", // width fill container
   });
   return legendList;
-}
-//Create total value frame
-export async function createTotalValueFrame(
-  sumValue: number,
-  title: string,
-): Promise<FrameNode | null> {
-  // Create total value frame
-  await figma.loadFontAsync({ family: "Inter", style: "Regular" });
-  const titleNode = figma.createText();
-  titleNode.characters = title;
-  titleNode.fills = [
-    {
-      type: "SOLID",
-      color: figma.util.rgb(dotToSlash(chartConfig.defaultColor)),
-    },
-  ];
-  //bind text color token
-  try {
-    const boundPaint = await bindVariableKeyToPaint(
-      semanticToken.textPrimayColor.key,
-      titleNode.fills[0] as SolidPaint,
-    );
-    titleNode.fills = [boundPaint];
-  } catch (err) {
-    console.error("balance display: bindVariableKeyToPaint failed", err);
-  }
-  //test text style
-  try {
-    titleNode.setTextStyleIdAsync(semanticToken.textQuoteStyle.key);
-  } catch (err) {
-    console.log("Err:", err);
-  }
-  //Create Balance display
-  const compKey = teamLibrary.dataVis.balanceDisplay.compKey;
-  const importedComponent = await figma.importComponentByKeyAsync(compKey);
-  const balanceDisplay = importedComponent.createInstance();
-  const { integer, decimal } = splitNumber(sumValue);
-  balanceDisplay.setProperties({
-    "Balance integer#1942:28": integer,
-    "Balance decimal#1942:40": `.${decimal}`,
-    "Code text#1942:32": "HKD",
-  });
-  const totalValFrame = figma.createFrame();
-  totalValFrame.fills = [];
-  totalValFrame.appendChild(titleNode);
-  totalValFrame.appendChild(balanceDisplay);
-  Object.assign(totalValFrame, {
-    name: "Total value frame",
-    layoutMode: "VERTICAL",
-    primaryAxisSizingMode: "AUTO",
-    counterAxisSizingMode: "AUTO",
-    counterAxisAlignItems: "CENTER",
-  });
-  return totalValFrame;
 }
 // Draw final frame
 export function createFinalFrame() {
