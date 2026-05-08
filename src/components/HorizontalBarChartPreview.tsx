@@ -1,8 +1,9 @@
 import { h } from "preact";
 import { dataVisColor } from "../config";
-import { formatLegendPercentageDisplay } from "../helpers";
 import { LegendStyle } from "../types";
 import { ChartItem } from "./ChartItemInput";
+import ChartTitlePreview from "./ChartTitlePreview";
+import LegendPreview from "./LegendPreview";
 
 interface HorizontalBarChartPreviewProps {
   chartTitle: string;
@@ -15,13 +16,6 @@ interface HorizontalBarChartPreviewProps {
 
 function formatPercent(value: number) {
   return value.toFixed(1);
-}
-
-function formatLegendValue(value: number, prefix: string, suffix: string) {
-  const formattedValue = value.toFixed(2);
-  const prefixText = prefix.trim();
-  const suffixText = suffix.trim();
-  return `${prefixText}${formattedValue}${suffixText ? ` ${suffixText}` : ""}`;
 }
 
 function HorizontalBarChartPreview({
@@ -58,31 +52,7 @@ function HorizontalBarChartPreview({
         transformOrigin: "top center",
       }}
     >
-      {chartTitle.trim() ? (
-        <div
-          style={{
-            boxSizing: "border-box",
-            display: "flex",
-            padding: "8px 16px",
-            width: "100%",
-          }}
-        >
-          <div
-            style={{
-              color: "#333333",
-              flex: 1,
-              fontFamily: "Inter, sans-serif",
-              fontSize: "23px",
-              fontWeight: 500,
-              letterSpacing: "0px",
-              lineHeight: "30px",
-              minWidth: 0,
-            }}
-          >
-            {chartTitle}
-          </div>
-        </div>
-      ) : null}
+      <ChartTitlePreview title={chartTitle} />
       <div
         style={{
           boxSizing: "border-box",
@@ -108,153 +78,15 @@ function HorizontalBarChartPreview({
           );
         })}
       </div>
-      {legendStyle === "leftAndRight" || legendStyle === "topAndBottom" ? (
-        <div
-          style={{ display: "flex", flexDirection: "column", width: "100%" }}
-        >
-          {legendItems.map((item, index) => {
-            const color = dataVisColor[item.index % dataVisColor.length].value;
-            const percent = total > 0 ? (item.value / total) * 100 : 0;
-            const label = item.label || `Item ${item.index + 1}`;
-            const rowBase = {
-              borderBottom: "1px solid #EDEDED",
-              boxSizing: "border-box" as const,
-              padding: "12px 16px",
-              width: "100%",
-            };
-            if (legendStyle === "topAndBottom") {
-              return (
-                <div
-                  key={`${label}-${index}`}
-                  style={{
-                    alignItems: "flex-start",
-                    display: "flex",
-                    gap: "8px",
-                    ...rowBase,
-                  }}
-                >
-                  <div
-                    style={{
-                      backgroundColor: color,
-                      flexShrink: 0,
-                      height: "14px",
-                      width: "14px",
-                    }}
-                  />
-                  <div
-                    style={{
-                      display: "flex",
-                      flex: 1,
-                      flexDirection: "column",
-                      gap: "0px",
-                      minWidth: 0,
-                    }}
-                  >
-                    <div
-                      style={{
-                        color: "#333333",
-                        fontFamily: "Inter, sans-serif",
-                        fontSize: "14px",
-                        fontWeight: 400,
-                        lineHeight: "20px",
-                        width: "100%",
-                      }}
-                    >
-                      {label}
-                    </div>
-                    <div
-                      style={{
-                        alignItems: "center",
-                        color: "#333333",
-                        display: "flex",
-                        flexWrap: "wrap",
-                        fontFamily: "Inter, sans-serif",
-                        fontSize: "14px",
-                        gap: "4px",
-                        lineHeight: "20px",
-                        width: "100%",
-                      }}
-                    >
-                      <span
-                        style={{
-                          flexShrink: 0,
-                          fontWeight: 600,
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {formatLegendValue(
-                          item.value,
-                          valuePrefix,
-                          valueSuffix,
-                        )}
-                      </span>
-                      {showPercentage ? (
-                        <span
-                          style={{
-                            flexShrink: 0,
-                            fontWeight: 400,
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          ({formatLegendPercentageDisplay(percent)}%)
-                        </span>
-                      ) : null}
-                    </div>
-                  </div>
-                </div>
-              );
-            }
-            return (
-              <div
-                key={`${label}-${index}`}
-                style={{
-                  alignItems: "center",
-                  display: "flex",
-                  gap: "8px",
-                  ...rowBase,
-                }}
-              >
-                <div
-                  style={{
-                    backgroundColor: color,
-                    flexShrink: 0,
-                    height: "14px",
-                    width: "14px",
-                  }}
-                />
-                <div
-                  style={{
-                    color: "#333333",
-                    flex: 1,
-                    fontFamily: "Inter, sans-serif",
-                    fontSize: "14px",
-                    fontWeight: 400,
-                    lineHeight: "20px",
-                    minWidth: 0,
-                  }}
-                >
-                  {showPercentage
-                    ? `${label} (${formatPercent(percent)}%)`
-                    : label}
-                </div>
-                <div
-                  style={{
-                    color: "#333333",
-                    flexShrink: 0,
-                    fontFamily: "Inter, sans-serif",
-                    fontSize: "14px",
-                    fontWeight: 600,
-                    lineHeight: "20px",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {formatLegendValue(item.value, valuePrefix, valueSuffix)}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      ) : null}
+      <LegendPreview
+        items={legendItems}
+        legendStyle={legendStyle}
+        total={total}
+        showPercentage={showPercentage}
+        valuePrefix={valuePrefix}
+        valueSuffix={valueSuffix}
+        inlinePercentageFormatter={formatPercent}
+      />
     </div>
   );
 }
