@@ -16,6 +16,17 @@ export const chartConfig = {
   ratio: 0.88,
   defaultColor: "#DB0011",
 };
+// Pie chart preview/draw config
+export const pieChartConfig = {
+  frameWidth: 390,
+  frameHeight: 312,
+  radius: 100,
+  indicatorLineExtend: 8,
+  indicatorLabelCenterOffset: 30,
+  /** Full donut hole as a fraction of outer radius (preview + draw). */
+  donutInnerRadiusRatio: 0.8,
+};
+export const pieChartRadiusLarge = 120;
 //Team library keys
 export const teamLibrary = {
   coreToolKit: {
@@ -147,9 +158,10 @@ export const semanticToken = {
 export const sampleData = {
   spending: {
     data: [
-      { label: "Shopping", value: 4120.23 },
-      { label: "Travel", value: 2521.41 },
-      { label: "Food", value: 1596.9 },
+      { label: "Shopping", value: 412 },
+      { label: "Travel", value: 252 },
+      { label: "Food", value: 159 },
+      { label: "Transportation", value: 112 },
     ],
   },
 };

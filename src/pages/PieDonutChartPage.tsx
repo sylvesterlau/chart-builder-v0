@@ -13,22 +13,29 @@ import { emit } from "@create-figma-plugin/utilities";
 import { h } from "preact";
 import { useCallback, useEffect, useState } from "preact/hooks";
 import ChartItemInput, { ChartItem } from "../components/ChartItemInput";
+import PieDonutPreview from "../components/PieDonutPreview";
 import SemiDonutChartPreview from "../components/SemiDonutChartPreview";
 import { pluginUI, sampleData } from "../config";
-import { LegendStyle } from "../types";
+import { LegendStyle, PiePageChartKind } from "../types";
 import styles from "../ui.css";
 
-interface SemiDonutPagePageProps {
+interface PieDonutChartPageProps {
   onBack: () => void;
 }
 
 const MIN_ITEMS = 2;
+/** Semi-donut supports up to 10 items; unify cap so switching type does not break rows. */
 const MAX_ITEMS = 10;
-const DEFAULT_ITEM_COUNT = 3;
+const DEFAULT_ITEM_COUNT = 4;
 const LEGEND_STYLE_OPTIONS: Array<DropdownOption> = [
   { text: "None", value: "none" },
   { text: "Left and right", value: "leftAndRight" },
   { text: "Top and bottom", value: "topAndBottom" },
+];
+const CHART_KIND_OPTIONS: Array<DropdownOption> = [
+  { text: "Pie", value: "pie" },
+  { text: "Donut", value: "donut" },
+  { text: "Semi-donut", value: "semiDonut" },
 ];
 
 function createEmptyItem(index: number): ChartItem {
@@ -65,15 +72,22 @@ function sanitizeDecimalInput(value: string) {
   return sanitizedValue;
 }
 
-function SemiDonutPage({ onBack }: SemiDonutPagePageProps) {
+function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
+  const [chartKind, setChartKind] = useState<PiePageChartKind>("pie");
   const [chartTitle, setChartTitle] = useState<string>("Chart title");
   const [items, setItems] = useState<ChartItem[]>(createSampleItems);
   const [legendStyle, setLegendStyle] = useState<LegendStyle>("leftAndRight");
   const [showPercentage, setShowPercentage] = useState<boolean>(true);
+  const [showIndicator, setShowIndicator] = useState<boolean>(true);
+  const [showIndicatorPercentage, setShowIndicatorPercentage] =
+    useState<boolean>(true);
+  const [showTotalValue, setShowTotalValue] = useState<boolean>(true);
+  const [totalValueTitle, setTotalValueTitle] =
+    useState<string>("Total Asset Value");
   const [valuePrefix, setValuePrefix] = useState<string>("");
   const [valueSuffix, setValueSuffix] = useState<string>("HKD");
-  const [showTotalValue, setShowTotalValue] = useState<boolean>(true);
-  const [totalValueTitle, setTotalValueTitle] = useState<string>("Total Asset Value");
+
+  const isSemiDonut = chartKind === "semiDonut";
 
   useEffect(() => {
     emit("RESIZE_PLUGIN_UI_WINDOW", {
@@ -130,32 +144,59 @@ function SemiDonutPage({ onBack }: SemiDonutPagePageProps) {
 
   const handleGenerateButtonClick = useCallback(
     function () {
-      const formData = {
-        data: items.map((item) => ({
-          label: item.label,
-          value: item.value,
-        })),
+      const dataPayload = items.map((item) => ({
+        label: item.label,
+        value: item.value,
+      }));
+
+      if (isSemiDonut) {
+        emit("SUBMIT_SEMI_DONUT_CHART_DATA", {
+          data: dataPayload,
+          chartTitle,
+          legendStyle,
+          showPercentage,
+          valuePrefix,
+          valueSuffix,
+          showTotalValue,
+          totalValueTitle,
+        });
+        return;
+      }
+
+      emit("SUBMIT_PIE_CHART_DATA", {
+        data: dataPayload,
         chartTitle,
+        pieChartKind: chartKind,
         legendStyle,
         showPercentage,
+        showIndicator,
+        showIndicatorPercentage,
         valuePrefix,
         valueSuffix,
-        showTotalValue,
-        totalValueTitle,
-      };
-      emit("SUBMIT_SEMI_DONUT_CHART_DATA", formData);
+      });
     },
     [
+      isSemiDonut,
+      chartKind,
       items,
       chartTitle,
       legendStyle,
       showPercentage,
-      valuePrefix,
-      valueSuffix,
+      showIndicator,
+      showIndicatorPercentage,
       showTotalValue,
       totalValueTitle,
+      valuePrefix,
+      valueSuffix,
     ],
   );
+
+  const pageTitle =
+    chartKind === "semiDonut"
+      ? "Semi-donut chart"
+      : chartKind === "donut"
+        ? "Donut chart"
+        : "Pie chart";
 
   return (
     <div className={styles.horizontalBarPage}>
@@ -169,25 +210,53 @@ function SemiDonutPage({ onBack }: SemiDonutPagePageProps) {
           >
             ←
           </button>
-          <Text className={styles.horizontalBarTypeTitle}>
-            Semi-donut chart
-          </Text>
+          <Text className={styles.horizontalBarTypeTitle}>{pageTitle}</Text>
         </div>
         <div className={styles.horizontalBarPreviewPanel}>
-          <SemiDonutChartPreview
-            chartTitle={chartTitle}
-            items={items}
-            legendStyle={legendStyle}
-            showPercentage={showPercentage}
-            valuePrefix={valuePrefix}
-            valueSuffix={valueSuffix}
-            showTotalValue={showTotalValue}
-            totalValueTitle={totalValueTitle}
-          />
+          {isSemiDonut ? (
+            <SemiDonutChartPreview
+              chartTitle={chartTitle}
+              items={items}
+              legendStyle={legendStyle}
+              showPercentage={showPercentage}
+              valuePrefix={valuePrefix}
+              valueSuffix={valueSuffix}
+              showTotalValue={showTotalValue}
+              totalValueTitle={totalValueTitle}
+            />
+          ) : (
+            <PieDonutPreview
+              chartKind={chartKind}
+              chartTitle={chartTitle}
+              items={items}
+              legendStyle={legendStyle}
+              showIndicator={showIndicator}
+              showIndicatorPercentage={showIndicatorPercentage}
+              showPercentage={showPercentage}
+              valuePrefix={valuePrefix}
+              valueSuffix={valueSuffix}
+            />
+          )}
         </div>
       </div>
       <div className={styles.horizontalBarRightPanel}>
         <div className={styles.horizontalBarControls}>
+          <Stack space="small">
+            <Text className={styles.sectionTitle}>Type</Text>
+            <div className={styles.fieldRow}>
+              <Text className={styles.fieldLabel}>Chart</Text>
+              <Dropdown
+                onValueChange={(value) =>
+                  setChartKind(value as PiePageChartKind)
+                }
+                options={CHART_KIND_OPTIONS}
+                value={chartKind}
+              />
+            </div>
+          </Stack>
+          <VerticalSpace space="medium" />
+          <div className={styles.divider} />
+          <VerticalSpace space="medium" />
           <Stack space="small">
             <Text className={styles.sectionTitle}>Chart title</Text>
             <Textbox
@@ -246,26 +315,51 @@ function SemiDonutPage({ onBack }: SemiDonutPagePageProps) {
           <VerticalSpace space="medium" />
           <div className={styles.divider} />
           <VerticalSpace space="medium" />
-          <Stack space="small">
-            <Text className={styles.sectionTitle}>Total value</Text>
-            <div className={styles.fieldRow}>
-              <Text className={styles.fieldLabel}>Show</Text>
-              <Toggle onValueChange={setShowTotalValue} value={showTotalValue}>
-                {" "}
-              </Toggle>
-            </div>
-            <div className={styles.fieldRow}>
-              <Text className={styles.fieldLabel}>Tile</Text>
-              <Textbox
-                onValueInput={setTotalValueTitle}
-                value={totalValueTitle}
-                placeholder="Total value title"
-              />
-            </div>
-            <VerticalSpace space="medium" />
-          </Stack>
-          <div className={styles.divider} />
-          <VerticalSpace space="medium" />
+          {!isSemiDonut ? (
+            <Stack space="small">
+              <Text className={styles.sectionTitle}>Indicator</Text>
+              <div className={styles.fieldRow}>
+                <Text className={styles.fieldLabel}>Show</Text>
+                <Toggle onValueChange={setShowIndicator} value={showIndicator}>
+                  {" "}
+                </Toggle>
+              </div>
+              <div className={styles.fieldRow}>
+                <Text className={styles.fieldLabel}>Percentage</Text>
+                <Toggle
+                  onValueChange={setShowIndicatorPercentage}
+                  value={showIndicatorPercentage}
+                >
+                  {" "}
+                </Toggle>
+              </div>
+              <div className={styles.divider} />
+              <VerticalSpace space="medium" />
+            </Stack>
+          ) : (
+            <Stack space="small">
+              <Text className={styles.sectionTitle}>Total value</Text>
+              <div className={styles.fieldRow}>
+                <Text className={styles.fieldLabel}>Show</Text>
+                <Toggle
+                  onValueChange={setShowTotalValue}
+                  value={showTotalValue}
+                >
+                  {" "}
+                </Toggle>
+              </div>
+              <div className={styles.fieldRow}>
+                <Text className={styles.fieldLabel}>Tile</Text>
+                <Textbox
+                  onValueInput={setTotalValueTitle}
+                  value={totalValueTitle}
+                  placeholder="Total value title"
+                />
+              </div>
+              <div className={styles.divider} />
+              <VerticalSpace space="medium" />
+            </Stack>
+          )}
           <Stack space="small">
             <Text className={styles.sectionTitle}>Legend</Text>
             <div className={styles.fieldRow}>
@@ -285,7 +379,7 @@ function SemiDonutPage({ onBack }: SemiDonutPagePageProps) {
             <div className={styles.fieldRow}>
               <Text className={styles.fieldLabel}>Value prefix</Text>
               <Textbox
-                onValueInput={(value) => setValuePrefix(value)}
+                onValueInput={setValuePrefix}
                 value={valuePrefix}
                 placeholder="Value prefix"
               />
@@ -293,7 +387,7 @@ function SemiDonutPage({ onBack }: SemiDonutPagePageProps) {
             <div className={styles.fieldRow}>
               <Text className={styles.fieldLabel}>Value suffix</Text>
               <Textbox
-                onValueInput={(value) => setValueSuffix(value)}
+                onValueInput={setValueSuffix}
                 value={valueSuffix}
                 placeholder="Value suffix"
               />
@@ -310,4 +404,5 @@ function SemiDonutPage({ onBack }: SemiDonutPagePageProps) {
     </div>
   );
 }
-export default SemiDonutPage;
+
+export default PieDonutChartPage;

@@ -3,6 +3,7 @@ import { pluginUI, teamLibrary } from "./config";
 import { ChartData } from "./types";
 import { getTokenVarKey } from "./helpers";
 import { drawHorBarChart } from "./utils/drawHorBarChart";
+import { drawPieChart } from "./utils/drawPieChart";
 import { drawSemiDonutChart } from "./utils/drawSemiDonutChart";
 const themeColKey = teamLibrary.coreToolKit.collectionKey; // "Theme" collection key
 export default function () {
@@ -17,6 +18,10 @@ export default function () {
   async function handleHorizontalBarChartData(chartData: ChartData) {
     await drawHorBarChart(chartData);
   }
+  // Pie chart
+  async function handlePieChartData(chartData: ChartData) {
+    await drawPieChart(chartData);
+  }
   // Token key lookup
   async function handleLookupTokenVarKey(tokenPath: string) {
     if (!tokenPath || !tokenPath.trim()) {
@@ -27,6 +32,7 @@ export default function () {
   }
   on("SUBMIT_SEMI_DONUT_CHART_DATA", handleSemiDonutChartData);
   on("SUBMIT_HORIZONTAL_BAR_CHART_DATA", handleHorizontalBarChartData);
+  on("SUBMIT_PIE_CHART_DATA", handlePieChartData);
   on("LOOKUP_TOKEN_VAR_KEY", handleLookupTokenVarKey);
   on("RESIZE_PLUGIN_UI_WINDOW", handleResizePluginUiWindow);
   // UI window size
