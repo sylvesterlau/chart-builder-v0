@@ -5,6 +5,7 @@ import {
   Container,
   IconArc24,
   IconLayoutAlignLeft24,
+  IconLayoutAlignBottom24,
   IconLine24,
 } from "@create-figma-plugin/ui";
 import { h } from "preact";
@@ -32,7 +33,7 @@ function HomePage({ onNavigate }: HomePageProps) {
           onClick={() => onNavigate("horizontalBar")}
         />
         <List
-          icon={<IconLayoutAlignLeft24 />}
+          icon={<IconLayoutAlignBottom24 />}
           title="Vertical bar chart"
           onClick={() => onNavigate("verticalBar")}
         />
