@@ -19,6 +19,12 @@ declare const styles: {
   readonly "horizontalBarTypeTitle": string;
   readonly "section-title": string;
   readonly "sectionTitle": string;
+  readonly "verticalBarButtonContent": string;
+  readonly "verticalBarDataHeader": string;
+  readonly "verticalBarDataRowDual": string;
+  readonly "verticalBarDataRowSingle": string;
+  readonly "verticalBarDataSection": string;
+  readonly "verticalBarDeleteButton": string;
   readonly "verticalBarLeftPanel": string;
   readonly "verticalBarPage": string;
   readonly "verticalBarPreviewPanel": string;

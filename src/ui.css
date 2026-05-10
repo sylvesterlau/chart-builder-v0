@@ -124,6 +124,64 @@
   padding: 24px 10px;
 }
 
+.verticalBarDataSection {
+  width: 100%;
+}
+
+.verticalBarDataHeader {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.verticalBarDataRowSingle,
+.verticalBarDataRowDual {
+  align-items: center;
+  display: grid;
+  gap: 8px;
+  width: 100%;
+}
+
+.verticalBarDataRowSingle {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 28px;
+}
+
+.verticalBarDataRowDual {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr) minmax(0, 0.85fr) 28px;
+}
+
+.verticalBarDeleteButton {
+  align-items: center;
+  background-color: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  box-sizing: border-box;
+  color: var(--figma-color-icon-secondary);
+  cursor: default;
+  display: flex;
+  height: 28px;
+  justify-content: center;
+  padding: 0;
+  width: 28px;
+}
+
+.verticalBarDeleteButton:disabled {
+  color: var(--figma-color-icon-disabled);
+}
+
+.verticalBarDeleteButton:not(:disabled):hover {
+  background-color: var(--figma-color-bg-hover);
+  color: var(--figma-color-icon);
+}
+
+.verticalBarButtonContent {
+  align-items: center;
+  display: inline-flex;
+  gap: 6px;
+  justify-content: center;
+}
+
 .horizontalBarRightPanel {
   background-color: var(--figma-color-bg);
   box-sizing: border-box;

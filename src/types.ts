@@ -15,6 +15,8 @@ export interface ChartData {
 }
 
 export type VerticalBarMode = "single" | "dual";
+export type VerticalBarYAxisPosition = "left" | "right";
+export type VerticalBarAxisLineVisibility = "both" | "x" | "y" | "none";
 
 export interface VerticalBarChartSeries {
   name: string;
@@ -25,6 +27,8 @@ export interface VerticalBarChartSeries {
 export interface VerticalBarChartConfig {
   chartType: "verticalBar";
   barMode: VerticalBarMode;
+  yAxisPosition?: VerticalBarYAxisPosition;
+  axisLineVisibility?: VerticalBarAxisLineVisibility;
   periodCount: number;
   selectedIndex: number;
   width: number;

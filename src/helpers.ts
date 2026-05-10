@@ -3,6 +3,7 @@ import { chartConfig, dataVisColor } from "./config";
 import {
   ChartData,
   NormalizedVerticalBarChartConfig,
+  VerticalBarAxisLineVisibility,
   VerticalBarChartConfig,
 } from "./types";
 // Convert token name dots to slashes
@@ -229,7 +230,28 @@ export function normalizeHexColor(value: unknown, fallback: string): string {
 }
 
 export function formatAxisNumber(value: number): string {
-  return Math.round(Number(value) || 0).toLocaleString("en-US");
+  const roundedValue = Math.round(Number(value) || 0);
+  const sign = roundedValue < 0 ? "-" : "";
+  const absoluteValue = String(Math.abs(roundedValue));
+  return `${sign}${absoluteValue.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+}
+
+export function normalizeVerticalBarAxisLineVisibility(
+  value: unknown,
+): VerticalBarAxisLineVisibility {
+  return value === "x" || value === "y" || value === "none" ? value : "both";
+}
+
+export function isVerticalBarXAxisLineVisible(
+  value: VerticalBarAxisLineVisibility | undefined,
+): boolean {
+  return value === undefined || value === "both" || value === "x";
+}
+
+export function isVerticalBarYAxisLineVisible(
+  value: VerticalBarAxisLineVisibility | undefined,
+): boolean {
+  return value === undefined || value === "both" || value === "y";
 }
 
 function maxSeriesValue(
@@ -296,7 +318,7 @@ export function normalizeVerticalBarChartConfig(
   const selectedIndex = Math.round(
     clampNumber(
       input.selectedIndex,
-      0,
+      -1,
       periodCount - 1,
       Math.min(fallback.selectedIndex, periodCount - 1),
     ),
@@ -305,6 +327,10 @@ export function normalizeVerticalBarChartConfig(
   return {
     chartType: "verticalBar",
     barMode,
+    yAxisPosition: input.yAxisPosition === "left" ? "left" : "right",
+    axisLineVisibility: normalizeVerticalBarAxisLineVisibility(
+      input.axisLineVisibility,
+    ),
     periodCount,
     selectedIndex,
     width: Math.round(clampNumber(input.width, 260, 1200, fallback.width)),

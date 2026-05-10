@@ -2,6 +2,8 @@ import { sampleData } from "../config";
 import {
   clamp,
   formatAxisNumber,
+  isVerticalBarXAxisLineVisible,
+  isVerticalBarYAxisLineVisible,
   normalizeVerticalBarChartConfig,
 } from "../helpers";
 import {
@@ -69,6 +71,26 @@ function createRect(
   return rect;
 }
 
+function createLine(
+  parent: BaseNode & ChildrenMixin,
+  name: string,
+  x: number,
+  y: number,
+  length: number,
+  color: string,
+  strokeWeight = 1,
+): LineNode {
+  const line = figma.createLine();
+  line.name = name;
+  line.resize(Math.max(1, length), 0);
+  line.x = x;
+  line.y = y;
+  line.strokes = [{ type: "SOLID", color: figma.util.rgb(color) }];
+  line.strokeWeight = strokeWeight;
+  parent.appendChild(line);
+  return line;
+}
+
 function createText(
   characters: string | number,
   fontSize: number,
@@ -81,6 +103,7 @@ function createText(
   text.lineHeight = { unit: "PIXELS", value: fontSize === 12 ? 16 : 20 };
   text.fills = [{ type: "SOLID", color: figma.util.rgb(color) }];
   text.characters = String(characters);
+  text.textAutoResize = "WIDTH_AND_HEIGHT";
   return text;
 }
 
@@ -100,15 +123,20 @@ function positionChart(chart: FrameNode) {
 }
 
 function drawYAxisTitle(parent: FrameNode, config: NormalizedVerticalBarChartConfig) {
+  const yAxisPosition = config.yAxisPosition ?? "right";
   const leftTitle = createText("", 12, true, TEXT_COLOR);
   leftTitle.name = "Left axis title";
-  leftTitle.resize(parent.width / 2 - 11, 16);
+  leftTitle.characters = yAxisPosition === "left" ? config.yAxisTitle : "";
+  leftTitle.textAlignHorizontal = "LEFT";
+  leftTitle.textAutoResize = "NONE";
+  leftTitle.resize(parent.width / 2 - 4, 16);
   parent.appendChild(leftTitle);
 
-  const title = createText(config.yAxisTitle, 12, true, TEXT_COLOR);
+  const title = createText(yAxisPosition === "right" ? config.yAxisTitle : "", 12, true, TEXT_COLOR);
   title.name = "Right axis title";
   title.textAlignHorizontal = "RIGHT";
-  title.resize(parent.width, 16);
+  title.textAutoResize = "NONE";
+  title.resize(parent.width / 2 - 4, 16);
   parent.appendChild(title);
   title.layoutGrow = 1;
 }
@@ -122,42 +150,64 @@ function drawYAxis(
   height: number,
 ) {
   const axis = createFrameNode(parent, "Y-axis", x, y, width, height);
-  axis.layoutMode = "NONE";
-
-  config.yTicks.forEach((tick) => {
-    const ratio = config.maxValue > 0 ? 1 - tick / config.maxValue : 1;
-    const tickY = clamp(ratio, 0, 1) * height;
-    const lineFrame = createFrameNode(
-      axis,
-      ".Y-axis line",
-      0,
-      tickY,
-      width,
-      1,
-      "#FFFFFF",
-    );
-    lineFrame.layoutMode = "NONE";
-
-    const axisLineHeight = tick === 0 ? 1.5 : 1;
-    createRect(
-      lineFrame,
-      "Axis line",
-      0,
-      0,
-      width,
-      axisLineHeight,
-      tick === 0 ? AXIS_COLOR : GRID_COLOR,
-    );
-
-    const label = createText(formatAxisNumber(tick), 12, false, TEXT_COLOR);
-    label.name = "Right label";
-    label.resize(Math.max(7, formatAxisNumber(tick).length * 7), 16);
-    label.x = width + 8;
-    label.y = -8;
-    lineFrame.appendChild(label);
+  const yAxisPosition = config.yAxisPosition ?? "right";
+  Object.assign(axis, {
+    layoutMode: "VERTICAL",
+    primaryAxisSizingMode: "FIXED",
+    counterAxisSizingMode: "FIXED",
+    primaryAxisAlignItems: "SPACE_BETWEEN",
+    counterAxisAlignItems: "MIN",
+    itemSpacing: 0,
   });
 
-  createRect(axis, "Ruler", width - 1, -1, 1, height + 1, AXIS_COLOR);
+  config.yTicks.forEach((tick) => {
+    const lineFrame = createFrameNode(
+      axis,
+      "Y-axis line",
+      0,
+      0,
+      width,
+      1,
+    );
+    Object.assign(lineFrame, {
+      layoutMode: "HORIZONTAL",
+      primaryAxisSizingMode: "FIXED",
+      counterAxisSizingMode: "AUTO",
+      primaryAxisAlignItems: "CENTER",
+      counterAxisAlignItems: "CENTER",
+      itemSpacing: 0,
+    });
+
+    const axisLine = createLine(lineFrame, "Axis line", 0, 0, width, GRID_COLOR, 1);
+    axisLine.opacity = isVerticalBarYAxisLineVisible(
+      config.axisLineVisibility,
+    )
+      ? 1
+      : 0;
+
+    const labelText = formatAxisNumber(tick);
+    const label = createText(labelText, 12, false, TEXT_COLOR);
+    label.name = yAxisPosition === "right" ? "Right label" : "Left label";
+    label.textAlignHorizontal = yAxisPosition === "right" ? "LEFT" : "RIGHT";
+    lineFrame.appendChild(label);
+    label.layoutPositioning = "ABSOLUTE";
+    label.x = yAxisPosition === "right" ? width + 8 : -label.width - 8;
+    label.y = -8;
+  });
+
+  const rulerX = yAxisPosition === "right" ? width - 1 : 0;
+  const ruler = createRect(
+    axis,
+    "Ruler",
+    rulerX,
+    -1,
+    1,
+    height + 1,
+    AXIS_COLOR,
+  );
+  ruler.layoutPositioning = "ABSOLUTE";
+  ruler.x = rulerX;
+  ruler.y = -1;
 }
 
 function drawXAxis(
@@ -169,7 +219,14 @@ function drawXAxis(
   height: number,
 ) {
   const axis = createFrameNode(parent, "X-axis", x, y, width, height);
-  axis.layoutMode = "NONE";
+  Object.assign(axis, {
+    layoutMode: "HORIZONTAL",
+    primaryAxisSizingMode: "FIXED",
+    counterAxisSizingMode: "FIXED",
+    primaryAxisAlignItems: "MIN",
+    counterAxisAlignItems: "MAX",
+    itemSpacing: 0,
+  });
   const groupWidth = width / config.labels.length;
 
   config.labels.forEach((labelText, index) => {
@@ -180,29 +237,59 @@ function drawXAxis(
       0,
       groupWidth,
       height,
-      "#FFFFFF",
     );
-    lineFrame.layoutMode = "NONE";
+    Object.assign(lineFrame, {
+      layoutMode: "VERTICAL",
+      primaryAxisSizingMode: "FIXED",
+      counterAxisSizingMode: "FIXED",
+      primaryAxisAlignItems: "MIN",
+      counterAxisAlignItems: "CENTER",
+      itemSpacing: 0,
+    });
 
-    createRect(lineFrame, "Axis line", groupWidth / 2, 0, 1, height, GRID_COLOR);
+    createRect(
+      lineFrame,
+      "Axis line",
+      groupWidth / 2,
+      0,
+      1,
+      height,
+      GRID_COLOR,
+      isVerticalBarXAxisLineVisible(config.axisLineVisibility) ? 1 : 0,
+    );
     const label = createText(labelText, 12, false, TEXT_COLOR);
     label.name = "Axis label";
     label.textAlignHorizontal = "CENTER";
+    label.textAutoResize = "NONE";
     label.resize(groupWidth, 16);
+    lineFrame.appendChild(label);
+    label.layoutPositioning = "ABSOLUTE";
     label.x = 0;
     label.y = height + 4;
-    lineFrame.appendChild(label);
   });
 
   const title = createText(config.xAxisTitle, 12, true, TEXT_COLOR);
   title.name = "Axis title";
   title.textAlignHorizontal = "CENTER";
+  title.textAutoResize = "NONE";
   title.resize(width, 16);
+  axis.appendChild(title);
+  title.layoutPositioning = "ABSOLUTE";
   title.x = 0;
   title.y = height + 28;
-  axis.appendChild(title);
 
-  createRect(axis, "Ruler", 0, height, width, 1.5, AXIS_COLOR);
+  const ruler = createRect(
+    axis,
+    "Ruler",
+    0,
+    height - 1,
+    width,
+    1,
+    AXIS_COLOR,
+  );
+  ruler.layoutPositioning = "ABSOLUTE";
+  ruler.x = 0;
+  ruler.y = height - 1;
 }
 
 function drawSelectedLabel(
@@ -254,7 +341,15 @@ function drawBarMark(
   barHeight: number,
 ) {
   const markFrame = createFrameNode(parent, name, x, 0, width, height);
-  createRect(markFrame, "bar-mark", 0, height - barHeight, width, barHeight, color);
+  createRect(
+    markFrame,
+    "bar-mark",
+    0,
+    height - barHeight - 1,
+    width,
+    barHeight,
+    color,
+  );
 }
 
 function drawBars(
@@ -346,9 +441,11 @@ function drawBarChart(parent: FrameNode, config: NormalizedVerticalBarChartConfi
   contentFrame.layoutSizingHorizontal = "FILL";
   contentFrame.layoutSizingVertical = "FILL";
 
-  const plotX = 0;
+  const yAxisPosition = config.yAxisPosition ?? "right";
+  const labelGutter = 46;
+  const plotX = yAxisPosition === "right" ? 0 : labelGutter;
   const plotY = 9;
-  const plotWidth = contentFrame.width - 54;
+  const plotWidth = contentFrame.width - labelGutter;
   const plotHeight = contentFrame.height - 54;
 
   if (plotWidth < 180 || plotHeight < 120) {
