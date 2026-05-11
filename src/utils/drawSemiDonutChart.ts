@@ -1,14 +1,22 @@
-import { chartConfig, dataVisColor } from "../config";
-import { ChartData } from "../types";
+import {
+  semiDonutChartConfig,
+  dataVisAt,
+  dataVisColor,
+  textColor,
+  typography,
+} from "../config";
 import { getSum, transformToPercents, TransformedChartItem } from "../helpers";
+import { ChartData } from "../types";
+import { applyFigmaTypographyToken } from "./applyFigmaTypography";
+import { resolveFigmaFontStyle } from "./chartTypography";
 import {
   createChartTitle,
   createFinalFrame,
-  createLegend,
-  createLegendList,
   loadChartTitleFont,
-  loadLegendFonts,
 } from "./figmaOperations";
+import { createLegend, createLegendList, loadLegendFonts } from "./drawLegend";
+
+const chartTextPrimaryHex = textColor.primary.value;
 
 function formatValueText(value: number, prefix: string, suffix: string) {
   const formattedValue = value.toFixed(2);
@@ -21,7 +29,7 @@ async function createSemiDonutSlice(
   startPercent: number,
   endPercent: number,
   layerName: string = "slice",
-  hexColor: string = chartConfig.defaultColor,
+  hexColor: string = dataVisColor.general[0].value,
   isFirst: Boolean = false,
 ): Promise<EllipseNode | null> {
   if (endPercent - startPercent <= 0) {
@@ -30,11 +38,11 @@ async function createSemiDonutSlice(
   const slice = figma.createEllipse();
   const gap = isFirst ? 0 : 0.5;
   slice.name = layerName;
-  slice.resize(chartConfig.size, chartConfig.size);
+  slice.resize(semiDonutChartConfig.size, semiDonutChartConfig.size);
   slice.arcData = {
     startingAngle: -Math.PI * (1 - (startPercent + gap) / 100),
     endingAngle: -Math.PI * (1 - endPercent / 100),
-    innerRadius: chartConfig.ratio,
+    innerRadius: semiDonutChartConfig.ratio,
   };
   slice.fills = [{ type: "SOLID", color: figma.util.rgb(hexColor) }];
   return slice;
@@ -46,27 +54,38 @@ async function createTotalValueFrame(
   valuePrefix: string = "",
   valueSuffix: string = "HKD",
 ): Promise<FrameNode> {
-  await figma.loadFontAsync({ family: "Inter", style: "Regular" });
-  await figma.loadFontAsync({ family: "Inter", style: "Semi Bold" });
+  const titleTok = typography.totalValue.title;
+  const valueTok = typography.totalValue.value;
+  await figma.loadFontAsync({
+    family: titleTok.fontFamily,
+    style: resolveFigmaFontStyle(titleTok),
+  });
+  await figma.loadFontAsync({
+    family: valueTok.fontFamily,
+    style: resolveFigmaFontStyle(valueTok),
+  });
 
   const titleNode = figma.createText();
+  applyFigmaTypographyToken(titleNode, titleTok);
   titleNode.characters = title;
   titleNode.fills = [
     {
       type: "SOLID",
-      color: figma.util.rgb("#333333"),
+      color: figma.util.rgb(chartTextPrimaryHex),
     },
   ];
 
   const totalValueNode = figma.createText();
-  totalValueNode.characters = formatValueText(sumValue, valuePrefix, valueSuffix);
-  totalValueNode.fontName = { family: "Inter", style: "Semi Bold" };
-  totalValueNode.fontSize = 19;
-  totalValueNode.lineHeight = { unit: "PIXELS", value: 27 };
+  applyFigmaTypographyToken(totalValueNode, valueTok);
+  totalValueNode.characters = formatValueText(
+    sumValue,
+    valuePrefix,
+    valueSuffix,
+  );
   totalValueNode.fills = [
     {
       type: "SOLID",
-      color: figma.util.rgb("#333333"),
+      color: figma.util.rgb(chartTextPrimaryHex),
     },
   ];
 
@@ -102,7 +121,9 @@ export async function drawSemiDonutChart(chartData: ChartData) {
   const valuePrefix = chartData.valuePrefix ?? "";
   const valueSuffix = chartData.valueSuffix ?? "HKD";
   const showTotalValue = chartData.showTotalValue !== false;
-  const totalValueTitle = (chartData.totalValueTitle ?? "Total Asset Value").trim();
+  const totalValueTitle = (
+    chartData.totalValueTitle ?? "Total Asset Value"
+  ).trim();
 
   if (chartTitle.trim()) {
     await loadChartTitleFont();
@@ -113,24 +134,22 @@ export async function drawSemiDonutChart(chartData: ChartData) {
 
   const legendList = shouldShowLegend ? createLegendList() : null;
   const legendTileLayout =
-    chartData.legendStyle === "topAndBottom"
-      ? "topAndBottom"
-      : "leftAndRight";
+    chartData.legendStyle === "topAndBottom" ? "topAndBottom" : "leftAndRight";
 
   const chartFrame = figma.createFrame();
   chartFrame.fills = [];
-  chartFrame.resize(chartConfig.size, chartConfig.size / 2);
+  chartFrame.resize(semiDonutChartConfig.size, semiDonutChartConfig.size / 2);
   Object.assign(chartFrame, {
     name: "Chart area",
-    x: figma.viewport.center.x - chartConfig.size / 2,
-    y: figma.viewport.center.y - chartConfig.size / 2,
+    x: figma.viewport.center.x - semiDonutChartConfig.size / 2,
+    y: figma.viewport.center.y - semiDonutChartConfig.size / 2,
   });
 
   for (let i = 0; i < transformedData.length; i++) {
     const item = transformedData[i];
     const layerName = `${item.label} (${item.value})`;
     const isFirstSlice = i === 0;
-    const fallbackColor = dataVisColor[i % dataVisColor.length].value;
+    const fallbackColor = dataVisAt(i).value;
     if (item.value > 0) {
       const slice = await createSemiDonutSlice(
         item.startPercent,

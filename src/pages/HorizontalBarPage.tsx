@@ -14,7 +14,7 @@ import { h } from "preact";
 import { useCallback, useEffect, useState } from "preact/hooks";
 import ChartItemInput, { ChartItem } from "../components/ChartItemInput";
 import HorizontalBarChartPreview from "../components/HorizontalBarChartPreview";
-import { pluginUI, sampleData } from "../config";
+import { pluginUISize, sampleData } from "../config";
 import { LegendStyle } from "../types";
 import styles from "../ui.css";
 interface HorizontalBarPageProps {
@@ -63,13 +63,13 @@ function HorizontalBarPage({ onBack }: HorizontalBarPageProps) {
   const [valueSuffix, setValueSuffix] = useState<string>("HKD");
   useEffect(() => {
     emit("RESIZE_PLUGIN_UI_WINDOW", {
-      width: pluginUI.horizontalBarPageSize.width,
-      height: pluginUI.horizontalBarPageSize.height,
+      width: pluginUISize.editPage.width,
+      height: pluginUISize.editPage.height,
     });
     return () => {
       emit("RESIZE_PLUGIN_UI_WINDOW", {
-        width: pluginUI.size.width,
-        height: pluginUI.size.height,
+        width: pluginUISize.homePage.width,
+        height: pluginUISize.homePage.height,
       });
     };
   }, []);

@@ -1,11 +1,10 @@
 import { on, showUI } from "@create-figma-plugin/utilities";
-import { pluginUI, teamLibrary } from "./config";
+import { pluginUISize } from "./config";
 import { ChartData } from "./types";
 import { getTokenVarKey } from "./helpers";
 import { drawHorBarChart } from "./utils/drawHorBarChart";
 import { drawPieChart } from "./utils/drawPieChart";
 import { drawSemiDonutChart } from "./utils/drawSemiDonutChart";
-const themeColKey = teamLibrary.coreToolKit.collectionKey; // "Theme" collection key
 export default function () {
   function handleResizePluginUiWindow(size: { width: number; height: number }) {
     figma.ui.resize(size.width, size.height);
@@ -37,7 +36,7 @@ export default function () {
   on("RESIZE_PLUGIN_UI_WINDOW", handleResizePluginUiWindow);
   // UI window size
   showUI({
-    width: pluginUI.size.width,
-    height: pluginUI.size.height,
+    width: pluginUISize.homePage.width,
+    height: pluginUISize.homePage.height,
   });
 }

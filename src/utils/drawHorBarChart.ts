@@ -1,14 +1,16 @@
-import { chartConfig, dataVisColor } from "../config";
+import { dataVisAt, dataVisColor } from "../config";
 import { ChartData } from "../types";
 import { getSum, transformToPercents, TransformedChartItem } from "../helpers";
 import {
   createChartTitle,
   createFinalFrame,
+  loadChartTitleFont,
+} from "./figmaOperations";
+import {
   createLegend,
   createLegendList,
-  loadChartTitleFont,
   loadLegendFonts,
-} from "./figmaOperations";
+} from "./drawLegend";
 
 // Draw horizontal bar
 export function createHorBar(
@@ -16,7 +18,7 @@ export function createHorBar(
   endPercent: number,
   exactPercent: number,
   layerName: string = "bar",
-  hexColor: string = chartConfig.defaultColor,
+  hexColor: string = dataVisColor.general[0].value,
   isFirst: Boolean = false,
 ): RectangleNode | null {
   if (endPercent - startPercent <= 0) {
@@ -60,9 +62,7 @@ export async function drawHorBarChart(chartData: ChartData) {
   }
   const legendList = shouldShowLegend ? createLegendList() : null;
   const legendTileLayout =
-    chartData.legendStyle === "topAndBottom"
-      ? "topAndBottom"
-      : "leftAndRight";
+    chartData.legendStyle === "topAndBottom" ? "topAndBottom" : "leftAndRight";
   const chartContainerFrame = figma.createFrame();
   chartContainerFrame.fills = [];
   chartContainerFrame.resize(390, 44);
@@ -95,7 +95,7 @@ export async function drawHorBarChart(chartData: ChartData) {
     const item = transformedData[i];
     const layerName = `${item.label} (${item.value})`;
     const isFirstSlice = i == 0 ? true : false;
-    const fallbackColor = dataVisColor[i % dataVisColor.length].value;
+    const fallbackColor = dataVisAt(i).value;
     if (item.value > 0) {
       const bar = createHorBar(
         item.startPercent,

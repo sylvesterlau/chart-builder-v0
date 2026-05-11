@@ -1,9 +1,17 @@
 import { h } from "preact";
-import { chartConfig, dataVisColor } from "../config";
+import {
+  dataVisAt,
+  semiDonutChartConfig,
+  textColor,
+  typography,
+} from "../config";
+import { typographyTokenToCss } from "../utils/chartTypography";
 import { LegendStyle } from "../types";
 import { ChartItem } from "./ChartItemInput";
 import ChartTitlePreview from "./ChartTitlePreview";
 import LegendPreview from "./LegendPreview";
+
+const chartTextPrimaryHex = textColor.primary.value;
 
 interface SemiDonutChartPreviewProps {
   chartTitle: string;
@@ -70,8 +78,8 @@ function SemiDonutChartPreview({
     return null;
   }
 
-  const outerRadius = chartConfig.size / 2;
-  const innerRadius = outerRadius * chartConfig.ratio;
+  const outerRadius = semiDonutChartConfig.size / 2;
+  const innerRadius = outerRadius * semiDonutChartConfig.ratio;
   const ringWidth = outerRadius - innerRadius;
   const strokeRadius = (outerRadius + innerRadius) / 2;
   let startPercent = 0;
@@ -104,7 +112,7 @@ function SemiDonutChartPreview({
           style={{ display: "block", maxWidth: "390px" }}
         >
           {chartItems.map((item, arcIndex) => {
-            const color = dataVisColor[item.index % dataVisColor.length].value;
+            const color = dataVisAt(item.index).value;
             const exactPercent = (item.value / total) * 100;
             const adjustedStartPercent =
               arcIndex === 0 ? startPercent : startPercent + 0.5;
@@ -142,27 +150,21 @@ function SemiDonutChartPreview({
           >
             <div
               style={{
-                color: "#545454",
-                fontFamily: "Inter, sans-serif",
-                fontSize: "12px",
-                fontWeight: 400,
-                lineHeight: "16px",
+                color: chartTextPrimaryHex,
                 textAlign: "center",
+                ...typographyTokenToCss(typography.totalValue.title),
               }}
             >
               {totalValueTitle}
             </div>
             <div
               style={{
-                color: "#333333",
-                fontFamily: "Inter, sans-serif",
-                fontSize: "19px",
-                fontWeight: 600,
+                color: chartTextPrimaryHex,
                 letterSpacing: "0px",
-                lineHeight: "27px",
                 marginTop: "2px",
                 textAlign: "center",
                 whiteSpace: "nowrap",
+                ...typographyTokenToCss(typography.totalValue.value),
               }}
             >
               {totalValueText}

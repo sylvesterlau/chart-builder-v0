@@ -1,4 +1,6 @@
 import { h } from "preact";
+import { textColor, typography } from "../config";
+import { typographyTokenToCss } from "../utils/chartTypography";
 
 interface ChartTitlePreviewProps {
   title: string;
@@ -20,13 +22,10 @@ function ChartTitlePreview({ title }: ChartTitlePreviewProps) {
     >
       <div
         style={{
-          color: "#333333",
+          color: textColor.primary.value,
           flex: 1,
-          fontFamily: "Inter, sans-serif",
-          fontSize: "23px",
-          fontWeight: 500,
-          lineHeight: "30px",
           minWidth: 0,
+          ...typographyTokenToCss(typography.chartTitle),
         }}
       >
         {title}

@@ -1,7 +1,17 @@
 import { h } from "preact";
-import { dataVisColor } from "../config";
+import {
+  dividerColor,
+  dataVisAt,
+  legendSpacingConfig,
+  textColor,
+  typography,
+} from "../config";
+import { typographyTokenToCss } from "../utils/chartTypography";
 import { formatLegendPercentageDisplay } from "../helpers";
 import { LegendStyle } from "../types";
+
+const chartTextPrimaryHex = textColor.primary.value;
+const legendDividerHex = dividerColor.value;
 
 export interface PreviewLegendItem {
   index: number;
@@ -39,16 +49,19 @@ function LegendPreview({
     return null;
   }
 
+  const rowPadding = `${legendSpacingConfig.verticalPadding}px ${legendSpacingConfig.horizontalPadding}px`;
+  const rowGap = `${legendSpacingConfig.gap}px`;
+
   return (
     <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
       {items.map((item, index) => {
-        const color = dataVisColor[item.index % dataVisColor.length].value;
+        const color = dataVisAt(item.index).value;
         const percent = total > 0 ? (item.value / total) * 100 : 0;
         const label = item.label || `Item ${item.index + 1}`;
         const rowBase = {
-          borderBottom: "1px solid #EDEDED",
+          borderBottom: `1px solid ${legendDividerHex}`,
           boxSizing: "border-box" as const,
-          padding: "12px 16px",
+          padding: rowPadding,
           width: "100%",
         };
 
@@ -59,7 +72,7 @@ function LegendPreview({
               style={{
                 alignItems: "flex-start",
                 display: "flex",
-                gap: "8px",
+                gap: rowGap,
                 ...rowBase,
               }}
             >
@@ -82,12 +95,9 @@ function LegendPreview({
               >
                 <div
                   style={{
-                    color: "#333333",
-                    fontFamily: "Inter, sans-serif",
-                    fontSize: "14px",
-                    fontWeight: 400,
-                    lineHeight: "20px",
+                    color: chartTextPrimaryHex,
                     width: "100%",
+                    ...typographyTokenToCss(typography.legend.label),
                   }}
                 >
                   {label}
@@ -95,20 +105,18 @@ function LegendPreview({
                 <div
                   style={{
                     alignItems: "center",
-                    color: "#333333",
+                    color: chartTextPrimaryHex,
                     display: "flex",
                     flexWrap: "wrap",
-                    fontFamily: "Inter, sans-serif",
-                    fontSize: "14px",
                     gap: "4px",
-                    lineHeight: "20px",
                     width: "100%",
+                    ...typographyTokenToCss(typography.legend.label),
                   }}
                 >
                   <span
                     style={{
                       flexShrink: 0,
-                      fontWeight: 600,
+                      fontWeight: typography.legend.value.fontWeight,
                       whiteSpace: "nowrap",
                     }}
                   >
@@ -118,7 +126,7 @@ function LegendPreview({
                     <span
                       style={{
                         flexShrink: 0,
-                        fontWeight: 400,
+                        fontWeight: typography.legend.percentage.fontWeight,
                         whiteSpace: "nowrap",
                       }}
                     >
@@ -137,7 +145,7 @@ function LegendPreview({
             style={{
               alignItems: "center",
               display: "flex",
-              gap: "8px",
+              gap: rowGap,
               ...rowBase,
             }}
           >
@@ -151,26 +159,22 @@ function LegendPreview({
             />
             <div
               style={{
-                color: "#333333",
+                color: chartTextPrimaryHex,
                 flex: 1,
-                fontFamily: "Inter, sans-serif",
-                fontSize: "14px",
-                fontWeight: 400,
-                lineHeight: "20px",
                 minWidth: 0,
+                ...typographyTokenToCss(typography.legend.label),
               }}
             >
-              {showPercentage ? `${label} (${inlinePercentageFormatter(percent)}%)` : label}
+              {showPercentage
+                ? `${label} (${inlinePercentageFormatter(percent)}%)`
+                : label}
             </div>
             <div
               style={{
-                color: "#333333",
+                color: chartTextPrimaryHex,
                 flexShrink: 0,
-                fontFamily: "Inter, sans-serif",
-                fontSize: "14px",
-                fontWeight: 600,
-                lineHeight: "20px",
                 whiteSpace: "nowrap",
+                ...typographyTokenToCss(typography.legend.value),
               }}
             >
               {formatLegendValue(item.value, valuePrefix, valueSuffix)}

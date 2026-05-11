@@ -5,11 +5,14 @@ import {
   IconLayoutAlignLeft24,
   IconLine24,
   IconSettings24,
+  IconVariableColor24,
 } from "@create-figma-plugin/ui";
 import { h } from "preact";
 import List from "../components/List";
 interface HomePageProps {
-  onNavigate: (page: "horizontalBar" | "pieDonutChart" | "util") => void;
+  onNavigate: (
+    page: "horizontalBar" | "pieDonutChart" | "util" | "designSystemConfig",
+  ) => void;
 }
 function HomePage({ onNavigate }: HomePageProps) {
   return (
@@ -32,6 +35,11 @@ function HomePage({ onNavigate }: HomePageProps) {
           icon={<IconLine24 />}
           title="Line chart (coming soon)"
           disable={true}
+        />
+        <List
+          icon={<IconVariableColor24 />}
+          title="Design system config"
+          onClick={() => onNavigate("designSystemConfig")}
         />
         <List
           icon={<IconSettings24 />}

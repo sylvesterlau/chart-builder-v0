@@ -1,18 +1,20 @@
 import { h } from "preact";
-import { dataVisColor, pieChartConfig, pieChartRadiusLarge } from "../config";
+import { dataVisAt, pieChartConfig, textColor, typography } from "../config";
 import { formatLegendPercentageDisplay } from "../helpers";
 import { LegendStyle, PiePageChartKind } from "../types";
 import { ChartItem } from "./ChartItemInput";
 import ChartTitlePreview from "./ChartTitlePreview";
 import LegendPreview from "./LegendPreview";
 
+const chartTextPrimaryHex = textColor.primary.value;
+
 const PIE_PREVIEW_WIDTH = pieChartConfig.frameWidth;
 const PIE_PREVIEW_HEIGHT = pieChartConfig.frameHeight;
 const PIE_CENTER_X = PIE_PREVIEW_WIDTH / 2;
 const PIE_CENTER_Y = PIE_PREVIEW_HEIGHT / 2;
-const INDICATOR_LINE_EXTEND = pieChartConfig.indicatorLineExtend;
-const INDICATOR_LABEL_CENTER_OFFSET = pieChartConfig.indicatorLabelCenterOffset;
-const INDICATOR_TEXT_COLOR = "#333333";
+const INDICATOR_LINE_EXTEND = pieChartConfig.indicator.lineExtend;
+const INDICATOR_LABEL_CENTER_OFFSET =
+  pieChartConfig.indicator.labelCenterOffset;
 
 interface PieDonutPreviewProps {
   chartKind: Exclude<PiePageChartKind, "semiDonut">;
@@ -101,7 +103,9 @@ function PieDonutPreview({
   valuePrefix,
   valueSuffix,
 }: PieDonutPreviewProps) {
-  const pieRadius = showIndicator ? pieChartConfig.radius : pieChartRadiusLarge;
+  const pieRadius = showIndicator
+    ? pieChartConfig.radius
+    : pieChartConfig.radiusLarge;
   const donutInnerRadius = pieRadius * pieChartConfig.donutInnerRadiusRatio;
   const legendItems = items
     .map((item, index) => ({ ...item, index }))
@@ -152,8 +156,7 @@ function PieDonutPreview({
         >
           {slices.map(
             ({ item, startAngle, endAngle, midAngle, percentage }) => {
-              const color =
-                dataVisColor[item.index % dataVisColor.length].value;
+              const color = dataVisAt(item.index).value;
               const path =
                 chartKind === "donut"
                   ? describeDonutSlice(
@@ -203,34 +206,40 @@ function PieDonutPreview({
                       x2={lineEndPoint.x}
                       y2={lineEndPoint.y}
                       stroke={color}
-                      strokeWidth="1.5"
+                      strokeWidth={
+                        pieChartConfig.indicator.leaderLineStrokeWeight
+                      }
                     />
                   ) : null}
                   <path
                     d={path}
                     fill={color}
                     stroke="#ffffff"
-                    strokeWidth="1.5"
+                    strokeWidth={pieChartConfig.indicator.sliceStrokeWeight}
                   />
                   {showIndicator ? (
                     <text
                       x={labelCenterPoint.x}
                       y={labelCenterPoint.y}
-                      fill={INDICATOR_TEXT_COLOR}
-                      fontFamily="Inter, sans-serif"
-                      fontSize="12"
+                      fill={chartTextPrimaryHex}
+                      fontFamily={`${typography.indicator.label.fontFamily}, sans-serif`}
+                      fontSize={typography.indicator.label.fontSize}
                       textAnchor="middle"
                       dominantBaseline="middle"
                     >
                       <tspan
                         x={labelCenterPoint.x}
                         dy={showIndicatorPercentage ? "-0.6em" : "0"}
-                        fontWeight="400"
+                        fontWeight={typography.indicator.label.fontWeight}
                       >
                         {item.label || `Item ${item.index + 1}`}
                       </tspan>
                       {showIndicatorPercentage ? (
-                        <tspan x={labelCenterPoint.x} dy="1.2em" fontWeight="600">
+                        <tspan
+                          x={labelCenterPoint.x}
+                          dy="1.2em"
+                          fontWeight={typography.indicator.percentage.fontWeight}
+                        >
                           {formatLegendPercentageDisplay(percentage)}%
                         </tspan>
                       ) : null}

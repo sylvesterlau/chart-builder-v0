@@ -5,11 +5,13 @@ import HomePage from "./pages/HomePage";
 import HorizontalBarPage from "./pages/HorizontalBarPage";
 import UtilPage from "./pages/UtilPage";
 import PieDonutChartPage from "./pages/PieDonutChartPage";
+import DesignSystemConfigPage from "./pages/DesignSystemConfigPage";
 export type Pages =
   | "home"
   | "horizontalBar"
   | "pieDonutChart"
-  | "util";
+  | "util"
+  | "designSystemConfig";
 function Plugin() {
   const [page, setPage] = useState<Pages>("home");
   const navigateToPage = (page: Pages) => {
@@ -28,6 +30,8 @@ function Plugin() {
         return <PieDonutChartPage onBack={navigateToHome} />;
       case "util":
         return <UtilPage onBack={navigateToHome} />;
+      case "designSystemConfig":
+        return <DesignSystemConfigPage onBack={navigateToHome} />;
       default:
         return <HomePage onNavigate={navigateToPage} />;
     }

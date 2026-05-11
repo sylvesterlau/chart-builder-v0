@@ -197,8 +197,140 @@
   width: 100%;
 }
 
-.divider {
-  border-top: 1px solid var(--figma-color-border);
-  height: 0;
+/* Design system config — token swatches */
+.colorGrid {
+  box-sizing: border-box;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr 1fr;
   width: 100%;
+}
+
+.colorColumn {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.tokenName {
+  color: var(--figma-color-text);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.colorChip {
+  align-items: center;
+  background-color: var(--figma-color-bg-secondary);
+  border-radius: 6px;
+  box-sizing: border-box;
+  display: inline-flex;
+  flex-direction: row;
+  gap: 6px;
+  max-width: 100%;
+  padding: 4px 8px;
+  width: fit-content;
+}
+
+.colorSwatch {
+  border: 1px solid var(--figma-color-border);
+  border-radius: 3px;
+  flex-shrink: 0;
+  height: 14px;
+  width: 14px;
+}
+
+.colorHex {
+  color: var(--figma-color-text);
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 16px;
+}
+
+.variableKey {
+  color: var(--figma-color-text-secondary);
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 16px;
+  word-break: break-all;
+}
+
+/* Design system config — numeric / layout tokens */
+.configValueList {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.configValueRow {
+  align-items: center;
+  box-sizing: border-box;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.configValueRow .fieldLabel {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Typography rows — label above CSS font line (narrow plugin width) */
+.typographyTokenList {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.typographyTokenRow {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.typographyTokenValue {
+  box-sizing: border-box;
+  color: var(--figma-color-text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 16px;
+  word-break: break-word;
+}
+
+/* nav back btn */
+
+.navBackButton {
+  align-items: center;
+  border-radius: 4px;
+  color: var(--figma-color-icon);
+  cursor: pointer;
+  display: flex;
+  flex-shrink: 0;
+  font-size: 12px;
+  height: 28px;
+  justify-content: center;
+  line-height: 28px;
+  padding: 0;
+  width: 28px;
+}
+
+.navBackButton:hover {
+  background-color: var(--figma-color-bg-hover);
+}
+
+.navTitle {
+  color: var(--figma-color-text);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 20px;
 }

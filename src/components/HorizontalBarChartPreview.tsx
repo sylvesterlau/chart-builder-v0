@@ -1,5 +1,5 @@
 import { h } from "preact";
-import { dataVisColor } from "../config";
+import { dataVisAt } from "../config";
 import { LegendStyle } from "../types";
 import { ChartItem } from "./ChartItemInput";
 import ChartTitlePreview from "./ChartTitlePreview";
@@ -65,7 +65,7 @@ function HorizontalBarChartPreview({
         }}
       >
         {chartItems.map((item, index) => {
-          const color = dataVisColor[item.index % dataVisColor.length].value;
+          const color = dataVisAt(item.index).value;
           return (
             <div
               key={`${item.label}-${index}`}

@@ -1,18 +1,20 @@
-import {
-  dataVisColor,
-  pieChartConfig,
-  pieChartRadiusLarge,
-} from "../config";
+import { dataVisAt, pieChartConfig, textColor, typography } from "../config";
 import { formatLegendPercentageDisplay, getSum } from "../helpers";
 import { ChartData } from "../types";
+import { applyFigmaTypographyToken } from "./applyFigmaTypography";
+import { resolveFigmaFontStyle } from "./chartTypography";
 import {
   createChartTitle,
   createFinalFrame,
+  loadChartTitleFont,
+} from "./figmaOperations";
+import {
   createLegend,
   createLegendList,
-  loadChartTitleFont,
   loadLegendFonts,
-} from "./figmaOperations";
+} from "./drawLegend";
+
+const chartTextPrimaryHex = textColor.primary.value;
 
 const PIE_CENTER_X = pieChartConfig.frameWidth / 2;
 const PIE_CENTER_Y = pieChartConfig.frameHeight / 2;
@@ -45,7 +47,7 @@ function createPieSlice(
   slice.y = PIE_CENTER_Y - pieRadius;
   slice.fills = [{ type: "SOLID", color: figma.util.rgb(hexColor) }];
   slice.strokes = [{ type: "SOLID", color: figma.util.rgb("#ffffff") }];
-  slice.strokeWeight = 1.5;
+  slice.strokeWeight = pieChartConfig.indicator.sliceStrokeWeight;
   slice.strokeAlign = "CENTER";
   const sweep = endAngle - startAngle;
   if (sweep >= 359.999) {
@@ -83,18 +85,18 @@ async function createIndicatorTextFrame(
   textFrame.itemSpacing = 0;
 
   const labelNode = figma.createText();
+  applyFigmaTypographyToken(labelNode, typography.indicator.label);
   labelNode.characters = label;
-  labelNode.fontName = { family: "Inter", style: "Regular" };
-  labelNode.fontSize = 12;
-  labelNode.fills = [{ type: "SOLID", color: figma.util.rgb("#333333") }];
+  labelNode.fills = [{ type: "SOLID", color: figma.util.rgb(chartTextPrimaryHex) }];
   textFrame.appendChild(labelNode);
 
   if (showIndicatorPercentage) {
     const percentNode = figma.createText();
+    applyFigmaTypographyToken(percentNode, typography.indicator.percentage);
     percentNode.characters = `${formatLegendPercentageDisplay(percentage)}%`;
-    percentNode.fontName = { family: "Inter", style: "Semi Bold" };
-    percentNode.fontSize = 12;
-    percentNode.fills = [{ type: "SOLID", color: figma.util.rgb("#333333") }];
+    percentNode.fills = [
+      { type: "SOLID", color: figma.util.rgb(chartTextPrimaryHex) },
+    ];
     textFrame.appendChild(percentNode);
   }
 
@@ -122,7 +124,9 @@ export async function drawPieChart(chartData: ChartData) {
   const showPercentage = chartData.showPercentage !== false;
   const showIndicator = chartData.showIndicator !== false;
   const showIndicatorPercentage = chartData.showIndicatorPercentage !== false;
-  const pieRadius = showIndicator ? pieChartConfig.radius : pieChartRadiusLarge;
+  const pieRadius = showIndicator
+    ? pieChartConfig.radius
+    : pieChartConfig.radiusLarge;
   const donutInnerRadiusPx = pieRadius * innerRadiusRatio;
   const valuePrefix = chartData.valuePrefix ?? "";
   const valueSuffix = chartData.valueSuffix ?? "HKD";
@@ -134,9 +138,16 @@ export async function drawPieChart(chartData: ChartData) {
     await loadLegendFonts();
   }
   if (showIndicator) {
-    await figma.loadFontAsync({ family: "Inter", style: "Regular" });
+    const ind = typography.indicator;
+    await figma.loadFontAsync({
+      family: ind.label.fontFamily,
+      style: resolveFigmaFontStyle(ind.label),
+    });
     if (showIndicatorPercentage) {
-      await figma.loadFontAsync({ family: "Inter", style: "Semi Bold" });
+      await figma.loadFontAsync({
+        family: ind.percentage.fontFamily,
+        style: resolveFigmaFontStyle(ind.percentage),
+      });
     }
   }
 
@@ -156,7 +167,7 @@ export async function drawPieChart(chartData: ChartData) {
   let currentStartAngle = -90;
   for (let i = 0; i < chartItems.length; i++) {
     const item = chartItems[i];
-    const color = dataVisColor[item.index % dataVisColor.length].value;
+    const color = dataVisAt(item.index).value;
     const sweepAngle = (item.value / sum) * 360;
     const endAngle = currentStartAngle + sweepAngle;
     const midAngle = currentStartAngle + sweepAngle / 2;
@@ -166,7 +177,7 @@ export async function drawPieChart(chartData: ChartData) {
       const lineEndPoint = polarToCartesian(
         PIE_CENTER_X,
         PIE_CENTER_Y,
-        pieRadius + pieChartConfig.indicatorLineExtend,
+        pieRadius + pieChartConfig.indicator.lineExtend,
         midAngle,
       );
       const lineStartPoint =
@@ -186,15 +197,15 @@ export async function drawPieChart(chartData: ChartData) {
         },
       ];
       line.strokes = [{ type: "SOLID", color: figma.util.rgb(color) }];
-      line.strokeWeight = 1.5;
+      line.strokeWeight = pieChartConfig.indicator.leaderLineStrokeWeight;
       chartFrame.appendChild(line);
 
       const labelCenterPoint = polarToCartesian(
         PIE_CENTER_X,
         PIE_CENTER_Y,
         pieRadius +
-          pieChartConfig.indicatorLineExtend +
-          pieChartConfig.indicatorLabelCenterOffset,
+          pieChartConfig.indicator.lineExtend +
+          pieChartConfig.indicator.labelCenterOffset,
         midAngle,
       );
       indicatorText = await createIndicatorTextFrame(

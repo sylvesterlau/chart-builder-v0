@@ -15,7 +15,7 @@ import { useCallback, useEffect, useState } from "preact/hooks";
 import ChartItemInput, { ChartItem } from "../components/ChartItemInput";
 import PieDonutPreview from "../components/PieDonutPreview";
 import SemiDonutChartPreview from "../components/SemiDonutChartPreview";
-import { pluginUI, sampleData } from "../config";
+import { pluginUISize, sampleData } from "../config";
 import { LegendStyle, PiePageChartKind } from "../types";
 import styles from "../ui.css";
 
@@ -91,13 +91,13 @@ function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
 
   useEffect(() => {
     emit("RESIZE_PLUGIN_UI_WINDOW", {
-      width: pluginUI.horizontalBarPageSize.width,
-      height: pluginUI.horizontalBarPageSize.height,
+      width: pluginUISize.editPage.width,
+      height: pluginUISize.editPage.height,
     });
     return () => {
       emit("RESIZE_PLUGIN_UI_WINDOW", {
-        width: pluginUI.size.width,
-        height: pluginUI.size.height,
+        width: pluginUISize.homePage.width,
+        height: pluginUISize.homePage.height,
       });
     };
   }, []);
