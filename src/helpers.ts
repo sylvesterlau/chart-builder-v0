@@ -1,5 +1,5 @@
 // helpers.ts for reused function
-import { chartConfig, dataVisColor } from "./config";
+import { dataVisColor, dataVisAt } from "./config";
 import { ChartData } from "./types";
 // Convert token name dots to slashes
 export function dotToSlash(token: string): string {
@@ -13,6 +13,7 @@ export function formatLegendPercentageDisplay(percentage: number): string {
     ? fixedPercentage.slice(0, -2)
     : fixedPercentage;
 }
+
 // Split integer and decimal, with thousands separator
 export function splitNumber(
   value: number,
@@ -52,7 +53,7 @@ export function transformToPercents(
 ): TransformedChartItem[] {
   //add datavis color variable key to array
   items.forEach((item, index) => {
-    item.colorToken = dataVisColor[index % dataVisColor.length].key;
+    item.colorToken = dataVisAt(index).key;
   });
   const sum = items.reduce((s, it) => s + (it.value || 0), 0);
   if (sum === 0) return [];
@@ -77,10 +78,10 @@ export async function bindVariableKeyToPaint(
   variableKey: string | null,
   basePaint: Paint,
 ): Promise<Paint> {
-  // default base paint (use chartConfig.defaultColor from config)
+  // default base paint (first Data Vis swatch when binding fails / missing variable)
   const defaultSolid: SolidPaint = {
     type: "SOLID",
-    color: figma.util.rgb(chartConfig.defaultColor),
+    color: figma.util.rgb(dataVisColor.general[0].value),
   };
   const paintToUse: SolidPaint =
     (basePaint as SolidPaint).type === "SOLID"

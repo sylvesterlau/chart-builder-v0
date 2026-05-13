@@ -1,0 +1,53 @@
+/** Sidebar nav row — mirrors SelectableItem focus/hover/selected minus tick & outer horizontal padding */
+
+.root {
+  align-self: stretch;
+  background: transparent;
+  border: none;
+  box-sizing: border-box;
+  color: var(--figma-color-text);
+  cursor: pointer;
+  display: block;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 20px;
+  margin: 0;
+  max-width: 100%;
+  min-width: 0;
+  padding: 0;
+  text-align: left;
+  width: 100%;
+}
+
+.root[data-disabled="true"] {
+  color: var(--figma-color-text-disabled);
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.inner {
+  border: var(--border-width-1, 1px) solid transparent;
+  border-radius: var(--border-radius-6, 6px);
+  box-sizing: border-box;
+  cursor: pointer;
+  display: block;
+  overflow: hidden;
+  padding: 4px;
+  text-overflow: ellipsis;
+  user-select: none;
+  white-space: nowrap;
+  width: 100%;
+}
+
+.root:hover:not([data-disabled="true"]):not([data-selected="true"]) .inner {
+  background-color: var(--figma-color-bg-hover);
+}
+
+.root:focus-visible .inner {
+  border-color: var(--figma-color-border-selected);
+}
+
+.root[data-selected="true"] .inner {
+  background-color: var(--figma-color-bg-selected);
+}

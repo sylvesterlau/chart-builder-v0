@@ -1,16 +1,18 @@
 import {
-  Button,
-  Stack,
   VerticalSpace,
   Container,
   IconArc24,
   IconLayoutAlignLeft24,
   IconLine24,
+  IconSettings24,
+  IconVariableColor24,
 } from "@create-figma-plugin/ui";
 import { h } from "preact";
 import List from "../components/List";
 interface HomePageProps {
-  onNavigate: (page: "semiDonut" | "horizontalBar" | "util") => void;
+  onNavigate: (
+    page: "horizontalBar" | "pieDonutChart" | "util" | "designSystemConfig",
+  ) => void;
 }
 function HomePage({ onNavigate }: HomePageProps) {
   return (
@@ -21,8 +23,8 @@ function HomePage({ onNavigate }: HomePageProps) {
       <div>
         <List
           icon={<IconArc24 />}
-          title="Semi-donut chart"
-          onClick={() => onNavigate("semiDonut")}
+          title="Pie & Donut charts"
+          onClick={() => onNavigate("pieDonutChart")}
         />
         <List
           icon={<IconLayoutAlignLeft24 />}
@@ -35,12 +37,12 @@ function HomePage({ onNavigate }: HomePageProps) {
           disable={true}
         />
         <List
-          icon={<IconArc24 />}
-          title="Pie chart (coming soon)"
-          disable={true}
+          icon={<IconVariableColor24 />}
+          title="Design system config"
+          onClick={() => onNavigate("designSystemConfig")}
         />
         <List
-          icon={<IconLine24 />}
+          icon={<IconSettings24 />}
           title="Util page"
           onClick={() => onNavigate("util")}
         />

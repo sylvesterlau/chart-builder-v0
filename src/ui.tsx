@@ -2,10 +2,16 @@ import { render } from "@create-figma-plugin/ui";
 import { h } from "preact";
 import { useState } from "preact/hooks";
 import HomePage from "./pages/HomePage";
-import SemiDonutPage from "./pages/SemiDonutPage";
 import HorizontalBarPage from "./pages/HorizontalBarPage";
 import UtilPage from "./pages/UtilPage";
-export type Pages = "home" | "semiDonut" | "horizontalBar" | "util";
+import PieDonutChartPage from "./pages/PieDonutChartPage";
+import DesignSystemConfigPage from "./pages/DesignSystemConfigPage";
+export type Pages =
+  | "home"
+  | "horizontalBar"
+  | "pieDonutChart"
+  | "util"
+  | "designSystemConfig";
 function Plugin() {
   const [page, setPage] = useState<Pages>("home");
   const navigateToPage = (page: Pages) => {
@@ -18,12 +24,14 @@ function Plugin() {
     switch (page) {
       case "home":
         return <HomePage onNavigate={navigateToPage} />;
-      case "semiDonut":
-        return <SemiDonutPage onBack={navigateToHome} />;
       case "horizontalBar":
         return <HorizontalBarPage onBack={navigateToHome} />;
+      case "pieDonutChart":
+        return <PieDonutChartPage onBack={navigateToHome} />;
       case "util":
         return <UtilPage onBack={navigateToHome} />;
+      case "designSystemConfig":
+        return <DesignSystemConfigPage onBack={navigateToHome} />;
       default:
         return <HomePage onNavigate={navigateToPage} />;
     }
