@@ -1,5 +1,5 @@
 // helpers.ts for reused function
-import { chartConfig, dataVisColor } from "./config";
+import { dataVisAt, dataVisColor } from "./config";
 import {
   ChartData,
   NormalizedVerticalBarChartConfig,
@@ -57,7 +57,7 @@ export function transformToPercents(
 ): TransformedChartItem[] {
   //add datavis color variable key to array
   items.forEach((item, index) => {
-    item.colorToken = dataVisColor[index % dataVisColor.length].key;
+    item.colorToken = dataVisAt(index).key;
   });
   const sum = items.reduce((s, it) => s + (it.value || 0), 0);
   if (sum === 0) return [];
@@ -85,7 +85,7 @@ export async function bindVariableKeyToPaint(
   // default base paint (use chartConfig.defaultColor from config)
   const defaultSolid: SolidPaint = {
     type: "SOLID",
-    color: figma.util.rgb(chartConfig.defaultColor),
+    color: figma.util.rgb(dataVisColor.general[0].value),
   };
   const paintToUse: SolidPaint =
     (basePaint as SolidPaint).type === "SOLID"
@@ -254,9 +254,7 @@ export function isVerticalBarYAxisLineVisible(
   return value === undefined || value === "both" || value === "y";
 }
 
-function maxSeriesValue(
-  series: Array<{ values: number[] }>,
-): number {
+function maxSeriesValue(series: Array<{ values: number[] }>): number {
   let max = 1;
   series.forEach((item) => {
     item.values.forEach((value) => {
@@ -279,18 +277,22 @@ export function normalizeVerticalBarChartConfig(
   const inputLabels = Array.isArray(input.labels) ? input.labels : [];
 
   for (let index = 0; index < periodCount; index += 1) {
-    const label = String(inputLabels[index] || fallback.labels[index] || "")
-      .trim();
+    const label = String(
+      inputLabels[index] || fallback.labels[index] || "",
+    ).trim();
     labels.push(label || `P${index + 1}`);
   }
 
   const series = [];
   for (let index = 0; index < seriesCount; index += 1) {
     const fallbackSeries = fallback.series[index] || fallback.series[0];
-    const inputSeries = Array.isArray(input.series) ? input.series[index] : null;
-    const inputValues = inputSeries && Array.isArray(inputSeries.values)
-      ? inputSeries.values
-      : [];
+    const inputSeries = Array.isArray(input.series)
+      ? input.series[index]
+      : null;
+    const inputValues =
+      inputSeries && Array.isArray(inputSeries.values)
+        ? inputSeries.values
+        : [];
     const values: number[] = [];
 
     for (let valueIndex = 0; valueIndex < periodCount; valueIndex += 1) {
@@ -335,10 +337,8 @@ export function normalizeVerticalBarChartConfig(
     selectedIndex,
     width: Math.round(clampNumber(input.width, 260, 1200, fallback.width)),
     height: Math.round(clampNumber(input.height, 220, 900, fallback.height)),
-    yAxisTitle:
-      String(input.yAxisTitle || "").trim() || fallback.yAxisTitle,
-    xAxisTitle:
-      String(input.xAxisTitle || "").trim() || fallback.xAxisTitle,
+    yAxisTitle: String(input.yAxisTitle || "").trim() || fallback.yAxisTitle,
+    xAxisTitle: String(input.xAxisTitle || "").trim() || fallback.xAxisTitle,
     labels,
     series,
     maxValue,

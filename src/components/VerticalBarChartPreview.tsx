@@ -15,7 +15,9 @@ interface VerticalBarChartPreviewProps {
 
 function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
   const visibleSeries =
-    config.barMode === "single" ? config.series.slice(0, 1) : config.series.slice(0, 2);
+    config.barMode === "single"
+      ? config.series.slice(0, 1)
+      : config.series.slice(0, 2);
   const maxValue = niceMax(
     Math.max(
       1,
@@ -48,12 +50,12 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
         boxSizing: "border-box",
         color: "#333333",
         fontFamily: "Inter, sans-serif",
-        height: "280px",
+        height: `${config.height}px`,
         overflow: "hidden",
         padding: "16px",
         transform: "scale(0.9)",
         transformOrigin: "top center",
-        width: "390px",
+        width: `${config.width}px`,
       }}
     >
       <div
@@ -62,8 +64,7 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
           fontSize: "12px",
           fontWeight: 700,
           height: "16px",
-          justifyContent:
-            yAxisPosition === "right" ? "flex-end" : "flex-start",
+          justifyContent: yAxisPosition === "right" ? "flex-end" : "flex-start",
           lineHeight: "16px",
         }}
       >
@@ -247,14 +248,14 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
                 visibleSeries.length * barWidth +
                 (visibleSeries.length - 1) * gap;
               return (
-              <div
-                key={`${label}-${labelIndex}-bars`}
-                style={{
-                  flex: "1 1 0",
-                  height: "100%",
-                  position: "relative",
-                }}
-              >
+                <div
+                  key={`${label}-${labelIndex}-bars`}
+                  style={{
+                    flex: "1 1 0",
+                    height: "100%",
+                    position: "relative",
+                  }}
+                >
                   {labelIndex === config.selectedIndex ? (
                     <div
                       style={{
@@ -284,7 +285,10 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
                       0,
                       maxValue,
                     );
-                    const barHeight = Math.max(1, (value / maxValue) * plotHeight);
+                    const barHeight = Math.max(
+                      1,
+                      (value / maxValue) * plotHeight,
+                    );
                     return (
                       <div
                         key={series.name}

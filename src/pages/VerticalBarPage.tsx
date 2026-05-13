@@ -14,7 +14,7 @@ import { emit } from "@create-figma-plugin/utilities";
 import { h } from "preact";
 import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import VerticalBarChartPreview from "../components/VerticalBarChartPreview";
-import { dataVisColor, pluginUI, sampleData } from "../config";
+import { dataVisColor, pluginUISize, verticalBarChartConfig } from "../config";
 import {
   VerticalBarChartConfig,
   VerticalBarChartSeries,
@@ -121,7 +121,7 @@ function createRandomValue(): number {
 }
 
 function VerticalBarPage({ onBack }: VerticalBarPageProps) {
-  const sample = sampleData.verticalBar;
+  const sample = verticalBarChartConfig;
   const [barMode, setBarMode] = useState<VerticalBarMode>(sample.barMode);
   const [yAxisPosition, setYAxisPosition] =
     useState<VerticalBarYAxisPosition>(sample.yAxisPosition);
@@ -149,13 +149,13 @@ function VerticalBarPage({ onBack }: VerticalBarPageProps) {
 
   useEffect(() => {
     emit("RESIZE_PLUGIN_UI_WINDOW", {
-      width: pluginUI.verticalBarPageSize.width,
-      height: pluginUI.verticalBarPageSize.height,
+      width: pluginUISize.verticalBarPage.width,
+      height: pluginUISize.verticalBarPage.height,
     });
     return () => {
       emit("RESIZE_PLUGIN_UI_WINDOW", {
-        width: pluginUI.size.width,
-        height: pluginUI.size.height,
+        width: pluginUISize.homePage.width,
+        height: pluginUISize.homePage.height,
       });
     };
   }, []);
@@ -165,12 +165,12 @@ function VerticalBarPage({ onBack }: VerticalBarPageProps) {
     const series: VerticalBarChartSeries[] = [
       {
         name: "Data set 1",
-        color: dataVisColor[0].value,
+        color: dataVisColor.general[0].value,
         values: items.map((item) => item.valueA),
       },
       {
         name: "Data set 2",
-        color: dataVisColor[1].value,
+        color: dataVisColor.general[1].value,
         values: items.map((item) => item.valueB),
       },
     ];

@@ -1,6 +1,6 @@
 import { IconMinusSmall24, Textbox } from "@create-figma-plugin/ui";
 import { h } from "preact";
-import { dataVisColor } from "../config";
+import { dataVisAt } from "../config";
 import styles from "../ui.css";
 
 export interface ChartItem {
@@ -26,7 +26,7 @@ function ChartItemInput({
   onLabelInput,
   onValueInput,
 }: ChartItemInputProps) {
-  const color = dataVisColor[index % dataVisColor.length].value;
+  const color = dataVisAt(index).value;
   return (
     <div className={styles.chartItemInput}>
       <div

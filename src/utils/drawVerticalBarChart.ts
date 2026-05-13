@@ -1,4 +1,4 @@
-import { sampleData } from "../config";
+import { verticalBarChartConfig } from "../config";
 import {
   clamp,
   formatAxisNumber,
@@ -460,7 +460,7 @@ function drawBarChart(parent: FrameNode, config: NormalizedVerticalBarChartConfi
 export async function drawVerticalBarChart(chartData: Partial<VerticalBarChartConfig>) {
   const config = normalizeVerticalBarChartConfig(
     chartData,
-    sampleData.verticalBar,
+    verticalBarChartConfig as unknown as VerticalBarChartConfig,
   );
   await figma.currentPage.loadAsync();
   await loadVerticalBarFonts();
