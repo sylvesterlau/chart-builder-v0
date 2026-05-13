@@ -18,6 +18,7 @@ export function formatLegendPercentageDisplay(percentage: number): string {
     ? fixedPercentage.slice(0, -2)
     : fixedPercentage;
 }
+
 // Split integer and decimal, with thousands separator
 export function splitNumber(
   value: number,
@@ -82,7 +83,7 @@ export async function bindVariableKeyToPaint(
   variableKey: string | null,
   basePaint: Paint,
 ): Promise<Paint> {
-  // default base paint (use chartConfig.defaultColor from config)
+  // default base paint (first Data Vis swatch when binding fails / missing variable)
   const defaultSolid: SolidPaint = {
     type: "SOLID",
     color: figma.util.rgb(dataVisColor.general[0].value),

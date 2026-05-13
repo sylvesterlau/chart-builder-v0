@@ -48,8 +48,7 @@ export interface VerticalBarChartConfig {
   series: VerticalBarChartSeries[];
 }
 
-export interface NormalizedVerticalBarChartConfig
-  extends VerticalBarChartConfig {
+export interface NormalizedVerticalBarChartConfig extends VerticalBarChartConfig {
   maxValue: number;
   yTicks: number[];
 }
