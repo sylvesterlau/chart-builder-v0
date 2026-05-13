@@ -71,6 +71,10 @@ export const ds = {
         key: "",
         value: "#545454",
       },
+      onDark: {
+        key: "",
+        value: "#ffffff",
+      },
     },
   },
 
@@ -179,6 +183,51 @@ export const verticalBarChartConfig = {
   barMode: "dual" as const,
   yAxisPosition: "right" as const,
   axisLineVisibility: "y" as const,
+  color: {
+    axisLine: {
+      value: "#333333",
+      key: "",
+    },
+    gridLine: {
+      value: "#F1F1F1",
+      key: "",
+    },
+    selected: {
+      labelBg: {
+        value: "#000000",
+      },
+      highlightBg: {
+        value: "#000000",
+        opacity: 0.08,
+      },
+    },
+    typography: {
+      xAxisTitle: {
+        fontFamily: "Inter",
+        fontSize: 12,
+        fontWeight: 600,
+        lineHeight: 20,
+      },
+      yAxisTitle: {
+        fontFamily: "Inter",
+        fontSize: 12,
+        fontWeight: 600,
+        lineHeight: 20,
+      },
+      xAxisLabel: {
+        fontFamily: "Inter",
+        fontSize: 12,
+        fontWeight: 400,
+        lineHeight: 20,
+      },
+    },
+    yAxisLabel: {
+      fontFamily: "Inter",
+      fontSize: 12,
+      fontWeight: 400,
+      lineHeight: 20,
+    },
+  },
   periodCount: 6,
   selectedIndex: 3,
   width: 390,

@@ -3,8 +3,9 @@ import { emit } from "@create-figma-plugin/utilities";
 import { h } from "preact";
 import { useEffect, useState } from "preact/hooks";
 import NavTab from "../components/navTab/NavTab";
-import { ds, pluginUISize } from "../config";
+import { ds, pluginUISize, verticalBarChartConfig } from "../config";
 import uiStyles from "../ui.css";
+import { rgbaFromHex } from "../helpers";
 import {
   collectTypographyTokenPaths,
   formatTypographyTokenAsCssFontShorthand,
@@ -14,7 +15,12 @@ interface DesignSystemConfigPageProps {
   onBack: () => void;
 }
 
-type DesignSystemTabId = "general" | "legend" | "semiDonut" | "pieDonut";
+type DesignSystemTabId =
+  | "general"
+  | "legend"
+  | "semiDonut"
+  | "pieDonut"
+  | "verticalBar";
 
 /** Plugin UI dimensions while Design system page is open. */
 const DESIGN_SYSTEM_WINDOW = { width: 490, height: 490 } as const;
@@ -27,6 +33,7 @@ const DESIGN_SYSTEM_TABS: ReadonlyArray<{
   { id: "legend", label: "Legend" },
   { id: "semiDonut", label: "Semi-donut" },
   { id: "pieDonut", label: "Pie & donut" },
+  { id: "verticalBar", label: "Vertical bar" },
 ];
 
 function hexDigits(hex: string): string {
@@ -59,6 +66,8 @@ function pieIndicatorMetricEntries(): Array<[string, string | number]> {
   const { typography: _, ...metrics } = ds.chart.pie.indicator;
   return Object.entries(metrics);
 }
+
+const vbColor = verticalBarChartConfig.color;
 
 function TypographyBlock(props: { pathPrefix: string; root: unknown }) {
   const { pathPrefix, root } = props;
@@ -364,6 +373,122 @@ function DesignSystemConfigPage({ onBack }: DesignSystemConfigPageProps) {
             <TypographyBlock
               pathPrefix="chart.pie.indicator.typography"
               root={ds.chart.pie.indicator.typography}
+            />
+          </div>
+        ) : null}
+
+        {activeTab === "verticalBar" ? (
+          <div>
+            <Text className={uiStyles.sectionTitle}>Axis & grid</Text>
+            <VerticalSpace space="small" />
+            <div className={uiStyles.colorGrid}>
+              {(
+                [
+                  ["axisLine", vbColor.axisLine],
+                  ["gridLine", vbColor.gridLine],
+                ] as const
+              ).map(function ([role, token]) {
+                return (
+                  <div key={role} className={uiStyles.colorColumn}>
+                    <div className={uiStyles.tokenName}>{role}</div>
+                    <div className={uiStyles.colorChip}>
+                      <div
+                        className={uiStyles.colorSwatch}
+                        style={{ backgroundColor: token.value }}
+                      />
+                      <span className={uiStyles.colorHex}>
+                        {hexDigits(token.value)}
+                      </span>
+                    </div>
+                    {token.key ? (
+                      <div
+                        className={uiStyles.fieldLabel}
+                        style={{
+                          fontSize: 10,
+                          marginTop: 4,
+                          opacity: 0.7,
+                          wordBreak: "break-all",
+                        }}
+                        title={token.key}
+                      >
+                        key: {token.key}
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+            <VerticalSpace space="small" />
+            <Divider />
+            <VerticalSpace space="medium" />
+
+            <Text className={uiStyles.sectionTitle}>Selected state</Text>
+            <VerticalSpace space="small" />
+            <div className={uiStyles.colorGrid}>
+              <div className={uiStyles.colorColumn}>
+                <div className={uiStyles.tokenName}>labelBg</div>
+                <div className={uiStyles.colorChip}>
+                  <div
+                    className={uiStyles.colorSwatch}
+                    style={{
+                      backgroundColor: vbColor.selected.labelBg.value,
+                    }}
+                  />
+                  <span className={uiStyles.colorHex}>
+                    {hexDigits(vbColor.selected.labelBg.value)}
+                  </span>
+                </div>
+              </div>
+              <div className={uiStyles.colorColumn}>
+                <div className={uiStyles.tokenName}>highlightBg</div>
+                <div className={uiStyles.colorChip}>
+                  <div
+                    className={uiStyles.colorSwatch}
+                    style={{
+                      backgroundColor: rgbaFromHex(
+                        vbColor.selected.highlightBg.value,
+                        vbColor.selected.highlightBg.opacity,
+                      ),
+                    }}
+                  />
+                  <span className={uiStyles.colorHex}>
+                    {hexDigits(vbColor.selected.highlightBg.value)}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <VerticalSpace space="small" />
+            <div className={uiStyles.configValueList}>
+              <div className={uiStyles.configValueRow}>
+                <span className={uiStyles.fieldLabel}>highlightBg.opacity</span>
+                <span className={uiStyles.colorHex}>
+                  {String(vbColor.selected.highlightBg.opacity)}
+                </span>
+              </div>
+            </div>
+            <VerticalSpace space="small" />
+            <Divider />
+            <VerticalSpace space="medium" />
+
+            <Text className={uiStyles.sectionTitle}>
+              Axis titles & labels · typography
+            </Text>
+            <VerticalSpace space="small" />
+            <TypographyBlock
+              pathPrefix="verticalBar.color.typography"
+              root={vbColor.typography}
+            />
+            <VerticalSpace space="small" />
+            <Divider />
+            <VerticalSpace space="medium" />
+
+            <Text className={uiStyles.sectionTitle}>
+              Y-axis tick labels · typography
+            </Text>
+            <VerticalSpace space="small" />
+            <TypographyBlock
+              pathPrefix="verticalBar.color.yAxisLabel"
+              root={vbColor.yAxisLabel}
             />
           </div>
         ) : null}

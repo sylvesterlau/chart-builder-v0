@@ -33,11 +33,46 @@ export interface VerticalBarChartSeries {
   values: number[];
 }
 
+/** Figma-style paint token (key + hex value). */
+export interface VerticalBarChartColorToken {
+  key: string;
+  value: string;
+}
+
+export interface VerticalBarChartSelectedColors {
+  labelBg: {
+    value: string;
+  };
+  highlightBg: {
+    value: string;
+    opacity: number;
+  };
+}
+
+/** Vertical bar axis / title text (matches `verticalBarChartConfig.color`). */
+export interface VerticalBarChartTextStyle {
+  fontFamily: string;
+  fontSize: number;
+  fontWeight: number;
+  lineHeight: number;
+}
+
 export interface VerticalBarChartConfig {
   chartType: "verticalBar";
   barMode: VerticalBarMode;
   yAxisPosition?: VerticalBarYAxisPosition;
   axisLineVisibility?: VerticalBarAxisLineVisibility;
+  color: {
+    axisLine: VerticalBarChartColorToken;
+    gridLine: VerticalBarChartColorToken;
+    selected: VerticalBarChartSelectedColors;
+    typography: {
+      xAxisTitle: VerticalBarChartTextStyle;
+      yAxisTitle: VerticalBarChartTextStyle;
+      xAxisLabel: VerticalBarChartTextStyle;
+    };
+    yAxisLabel: VerticalBarChartTextStyle;
+  };
   periodCount: number;
   selectedIndex: number;
   width: number;

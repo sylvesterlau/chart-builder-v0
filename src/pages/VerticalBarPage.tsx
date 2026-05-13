@@ -179,6 +179,7 @@ function VerticalBarPage({ onBack }: VerticalBarPageProps) {
       barMode,
       yAxisPosition,
       axisLineVisibility,
+      color: sample.color,
       periodCount: items.length,
       selectedIndex:
         selectedIndex === null ? -1 : Math.min(selectedIndex, items.length - 1),
