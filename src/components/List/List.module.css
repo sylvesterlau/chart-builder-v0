@@ -1,0 +1,22 @@
+.listContainer {
+  display: flex;
+  align-items: center;
+  padding: 10px 8px;
+  border-bottom: 1px solid;
+  border-color: var(--figma-color-border);
+  cursor: pointer;
+}
+.listContainer:hover {
+  background-color: var(--figma-color-bg-hover);
+}
+.listTitle {
+  flex: 1 0 0;
+}
+.listContainerDisable {
+  display: flex;
+  align-items: center;
+  padding: 10px 8px;
+  border-bottom: 1px solid;
+  border-color: var(--figma-color-border);
+  color: var(--figma-color-text-disabled);
+}

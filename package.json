@@ -12,15 +12,25 @@
   },
   "scripts": {
     "build": "build-figma-plugin --typecheck --minify",
+    "dev": "build-figma-plugin --typecheck --watch",
     "watch": "build-figma-plugin --typecheck --watch"
   },
   "figma-plugin": {
     "editorType": [
       "figma"
     ],
-    "id": "preact-rectangles",
-    "name": "Preact Rectangles",
+    "id": "chart-builder",
+    "name": "Chart Builder",
     "main": "src/main.ts",
-    "ui": "src/ui.tsx"
+    "ui": "src/ui.tsx",
+    "documentAccess": "dynamic-page",
+    "networkAccess": {
+      "allowedDomains": [
+        "none"
+      ]
+    },
+    "permissions": [
+      "teamlibrary"
+    ]
   }
 }
