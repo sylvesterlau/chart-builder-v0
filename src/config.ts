@@ -10,7 +10,7 @@ export const sampleData = {
   },
 };
 
-/** Plugin panel window sizes — not part of canvas design tokens (`ds`). */
+/** Plugin panel window sizes */
 export const pluginUISize = {
   homePage: {
     width: 348,
@@ -19,6 +19,10 @@ export const pluginUISize = {
   editPage: {
     width: 640,
     height: 490,
+  },
+  verticalBarPage: {
+    width: 680,
+    height: 560,
   },
 } as const;
 
@@ -170,6 +174,31 @@ export const ds = {
   },
 } as const;
 
+export const verticalBarChartConfig = {
+  chartType: "verticalBar" as const,
+  barMode: "dual" as const,
+  yAxisPosition: "right" as const,
+  axisLineVisibility: "y" as const,
+  periodCount: 6,
+  selectedIndex: 3,
+  width: 390,
+  height: 280,
+  yAxisTitle: "USD",
+  xAxisTitle: "Year 2023",
+  labels: ["Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+  series: [
+    {
+      name: "Product A",
+      color: ds.colors.dataVis.general[0].value,
+      values: [9120, 12500, 28880, 20300, 24500, 26880],
+    },
+    {
+      name: "Product B",
+      color: ds.colors.dataVis.general[1].value,
+      values: [6320, 20300, 15320, 6320, 3000, 26880],
+    },
+  ],
+} as const;
 /** Cycle through `ds.colors.dataVis.general` by row index. */
 export function dataVisAt(index: number): { key: string; value: string } {
   const palette = ds.colors.dataVis.general;

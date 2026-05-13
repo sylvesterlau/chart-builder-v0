@@ -33,6 +33,15 @@ declare const styles: {
   readonly "typographyTokenRow": string;
   readonly "typographyTokenValue": string;
   readonly "variableKey": string;
+  readonly "verticalBarButtonContent": string;
+  readonly "verticalBarDataHeader": string;
+  readonly "verticalBarDataRowDual": string;
+  readonly "verticalBarDataRowSingle": string;
+  readonly "verticalBarDataSection": string;
+  readonly "verticalBarDeleteButton": string;
+  readonly "verticalBarLeftPanel": string;
+  readonly "verticalBarPage": string;
+  readonly "verticalBarPreviewPanel": string;
 };
 export = styles;
 

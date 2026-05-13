@@ -3,6 +3,7 @@ import {
   Container,
   IconArc24,
   IconLayoutAlignLeft24,
+  IconLayoutAlignBottom24,
   IconLine24,
   IconSettings24,
   IconVariableColor24,
@@ -11,7 +12,12 @@ import { h } from "preact";
 import List from "../components/List";
 interface HomePageProps {
   onNavigate: (
-    page: "horizontalBar" | "pieDonutChart" | "util" | "designSystemConfig",
+    page:
+      | "pieDonutChart"
+      | "horizontalBar"
+      | "verticalBar"
+      | "util"
+      | "designSystemConfig",
   ) => void;
 }
 function HomePage({ onNavigate }: HomePageProps) {
@@ -32,9 +38,9 @@ function HomePage({ onNavigate }: HomePageProps) {
           onClick={() => onNavigate("horizontalBar")}
         />
         <List
-          icon={<IconLine24 />}
-          title="Line chart (coming soon)"
-          disable={true}
+          icon={<IconLayoutAlignBottom24 />}
+          title="Vertical bar chart"
+          onClick={() => onNavigate("verticalBar")}
         />
         <List
           icon={<IconVariableColor24 />}

@@ -3,15 +3,20 @@ import { h } from "preact";
 import { useState } from "preact/hooks";
 import HomePage from "./pages/HomePage";
 import HorizontalBarPage from "./pages/HorizontalBarPage";
+import VerticalBarPage from "./pages/VerticalBarPage";
 import UtilPage from "./pages/UtilPage";
+
 import PieDonutChartPage from "./pages/PieDonutChartPage";
 import DesignSystemConfigPage from "./pages/DesignSystemConfigPage";
+
 export type Pages =
   | "home"
   | "horizontalBar"
   | "pieDonutChart"
+  | "verticalBar"
   | "util"
   | "designSystemConfig";
+
 function Plugin() {
   const [page, setPage] = useState<Pages>("home");
   const navigateToPage = (page: Pages) => {
@@ -26,6 +31,8 @@ function Plugin() {
         return <HomePage onNavigate={navigateToPage} />;
       case "horizontalBar":
         return <HorizontalBarPage onBack={navigateToHome} />;
+      case "verticalBar":
+        return <VerticalBarPage onBack={navigateToHome} />;
       case "pieDonutChart":
         return <PieDonutChartPage onBack={navigateToHome} />;
       case "util":
@@ -38,4 +45,5 @@ function Plugin() {
   };
   return renderPage();
 }
+
 export default render(Plugin);

@@ -1,6 +1,11 @@
 // helpers.ts for reused function
-import { dataVisColor, dataVisAt } from "./config";
-import { ChartData } from "./types";
+import { dataVisAt, dataVisColor } from "./config";
+import {
+  ChartData,
+  NormalizedVerticalBarChartConfig,
+  VerticalBarAxisLineVisibility,
+  VerticalBarChartConfig,
+} from "./types";
 // Convert token name dots to slashes
 export function dotToSlash(token: string): string {
   if (typeof token !== "string") return String(token);
@@ -183,4 +188,161 @@ export async function getTokenVarKey(tokenPath: string) {
     console.error("Token lookup failed:", err);
     figma.notify("Token lookup failed. Check console for details.");
   }
+}
+
+export function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
+function clampNumber(
+  value: unknown,
+  min: number,
+  max: number,
+  fallback: number,
+): number {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return fallback;
+  return clamp(number, min, max);
+}
+
+export function niceMax(value: number): number {
+  if (value <= 10) return 10;
+  const magnitude = Math.pow(10, Math.floor(Math.log10(value)));
+  const scaled = value / magnitude;
+  let nice = 10;
+  if (scaled <= 2) nice = 2;
+  else if (scaled <= 3) nice = 3;
+  else if (scaled <= 5) nice = 5;
+  return nice * magnitude;
+}
+
+export function buildTicks(maxValue: number, steps: number): number[] {
+  const ticks: number[] = [];
+  for (let index = 0; index <= steps; index += 1) {
+    ticks.push(Math.round(maxValue - (maxValue / steps) * index));
+  }
+  ticks[ticks.length - 1] = 0;
+  return ticks;
+}
+
+export function normalizeHexColor(value: unknown, fallback: string): string {
+  const text = String(value || "").trim();
+  return /^#[0-9a-f]{6}$/i.test(text) ? text : fallback;
+}
+
+export function formatAxisNumber(value: number): string {
+  const roundedValue = Math.round(Number(value) || 0);
+  const sign = roundedValue < 0 ? "-" : "";
+  const absoluteValue = String(Math.abs(roundedValue));
+  return `${sign}${absoluteValue.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+}
+
+export function normalizeVerticalBarAxisLineVisibility(
+  value: unknown,
+): VerticalBarAxisLineVisibility {
+  return value === "x" || value === "y" || value === "none" ? value : "both";
+}
+
+export function isVerticalBarXAxisLineVisible(
+  value: VerticalBarAxisLineVisibility | undefined,
+): boolean {
+  return value === undefined || value === "both" || value === "x";
+}
+
+export function isVerticalBarYAxisLineVisible(
+  value: VerticalBarAxisLineVisibility | undefined,
+): boolean {
+  return value === undefined || value === "both" || value === "y";
+}
+
+function maxSeriesValue(series: Array<{ values: number[] }>): number {
+  let max = 1;
+  series.forEach((item) => {
+    item.values.forEach((value) => {
+      max = Math.max(max, Number(value) || 0);
+    });
+  });
+  return max;
+}
+
+export function normalizeVerticalBarChartConfig(
+  input: Partial<VerticalBarChartConfig>,
+  fallback: VerticalBarChartConfig,
+): NormalizedVerticalBarChartConfig {
+  const periodCount = Math.round(
+    clampNumber(input.periodCount, 1, 24, fallback.periodCount),
+  );
+  const barMode = input.barMode === "single" ? "single" : "dual";
+  const seriesCount = barMode === "single" ? 1 : 2;
+  const labels: string[] = [];
+  const inputLabels = Array.isArray(input.labels) ? input.labels : [];
+
+  for (let index = 0; index < periodCount; index += 1) {
+    const label = String(
+      inputLabels[index] || fallback.labels[index] || "",
+    ).trim();
+    labels.push(label || `P${index + 1}`);
+  }
+
+  const series = [];
+  for (let index = 0; index < seriesCount; index += 1) {
+    const fallbackSeries = fallback.series[index] || fallback.series[0];
+    const inputSeries = Array.isArray(input.series)
+      ? input.series[index]
+      : null;
+    const inputValues =
+      inputSeries && Array.isArray(inputSeries.values)
+        ? inputSeries.values
+        : [];
+    const values: number[] = [];
+
+    for (let valueIndex = 0; valueIndex < periodCount; valueIndex += 1) {
+      const fallbackValue = fallbackSeries.values[valueIndex] || 0;
+      const nextValue =
+        inputValues[valueIndex] !== undefined
+          ? inputValues[valueIndex]
+          : fallbackValue;
+      values.push(Math.max(0, Number(nextValue) || 0));
+    }
+
+    series.push({
+      name:
+        String((inputSeries && inputSeries.name) || "").trim() ||
+        fallbackSeries.name,
+      color: normalizeHexColor(
+        inputSeries && inputSeries.color,
+        fallbackSeries.color,
+      ),
+      values,
+    });
+  }
+
+  const maxValue = niceMax(maxSeriesValue(series));
+  const selectedIndex = Math.round(
+    clampNumber(
+      input.selectedIndex,
+      -1,
+      periodCount - 1,
+      Math.min(fallback.selectedIndex, periodCount - 1),
+    ),
+  );
+
+  return {
+    chartType: "verticalBar",
+    barMode,
+    yAxisPosition: input.yAxisPosition === "left" ? "left" : "right",
+    axisLineVisibility: normalizeVerticalBarAxisLineVisibility(
+      input.axisLineVisibility,
+    ),
+    periodCount,
+    selectedIndex,
+    width: Math.round(clampNumber(input.width, 260, 1200, fallback.width)),
+    height: Math.round(clampNumber(input.height, 220, 900, fallback.height)),
+    yAxisTitle: String(input.yAxisTitle || "").trim() || fallback.yAxisTitle,
+    xAxisTitle: String(input.xAxisTitle || "").trim() || fallback.xAxisTitle,
+    labels,
+    series,
+    maxValue,
+    yTicks: buildTicks(maxValue, 3),
+  };
 }
