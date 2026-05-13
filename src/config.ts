@@ -1,3 +1,5 @@
+import type { ColorToken, TypographyToken } from "./types";
+
 // chart sample data — demo inputs, not visual tokens
 export const sampleData = {
   spending: {
@@ -60,7 +62,7 @@ export const ds = {
         { key: "", value: "#c64d24" },
         { key: "", value: "#266076" },
         { key: "", value: "#f14e73" },
-      ],
+      ] satisfies ReadonlyArray<ColorToken>,
     },
     text: {
       primary: {
@@ -74,7 +76,7 @@ export const ds = {
       onDark: {
         key: "",
         value: "#ffffff",
-      },
+      } satisfies Readonly<ColorToken>,
     },
   },
 
@@ -94,19 +96,19 @@ export const ds = {
         fontSize: 14,
         fontWeight: 400,
         lineHeight: 20,
-      },
+      } satisfies Readonly<TypographyToken>,
       value: {
         fontFamily: "Inter",
         fontSize: 14,
         fontWeight: 600,
         lineHeight: 20,
-      },
+      } satisfies Readonly<TypographyToken>,
       percentage: {
         fontFamily: "Inter",
         fontSize: 14,
         fontWeight: 400,
         lineHeight: 20,
-      },
+      } satisfies Readonly<TypographyToken>,
     },
     spacing: {
       horizontalPadding: 16,
@@ -117,7 +119,7 @@ export const ds = {
       divider: {
         key: "",
         value: "#EDEDED",
-      },
+      } satisfies Readonly<ColorToken>,
     },
   },
 
@@ -132,13 +134,13 @@ export const ds = {
             fontSize: 14,
             fontWeight: 400,
             lineHeight: 20,
-          },
+          } satisfies Readonly<TypographyToken>,
           value: {
             fontFamily: "Inter",
             fontSize: 19,
             fontWeight: 600,
             lineHeight: 27,
-          },
+          } satisfies Readonly<TypographyToken>,
         },
       },
     },
@@ -165,13 +167,13 @@ export const ds = {
             fontSize: 12,
             fontWeight: 400,
             lineHeight: 20,
-          },
+          } satisfies Readonly<TypographyToken>,
           percentage: {
             fontFamily: "Inter",
             fontSize: 12,
             fontWeight: 600,
             lineHeight: 20,
-          },
+          } satisfies Readonly<TypographyToken>,
         },
       },
     },
@@ -187,19 +189,19 @@ export const verticalBarChartConfig = {
     axisLine: {
       value: "#333333",
       key: "",
-    },
+    } satisfies Readonly<ColorToken>,
     gridLine: {
       value: "#F1F1F1",
       key: "",
-    },
+    } satisfies Readonly<ColorToken>,
     selected: {
       labelBg: {
         value: "#000000",
-      },
+      } satisfies Readonly<ColorToken>,
       highlightBg: {
         value: "#000000",
         opacity: 0.08,
-      },
+      } satisfies Readonly<ColorToken>,
     },
     typography: {
       xAxisTitle: {
@@ -207,26 +209,26 @@ export const verticalBarChartConfig = {
         fontSize: 12,
         fontWeight: 600,
         lineHeight: 20,
-      },
+      } satisfies Readonly<TypographyToken>,
       yAxisTitle: {
         fontFamily: "Inter",
         fontSize: 12,
         fontWeight: 600,
         lineHeight: 20,
-      },
+      } satisfies Readonly<TypographyToken>,
       xAxisLabel: {
         fontFamily: "Inter",
         fontSize: 12,
         fontWeight: 400,
         lineHeight: 20,
-      },
+      } satisfies Readonly<TypographyToken>,
     },
     yAxisLabel: {
       fontFamily: "Inter",
       fontSize: 12,
       fontWeight: 400,
       lineHeight: 20,
-    },
+    } satisfies Readonly<TypographyToken>,
   },
   periodCount: 6,
   selectedIndex: 3,

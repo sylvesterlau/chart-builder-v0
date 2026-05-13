@@ -49,7 +49,10 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
   const gridLineColor = config.color.gridLine.value;
   const { labelBg, highlightBg } = config.color.selected;
   const { typography: ty, yAxisLabel: yLab } = config.color;
-  const highlightBgCss = rgbaFromHex(highlightBg.value, highlightBg.opacity);
+  const highlightBgCss = rgbaFromHex(
+    highlightBg.value,
+    highlightBg.opacity ?? 0.08,
+  );
   const xAxisLabelGap = 4;
   const xAxisLabelRowHeight = ty.xAxisLabel.lineHeight;
   const xAxisSelectedPillHeight = Math.max(18, xAxisLabelRowHeight);

@@ -2,10 +2,11 @@
 import { dataVisAt, dataVisColor } from "./config";
 import {
   ChartData,
+  ColorToken,
   NormalizedVerticalBarChartConfig,
+  TypographyToken,
   VerticalBarAxisLineVisibility,
   VerticalBarChartConfig,
-  VerticalBarChartTextStyle,
 } from "./types";
 // Convert token name dots to slashes
 export function dotToSlash(token: string): string {
@@ -231,9 +232,30 @@ export function normalizeHexColor(value: unknown, fallback: string): string {
   return /^#[0-9a-f]{6}$/i.test(text) ? text : fallback;
 }
 
+export function mergeColorToken(
+  input: Partial<ColorToken> | undefined,
+  fallback: ColorToken,
+): ColorToken {
+  const value = normalizeHexColor(input?.value, fallback.value);
+  const next: ColorToken = { value };
+  const key = input?.key !== undefined ? String(input.key) : fallback.key;
+  if (key !== undefined) next.key = key;
+  const opacity =
+    input?.opacity !== undefined
+      ? clampNumber(
+          input.opacity,
+          0,
+          1,
+          fallback.opacity ?? 0,
+        )
+      : fallback.opacity;
+  if (opacity !== undefined) next.opacity = opacity;
+  return next;
+}
+
 /** CSS inline style fragment from vertical bar text tokens (preview). */
 export function verticalBarTextStyleToCss(
-  style: VerticalBarChartTextStyle,
+  style: TypographyToken,
 ): Record<string, string | number> {
   return {
     fontFamily: `${style.fontFamily}, sans-serif`,
@@ -244,11 +266,11 @@ export function verticalBarTextStyleToCss(
 }
 
 export function mergeVerticalBarTextStyle(
-  input: Partial<VerticalBarChartTextStyle> | undefined,
-  fallback: VerticalBarChartTextStyle,
-): VerticalBarChartTextStyle {
+  input: Partial<TypographyToken> | undefined,
+  fallback: TypographyToken,
+): TypographyToken {
   const family = String(input?.fontFamily ?? "").trim();
-  return {
+  const merged: TypographyToken = {
     fontFamily: family || fallback.fontFamily,
     fontSize: Math.round(clampNumber(input?.fontSize, 6, 96, fallback.fontSize)),
     fontWeight: Math.round(
@@ -258,6 +280,11 @@ export function mergeVerticalBarTextStyle(
       clampNumber(input?.lineHeight, 8, 160, fallback.lineHeight),
     ),
   };
+  const key = input?.key !== undefined ? String(input.key) : fallback.key;
+  if (key !== undefined) merged.key = key;
+  const figma = input?.figmaFontStyle ?? fallback.figmaFontStyle;
+  if (figma !== undefined) merged.figmaFontStyle = figma;
+  return merged;
 }
 
 /** CSS `rgba(...)` from `#RRGGBB` and alpha in 0–1 (invalid hex → black). */
@@ -380,39 +407,17 @@ export function normalizeVerticalBarChartConfig(
       input.axisLineVisibility,
     ),
     color: {
-      axisLine: {
-        key: String(inputColor?.axisLine?.key ?? fallbackColor.axisLine.key),
-        value: normalizeHexColor(
-          inputColor?.axisLine?.value,
-          fallbackColor.axisLine.value,
-        ),
-      },
-      gridLine: {
-        key: String(inputColor?.gridLine?.key ?? fallbackColor.gridLine.key),
-        value: normalizeHexColor(
-          inputColor?.gridLine?.value,
-          fallbackColor.gridLine.value,
-        ),
-      },
+      axisLine: mergeColorToken(inputColor?.axisLine, fallbackColor.axisLine),
+      gridLine: mergeColorToken(inputColor?.gridLine, fallbackColor.gridLine),
       selected: {
-        labelBg: {
-          value: normalizeHexColor(
-            inputColor?.selected?.labelBg?.value,
-            fallbackColor.selected.labelBg.value,
-          ),
-        },
-        highlightBg: {
-          value: normalizeHexColor(
-            inputColor?.selected?.highlightBg?.value,
-            fallbackColor.selected.highlightBg.value,
-          ),
-          opacity: clampNumber(
-            inputColor?.selected?.highlightBg?.opacity,
-            0,
-            1,
-            fallbackColor.selected.highlightBg.opacity,
-          ),
-        },
+        labelBg: mergeColorToken(
+          inputColor?.selected?.labelBg,
+          fallbackColor.selected.labelBg,
+        ),
+        highlightBg: mergeColorToken(
+          inputColor?.selected?.highlightBg,
+          fallbackColor.selected.highlightBg,
+        ),
       },
       typography: {
         xAxisTitle: mergeVerticalBarTextStyle(

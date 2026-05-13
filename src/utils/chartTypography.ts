@@ -1,14 +1,7 @@
-export type ChartTypographyToken = {
-  fontFamily: string;
-  fontSize: number;
-  fontWeight: number;
-  lineHeight: number;
-  /**
-   * When set, used as Figma `fontName.style` instead of deriving from `fontWeight`.
-   * Use when the font uses non-standard style names (e.g. `Semibold` vs `Semi Bold`).
-   */
-  figmaFontStyle?: string;
-};
+import type { TypographyToken } from "../types";
+
+/** Alias for chart design-system leaves; same shape as `TypographyToken`. */
+export type ChartTypographyToken = TypographyToken;
 
 function isChartTypographyToken(v: unknown): v is ChartTypographyToken {
   if (v === null || typeof v !== "object" || Array.isArray(v)) {
@@ -16,6 +9,9 @@ function isChartTypographyToken(v: unknown): v is ChartTypographyToken {
   }
   const o = v as Record<string, unknown>;
   if (o.figmaFontStyle !== undefined && typeof o.figmaFontStyle !== "string") {
+    return false;
+  }
+  if (o.key !== undefined && typeof o.key !== "string") {
     return false;
   }
   return (

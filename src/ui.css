@@ -301,44 +301,31 @@
   width: 100%;
 }
 
-.tokenName {
-  color: var(--figma-color-text);
-  font-size: 12px;
-  font-weight: 400;
-  line-height: 1.5;
-}
-
-.colorChip {
-  align-items: center;
-  background-color: var(--figma-color-bg-secondary);
-  border-radius: 6px;
+.colorTokenBlock {
   box-sizing: border-box;
-  display: inline-flex;
-  flex-direction: row;
-  gap: 6px;
-  max-width: 100%;
-  padding: 4px 8px;
-  width: fit-content;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
 }
 
-.colorSwatch {
-  border: 1px solid var(--figma-color-border);
-  border-radius: 3px;
-  flex-shrink: 0;
-  height: 14px;
-  width: 14px;
+.colorTokenRow {
+  align-items: center;
+  box-sizing: border-box;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  width: 100%;
 }
 
-.colorHex {
-  color: var(--figma-color-text);
-  font-size: 11px;
-  font-weight: 400;
-  line-height: 16px;
+.colorTokenRow .variableKey {
+  flex: 1;
+  min-width: 0;
 }
 
 .variableKey {
   color: var(--figma-color-text-secondary);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 400;
   line-height: 16px;
   word-break: break-all;
@@ -367,7 +354,7 @@
   min-width: 0;
 }
 
-/* Typography rows — label above CSS font line (narrow plugin width) */
+/* Typography rows — design system (label + chip) */
 .typographyTokenList {
   box-sizing: border-box;
   display: flex;
@@ -377,21 +364,18 @@
 }
 
 .typographyTokenRow {
+  align-items: center;
   box-sizing: border-box;
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  flex-direction: row;
+  gap: 12px;
+  justify-content: space-between;
   width: 100%;
 }
 
-.typographyTokenValue {
-  box-sizing: border-box;
-  color: var(--figma-color-text);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 11px;
-  font-weight: 400;
-  line-height: 16px;
-  word-break: break-word;
+.typographyTokenRow .fieldLabel {
+  flex: 1;
+  min-width: 0;
 }
 
 /* nav back btn */

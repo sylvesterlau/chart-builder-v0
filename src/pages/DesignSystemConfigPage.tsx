@@ -1,15 +1,15 @@
-import { Divider, Text, VerticalSpace } from "@create-figma-plugin/ui";
+import { Divider, Stack, Text, VerticalSpace } from "@create-figma-plugin/ui";
 import { emit } from "@create-figma-plugin/utilities";
 import { h } from "preact";
 import { useEffect, useState } from "preact/hooks";
 import NavTab from "../components/navTab/NavTab";
+import { ColorTokenChip } from "../components/ColorChips/ColorTokenChip";
+import { NumChip } from "../components/NumChips/NumChip";
+import { TypographyTokenChip } from "../components/TypographyChips/TypographyTokenChip";
 import { ds, pluginUISize, verticalBarChartConfig } from "../config";
+import type { ColorToken } from "../types";
 import uiStyles from "../ui.css";
-import { rgbaFromHex } from "../helpers";
-import {
-  collectTypographyTokenPaths,
-  formatTypographyTokenAsCssFontShorthand,
-} from "../utils/chartTypography";
+import { collectTypographyTokenPaths } from "../utils/chartTypography";
 
 interface DesignSystemConfigPageProps {
   onBack: () => void;
@@ -35,11 +35,6 @@ const DESIGN_SYSTEM_TABS: ReadonlyArray<{
   { id: "pieDonut", label: "Pie & donut" },
   { id: "verticalBar", label: "Vertical bar" },
 ];
-
-function hexDigits(hex: string): string {
-  const trimmed = hex.trim().replace(/^#/, "");
-  return trimmed.toUpperCase();
-}
 
 /** Strip section prefix from typography row paths for shorter labels. */
 function typographyLabel(fullPath: string, sectionPrefix: string): string {
@@ -77,14 +72,11 @@ function TypographyBlock(props: { pathPrefix: string; root: unknown }) {
         path,
         token,
       }) {
-        const fontLine = formatTypographyTokenAsCssFontShorthand(token);
         const labelPath = typographyLabel(path, pathPrefix);
         return (
           <div key={path} className={uiStyles.typographyTokenRow}>
             <span className={uiStyles.fieldLabel}>{labelPath}</span>
-            <span className={uiStyles.typographyTokenValue} title={fontLine}>
-              {fontLine}
-            </span>
+            <TypographyTokenChip token={token} />
           </div>
         );
       })}
@@ -200,16 +192,8 @@ function DesignSystemConfigPage({ onBack }: DesignSystemConfigPageProps) {
               {ds.colors.dataVis.general.map(function (token, index) {
                 return (
                   <div key={index} className={uiStyles.colorColumn}>
-                    <div className={uiStyles.tokenName}>{`${index + 1}`}</div>
-                    <div className={uiStyles.colorChip}>
-                      <div
-                        className={uiStyles.colorSwatch}
-                        style={{ backgroundColor: token.value }}
-                      />
-                      <span className={uiStyles.colorHex}>
-                        {hexDigits(token.value)}
-                      </span>
-                    </div>
+                    <div className={uiStyles.variableKey}>{`${index + 1}`}</div>
+                    <ColorTokenChip token={token as ColorToken} />
                   </div>
                 );
               })}
@@ -217,34 +201,23 @@ function DesignSystemConfigPage({ onBack }: DesignSystemConfigPageProps) {
             <VerticalSpace space="small" />
             <Divider />
             <VerticalSpace space="medium" />
-
-            <Text className={uiStyles.sectionTitle}>Text colors</Text>
-            <VerticalSpace space="small" />
-            <div className={uiStyles.colorGrid}>
-              {Object.entries(ds.colors.text).map(function ([role, token]) {
-                return (
-                  <div key={role} className={uiStyles.colorColumn}>
-                    <div className={uiStyles.tokenName}>{role}</div>
-                    <div className={uiStyles.colorChip}>
-                      <div
-                        className={uiStyles.colorSwatch}
-                        style={{ backgroundColor: token.value }}
-                      />
-                      <span className={uiStyles.colorHex}>
-                        {hexDigits(token.value)}
-                      </span>
+            <Stack space="medium">
+              <Text className={uiStyles.sectionTitle}>Text colors</Text>
+              <Stack space="small">
+                {Object.entries(ds.colors.text).map(function ([role, token]) {
+                  return (
+                    <div key={role} className={uiStyles.colorTokenRow}>
+                      <div className={uiStyles.variableKey}>{role}</div>
+                      <ColorTokenChip token={token as ColorToken} />
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-            <VerticalSpace space="small" />
-            <Divider />
+                  );
+                })}
+              </Stack>
+              <Divider />
+            </Stack>
             <VerticalSpace space="medium" />
 
-            <Text className={uiStyles.sectionTitle}>
-              Chart title · typography
-            </Text>
+            <Text className={uiStyles.sectionTitle}>Chart title</Text>
             <VerticalSpace space="small" />
             <TypographyBlock
               pathPrefix="chartTitle.typography"
@@ -264,7 +237,7 @@ function DesignSystemConfigPage({ onBack }: DesignSystemConfigPageProps) {
                 return (
                   <div key={key} className={uiStyles.configValueRow}>
                     <span className={uiStyles.fieldLabel}>{key}</span>
-                    <span className={uiStyles.colorHex}>{String(value)}</span>
+                    <NumChip value={value} />
                   </div>
                 );
               })}
@@ -285,20 +258,12 @@ function DesignSystemConfigPage({ onBack }: DesignSystemConfigPageProps) {
 
             <Text className={uiStyles.sectionTitle}>Divider</Text>
             <VerticalSpace space="medium" />
-            <div className={uiStyles.colorGrid}>
+            <div className={uiStyles.configValueList}>
               {Object.entries(ds.legend.color).map(function ([role, token]) {
                 return (
-                  <div key={role} className={uiStyles.colorColumn}>
-                    <div className={uiStyles.tokenName}>{role}</div>
-                    <div className={uiStyles.colorChip}>
-                      <div
-                        className={uiStyles.colorSwatch}
-                        style={{ backgroundColor: token.value }}
-                      />
-                      <span className={uiStyles.colorHex}>
-                        {hexDigits(token.value)}
-                      </span>
-                    </div>
+                  <div key={role} className={uiStyles.colorTokenRow}>
+                    <div className={uiStyles.variableKey}>{role}</div>
+                    <ColorTokenChip token={token as ColorToken} />
                   </div>
                 );
               })}
@@ -315,7 +280,7 @@ function DesignSystemConfigPage({ onBack }: DesignSystemConfigPageProps) {
                 return (
                   <div key={key} className={uiStyles.configValueRow}>
                     <span className={uiStyles.fieldLabel}>{key}</span>
-                    <span className={uiStyles.colorHex}>{String(value)}</span>
+                    <NumChip value={value} />
                   </div>
                 );
               })}
@@ -342,7 +307,7 @@ function DesignSystemConfigPage({ onBack }: DesignSystemConfigPageProps) {
                 return (
                   <div key={key} className={uiStyles.configValueRow}>
                     <span className={uiStyles.fieldLabel}>{key}</span>
-                    <span className={uiStyles.colorHex}>{String(value)}</span>
+                    <NumChip value={value} />
                   </div>
                 );
               })}
@@ -358,7 +323,7 @@ function DesignSystemConfigPage({ onBack }: DesignSystemConfigPageProps) {
                 return (
                   <div key={key} className={uiStyles.configValueRow}>
                     <span className={uiStyles.fieldLabel}>{key}</span>
-                    <span className={uiStyles.colorHex}>{String(value)}</span>
+                    <NumChip value={value} />
                   </div>
                 );
               })}
@@ -381,7 +346,7 @@ function DesignSystemConfigPage({ onBack }: DesignSystemConfigPageProps) {
           <div>
             <Text className={uiStyles.sectionTitle}>Axis & grid</Text>
             <VerticalSpace space="small" />
-            <div className={uiStyles.colorGrid}>
+            <Stack space="small">
               {(
                 [
                   ["axisLine", vbColor.axisLine],
@@ -390,16 +355,8 @@ function DesignSystemConfigPage({ onBack }: DesignSystemConfigPageProps) {
               ).map(function ([role, token]) {
                 return (
                   <div key={role} className={uiStyles.colorColumn}>
-                    <div className={uiStyles.tokenName}>{role}</div>
-                    <div className={uiStyles.colorChip}>
-                      <div
-                        className={uiStyles.colorSwatch}
-                        style={{ backgroundColor: token.value }}
-                      />
-                      <span className={uiStyles.colorHex}>
-                        {hexDigits(token.value)}
-                      </span>
-                    </div>
+                    <div className={uiStyles.variableKey}>{role}</div>
+                    <ColorTokenChip token={token as ColorToken} />
                     {token.key ? (
                       <div
                         className={uiStyles.fieldLabel}
@@ -417,55 +374,26 @@ function DesignSystemConfigPage({ onBack }: DesignSystemConfigPageProps) {
                   </div>
                 );
               })}
-            </div>
+            </Stack>
             <VerticalSpace space="small" />
             <Divider />
             <VerticalSpace space="medium" />
 
             <Text className={uiStyles.sectionTitle}>Selected state</Text>
             <VerticalSpace space="small" />
-            <div className={uiStyles.colorGrid}>
+            <Stack space="small">
               <div className={uiStyles.colorColumn}>
-                <div className={uiStyles.tokenName}>labelBg</div>
-                <div className={uiStyles.colorChip}>
-                  <div
-                    className={uiStyles.colorSwatch}
-                    style={{
-                      backgroundColor: vbColor.selected.labelBg.value,
-                    }}
-                  />
-                  <span className={uiStyles.colorHex}>
-                    {hexDigits(vbColor.selected.labelBg.value)}
-                  </span>
-                </div>
+                <div className={uiStyles.variableKey}>labelBg</div>
+                <ColorTokenChip token={vbColor.selected.labelBg} />
               </div>
               <div className={uiStyles.colorColumn}>
-                <div className={uiStyles.tokenName}>highlightBg</div>
-                <div className={uiStyles.colorChip}>
-                  <div
-                    className={uiStyles.colorSwatch}
-                    style={{
-                      backgroundColor: rgbaFromHex(
-                        vbColor.selected.highlightBg.value,
-                        vbColor.selected.highlightBg.opacity,
-                      ),
-                    }}
-                  />
-                  <span className={uiStyles.colorHex}>
-                    {hexDigits(vbColor.selected.highlightBg.value)}
-                  </span>
-                </div>
+                <div className={uiStyles.variableKey}>highlightBg</div>
+                <ColorTokenChip
+                  token={vbColor.selected.highlightBg}
+                  fallbackOpacity={0.08}
+                />
               </div>
-            </div>
-            <VerticalSpace space="small" />
-            <div className={uiStyles.configValueList}>
-              <div className={uiStyles.configValueRow}>
-                <span className={uiStyles.fieldLabel}>highlightBg.opacity</span>
-                <span className={uiStyles.colorHex}>
-                  {String(vbColor.selected.highlightBg.opacity)}
-                </span>
-              </div>
-            </div>
+            </Stack>
             <VerticalSpace space="small" />
             <Divider />
             <VerticalSpace space="medium" />

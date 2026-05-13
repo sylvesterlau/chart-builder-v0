@@ -8,8 +8,8 @@ import {
 } from "../helpers";
 import {
   NormalizedVerticalBarChartConfig,
+  TypographyToken,
   VerticalBarChartConfig,
-  VerticalBarChartTextStyle,
 } from "../types";
 
 const TEXT_PRIMARY_COLOR = textColor.primary.value;
@@ -92,7 +92,7 @@ function createLine(
 
 function createText(
   characters: string | number,
-  style: VerticalBarChartTextStyle,
+  style: TypographyToken,
   color: string,
 ): TextNode {
   const text = figma.createText();
@@ -306,7 +306,7 @@ function drawSelectedLabel(
   groupWidth: number,
   height: number,
   labelBgColor: string,
-  labelTextStyle: VerticalBarChartTextStyle,
+  labelTextStyle: TypographyToken,
 ) {
   const labelWidth = Math.max(28, measureLabel(labelText) + 16);
   const labelFrameHeight = Math.max(18, labelTextStyle.lineHeight);
@@ -439,7 +439,7 @@ function drawBars(
         groupWidth,
         height,
         highlightBg.value,
-        highlightBg.opacity,
+        highlightBg.opacity ?? 0.08,
       );
     }
 

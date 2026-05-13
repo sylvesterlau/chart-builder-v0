@@ -1,3 +1,20 @@
+/** Figma-style paint: hex `value`, optional variable `key`, optional `opacity` (0–1). */
+export interface ColorToken {
+  value: string;
+  opacity?: number;
+  key?: string;
+}
+
+/** Figma-aligned text style; optional variable `key` and Figma style name override. */
+export interface TypographyToken {
+  fontFamily: string;
+  fontSize: number;
+  fontWeight: number;
+  lineHeight: number;
+  key?: string;
+  figmaFontStyle?: string;
+}
+
 // Define types for chart data
 export interface ChartDataItem {
   label: string;
@@ -33,45 +50,24 @@ export interface VerticalBarChartSeries {
   values: number[];
 }
 
-/** Figma-style paint token (key + hex value). */
-export interface VerticalBarChartColorToken {
-  key: string;
-  value: string;
-}
-
-export interface VerticalBarChartSelectedColors {
-  labelBg: {
-    value: string;
-  };
-  highlightBg: {
-    value: string;
-    opacity: number;
-  };
-}
-
-/** Vertical bar axis / title text (matches `verticalBarChartConfig.color`). */
-export interface VerticalBarChartTextStyle {
-  fontFamily: string;
-  fontSize: number;
-  fontWeight: number;
-  lineHeight: number;
-}
-
 export interface VerticalBarChartConfig {
   chartType: "verticalBar";
   barMode: VerticalBarMode;
   yAxisPosition?: VerticalBarYAxisPosition;
   axisLineVisibility?: VerticalBarAxisLineVisibility;
   color: {
-    axisLine: VerticalBarChartColorToken;
-    gridLine: VerticalBarChartColorToken;
-    selected: VerticalBarChartSelectedColors;
-    typography: {
-      xAxisTitle: VerticalBarChartTextStyle;
-      yAxisTitle: VerticalBarChartTextStyle;
-      xAxisLabel: VerticalBarChartTextStyle;
+    axisLine: ColorToken;
+    gridLine: ColorToken;
+    selected: {
+      labelBg: ColorToken;
+      highlightBg: ColorToken;
     };
-    yAxisLabel: VerticalBarChartTextStyle;
+    typography: {
+      xAxisTitle: TypographyToken;
+      yAxisTitle: TypographyToken;
+      xAxisLabel: TypographyToken;
+    };
+    yAxisLabel: TypographyToken;
   };
   periodCount: number;
   selectedIndex: number;
