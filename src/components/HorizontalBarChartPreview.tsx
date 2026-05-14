@@ -1,5 +1,5 @@
 import { h } from "preact";
-import { dataVisAt } from "../config";
+import { chartBackground, dataVisAt } from "../config";
 import { LegendStyle } from "../types";
 import { ChartItem } from "./ChartItemInput";
 import ChartTitlePreview from "./ChartTitlePreview";
@@ -40,7 +40,7 @@ function HorizontalBarChartPreview({
     <div
       style={{
         alignItems: "center",
-        backgroundColor: "#ffffff",
+        backgroundColor: chartBackground.value,
         boxSizing: "border-box",
         display: "flex",
         flexDirection: "column",

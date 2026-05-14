@@ -1,4 +1,4 @@
-import { textColor, verticalBarChartConfig } from "../config";
+import { chartBackground, textColor, verticalBarChartConfig } from "../config";
 import {
   clamp,
   formatAxisNumber,
@@ -475,7 +475,7 @@ function drawBarChart(
     0,
     parent.width,
     parent.height,
-    "#FFFFFF",
+    chartBackground.value,
   );
   Object.assign(chart, {
     layoutMode: "VERTICAL",
@@ -498,7 +498,7 @@ function drawBarChart(
     0,
     parent.width - 32,
     yTitleRowHeight,
-    "#FFFFFF",
+    chartBackground.value,
   );
   Object.assign(titleFrame, {
     layoutMode: "HORIZONTAL",
@@ -549,7 +549,7 @@ export async function drawVerticalBarChart(
   const chart = figma.createFrame();
   chart.name = ROOT_NAME;
   chart.resize(config.width, config.height);
-  chart.fills = [{ type: "SOLID", color: figma.util.rgb("#FFFFFF") }];
+  chart.fills = [{ type: "SOLID", color: figma.util.rgb(chartBackground.value) }];
   chart.clipsContent = true;
   Object.assign(chart, {
     layoutMode: "VERTICAL",

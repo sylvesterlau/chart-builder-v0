@@ -6,7 +6,7 @@ import NavTab from "../components/navTab/NavTab";
 import { ColorTokenChip } from "../components/ColorChips/ColorTokenChip";
 import { NumChip } from "../components/NumChips/NumChip";
 import { TypographyTokenChip } from "../components/TypographyChips/TypographyTokenChip";
-import { ds, pluginUISize, verticalBarChartConfig } from "../config";
+import { chartTitleConfig, ds, pluginUISize, verticalBarChartConfig } from "../config";
 import type { ColorToken } from "../types";
 import uiStyles from "../ui.css";
 import { collectTypographyTokenPaths } from "../utils/chartTypography";
@@ -216,12 +216,34 @@ function DesignSystemConfigPage({ onBack }: DesignSystemConfigPageProps) {
               <Divider />
             </Stack>
             <VerticalSpace space="medium" />
+            <Text className={uiStyles.sectionTitle}>Canvas background</Text>
+            <VerticalSpace space="small" />
+            <div className={uiStyles.colorTokenRow}>
+              <div className={uiStyles.variableKey}>colors.background</div>
+              <ColorTokenChip token={ds.colors.background} />
+            </div>
+            <VerticalSpace space="medium" />
 
             <Text className={uiStyles.sectionTitle}>Chart title</Text>
             <VerticalSpace space="small" />
+            <div className={uiStyles.configValueList}>
+              <div className={uiStyles.configValueRow}>
+                <span className={uiStyles.fieldLabel}>
+                  chartTitle.padding.horizontal
+                </span>
+                <NumChip value={chartTitleConfig.padding.horizontal} />
+              </div>
+              <div className={uiStyles.configValueRow}>
+                <span className={uiStyles.fieldLabel}>
+                  chartTitle.padding.vertical
+                </span>
+                <NumChip value={chartTitleConfig.padding.vertical} />
+              </div>
+            </div>
+            <VerticalSpace space="small" />
             <TypographyBlock
               pathPrefix="chartTitle.typography"
-              root={ds.chartTitle.typography}
+              root={chartTitleConfig.typography}
             />
           </div>
         ) : null}

@@ -1,5 +1,5 @@
 import { h } from "preact";
-import { textColor } from "../config";
+import { chartBackground, textColor } from "../config";
 import {
   buildTicks,
   clamp,
@@ -62,7 +62,7 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
   return (
     <div
       style={{
-        background: "#ffffff",
+        background: chartBackground.value,
         boxSizing: "border-box",
         color: textColor.primary.value,
         fontFamily: "Inter, sans-serif",

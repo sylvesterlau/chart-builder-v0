@@ -1,5 +1,5 @@
 import { h } from "preact";
-import { dataVisAt, pieChartConfig, textColor, typography } from "../config";
+import { chartBackground, dataVisAt, pieChartConfig, textColor, typography } from "../config";
 import { formatLegendPercentageDisplay } from "../helpers";
 import { LegendStyle, PiePageChartKind } from "../types";
 import { ChartItem } from "./ChartItemInput";
@@ -136,7 +136,7 @@ function PieDonutPreview({
     <div
       style={{
         alignItems: "center",
-        backgroundColor: "#ffffff",
+        backgroundColor: chartBackground.value,
         boxSizing: "border-box",
         display: "flex",
         flexDirection: "column",
@@ -214,7 +214,7 @@ function PieDonutPreview({
                   <path
                     d={path}
                     fill={color}
-                    stroke="#ffffff"
+                    stroke={chartBackground.value}
                     strokeWidth={pieChartConfig.indicator.sliceStrokeWeight}
                   />
                   {showIndicator ? (

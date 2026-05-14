@@ -1,5 +1,5 @@
 import { h } from "preact";
-import { textColor, typography } from "../config";
+import { chartTitleConfig, textColor } from "../config";
 import { typographyTokenToCss } from "../utils/chartTypography";
 
 interface ChartTitlePreviewProps {
@@ -16,7 +16,7 @@ function ChartTitlePreview({ title }: ChartTitlePreviewProps) {
       style={{
         boxSizing: "border-box",
         display: "flex",
-        padding: "8px 16px",
+        padding: `${chartTitleConfig.padding.vertical}px ${chartTitleConfig.padding.horizontal}px`,
         width: "100%",
       }}
     >
@@ -25,7 +25,7 @@ function ChartTitlePreview({ title }: ChartTitlePreviewProps) {
           color: textColor.primary.value,
           flex: 1,
           minWidth: 0,
-          ...typographyTokenToCss(typography.chartTitle),
+          ...typographyTokenToCss(chartTitleConfig.typography),
         }}
       >
         {title}

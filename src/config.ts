@@ -78,6 +78,10 @@ export const ds = {
         value: "#ffffff",
       } satisfies Readonly<ColorToken>,
     },
+    background: {
+      value: "#ffffff",
+      key: "",
+    } satisfies Readonly<ColorToken>,
   },
 
   chartTitle: {
@@ -86,6 +90,10 @@ export const ds = {
       fontSize: 19,
       fontWeight: 500,
       lineHeight: 23,
+    },
+    padding: {
+      horizontal: 16,
+      vertical: 8,
     },
   },
 
@@ -265,9 +273,18 @@ export const dataVisColor = ds.colors.dataVis;
 export const textColor = ds.colors.text;
 export const dividerColor = ds.legend.color.divider;
 
+/** Canvas / chart area fill + pie·donut slice stroke (Figma + UI preview). */
+export const chartBackground = ds.colors.background;
+
+/** Chart title: padding + typography (`drawChartTitle.ts`, `ChartTitlePreview`, design system). */
+export const chartTitleConfig = {
+  padding: ds.chartTitle.padding,
+  typography: ds.chartTitle.typography,
+} as const;
+
 /** Flat typography map for APIs that expect `typography.chartTitle` etc. */
 export const typography = {
-  chartTitle: ds.chartTitle.typography,
+  chartTitle: chartTitleConfig.typography,
   legend: ds.legend.typography,
   indicator: ds.chart.pie.indicator.typography,
   totalValue: ds.chart.semiDonut.totalValue.typography,
