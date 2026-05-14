@@ -1,11 +1,8 @@
 import { dataVisAt, dataVisColor } from "../config";
 import { ChartData } from "../types";
 import { getSum, transformToPercents, TransformedChartItem } from "../helpers";
-import {
-  createChartTitle,
-  createFinalFrame,
-  loadChartTitleFont,
-} from "./figmaOperations";
+import { createChartTitle, loadChartTitleFont } from "./drawChartTitle";
+import { createFinalFrame } from "./figmaOperations";
 import {
   createLegend,
   createLegendList,

@@ -9,11 +9,8 @@ import { getSum, transformToPercents, TransformedChartItem } from "../helpers";
 import { ChartData } from "../types";
 import { applyFigmaTypographyToken } from "./applyFigmaTypography";
 import { resolveFigmaFontStyle } from "./chartTypography";
-import {
-  createChartTitle,
-  createFinalFrame,
-  loadChartTitleFont,
-} from "./figmaOperations";
+import { createChartTitle, loadChartTitleFont } from "./drawChartTitle";
+import { createFinalFrame } from "./figmaOperations";
 import { createLegend, createLegendList, loadLegendFonts } from "./drawLegend";
 
 const chartTextPrimaryHex = textColor.primary.value;

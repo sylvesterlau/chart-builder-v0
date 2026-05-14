@@ -1,4 +1,4 @@
-import { verticalBarChartConfig } from "../config";
+import { chartBackground, textColor, verticalBarChartConfig } from "../config";
 import {
   clamp,
   formatAxisNumber,
@@ -8,13 +8,12 @@ import {
 } from "../helpers";
 import {
   NormalizedVerticalBarChartConfig,
+  TypographyToken,
   VerticalBarChartConfig,
 } from "../types";
 
-const TEXT_COLOR = "#333333";
-const GRID_COLOR = "#F1F1F1";
-const AXIS_COLOR = "#333333";
-const HIGHLIGHT_COLOR = "#000000";
+const TEXT_PRIMARY_COLOR = textColor.primary.value;
+const TEXT_ON_DARK_COLOR = textColor.onDark.value;
 const ROOT_NAME = "_demo/bar chart/1";
 const FONT_REGULAR: FontName = { family: "Inter", style: "Regular" };
 const FONT_BOLD: FontName = { family: "Inter", style: "Bold" };
@@ -93,14 +92,13 @@ function createLine(
 
 function createText(
   characters: string | number,
-  fontSize: number,
-  isBold: boolean,
+  style: TypographyToken,
   color: string,
 ): TextNode {
   const text = figma.createText();
-  text.fontName = isBold ? FONT_BOLD : FONT_REGULAR;
-  text.fontSize = fontSize;
-  text.lineHeight = { unit: "PIXELS", value: fontSize === 12 ? 16 : 20 };
+  text.fontName = style.fontWeight >= 600 ? FONT_BOLD : FONT_REGULAR;
+  text.fontSize = style.fontSize;
+  text.lineHeight = { unit: "PIXELS", value: style.lineHeight };
   text.fills = [{ type: "SOLID", color: figma.util.rgb(color) }];
   text.characters = String(characters);
   text.textAutoResize = "WIDTH_AND_HEIGHT";
@@ -122,21 +120,29 @@ function positionChart(chart: FrameNode) {
   chart.y = figma.viewport.center.y - chart.height / 2;
 }
 
-function drawYAxisTitle(parent: FrameNode, config: NormalizedVerticalBarChartConfig) {
+function drawYAxisTitle(
+  parent: FrameNode,
+  config: NormalizedVerticalBarChartConfig,
+) {
   const yAxisPosition = config.yAxisPosition ?? "right";
-  const leftTitle = createText("", 12, true, TEXT_COLOR);
+  const yTitle = config.color.typography.yAxisTitle;
+  const leftTitle = createText("", yTitle, TEXT_PRIMARY_COLOR);
   leftTitle.name = "Left axis title";
   leftTitle.characters = yAxisPosition === "left" ? config.yAxisTitle : "";
   leftTitle.textAlignHorizontal = "LEFT";
   leftTitle.textAutoResize = "NONE";
-  leftTitle.resize(parent.width / 2 - 4, 16);
+  leftTitle.resize(parent.width / 2 - 4, yTitle.lineHeight);
   parent.appendChild(leftTitle);
 
-  const title = createText(yAxisPosition === "right" ? config.yAxisTitle : "", 12, true, TEXT_COLOR);
+  const title = createText(
+    yAxisPosition === "right" ? config.yAxisTitle : "",
+    yTitle,
+    TEXT_PRIMARY_COLOR,
+  );
   title.name = "Right axis title";
   title.textAlignHorizontal = "RIGHT";
   title.textAutoResize = "NONE";
-  title.resize(parent.width / 2 - 4, 16);
+  title.resize(parent.width / 2 - 4, yTitle.lineHeight);
   parent.appendChild(title);
   title.layoutGrow = 1;
 }
@@ -151,6 +157,7 @@ function drawYAxis(
 ) {
   const axis = createFrameNode(parent, "Y-axis", x, y, width, height);
   const yAxisPosition = config.yAxisPosition ?? "right";
+  const yLabelStyle = config.color.yAxisLabel;
   Object.assign(axis, {
     layoutMode: "VERTICAL",
     primaryAxisSizingMode: "FIXED",
@@ -161,14 +168,7 @@ function drawYAxis(
   });
 
   config.yTicks.forEach((tick) => {
-    const lineFrame = createFrameNode(
-      axis,
-      "Y-axis line",
-      0,
-      0,
-      width,
-      1,
-    );
+    const lineFrame = createFrameNode(axis, "Y-axis line", 0, 0, width, 1);
     Object.assign(lineFrame, {
       layoutMode: "HORIZONTAL",
       primaryAxisSizingMode: "FIXED",
@@ -178,15 +178,21 @@ function drawYAxis(
       itemSpacing: 0,
     });
 
-    const axisLine = createLine(lineFrame, "Axis line", 0, 0, width, GRID_COLOR, 1);
-    axisLine.opacity = isVerticalBarYAxisLineVisible(
-      config.axisLineVisibility,
-    )
+    const axisLine = createLine(
+      lineFrame,
+      "Axis line",
+      0,
+      0,
+      width,
+      config.color.gridLine.value,
+      1,
+    );
+    axisLine.opacity = isVerticalBarYAxisLineVisible(config.axisLineVisibility)
       ? 1
       : 0;
 
     const labelText = formatAxisNumber(tick);
-    const label = createText(labelText, 12, false, TEXT_COLOR);
+    const label = createText(labelText, yLabelStyle, TEXT_PRIMARY_COLOR);
     label.name = yAxisPosition === "right" ? "Right label" : "Left label";
     label.textAlignHorizontal = yAxisPosition === "right" ? "LEFT" : "RIGHT";
     lineFrame.appendChild(label);
@@ -203,7 +209,7 @@ function drawYAxis(
     -1,
     1,
     height + 1,
-    AXIS_COLOR,
+    config.color.axisLine.value,
   );
   ruler.layoutPositioning = "ABSOLUTE";
   ruler.x = rulerX;
@@ -228,6 +234,8 @@ function drawXAxis(
     itemSpacing: 0,
   });
   const groupWidth = width / config.labels.length;
+  const xLabelStyle = config.color.typography.xAxisLabel;
+  const xTitleStyle = config.color.typography.xAxisTitle;
 
   config.labels.forEach((labelText, index) => {
     const lineFrame = createFrameNode(
@@ -254,25 +262,25 @@ function drawXAxis(
       0,
       1,
       height,
-      GRID_COLOR,
+      config.color.gridLine.value,
       isVerticalBarXAxisLineVisible(config.axisLineVisibility) ? 1 : 0,
     );
-    const label = createText(labelText, 12, false, TEXT_COLOR);
+    const label = createText(labelText, xLabelStyle, TEXT_PRIMARY_COLOR);
     label.name = "Axis label";
     label.textAlignHorizontal = "CENTER";
     label.textAutoResize = "NONE";
-    label.resize(groupWidth, 16);
+    label.resize(groupWidth, xLabelStyle.lineHeight);
     lineFrame.appendChild(label);
     label.layoutPositioning = "ABSOLUTE";
     label.x = 0;
     label.y = height + 4;
   });
 
-  const title = createText(config.xAxisTitle, 12, true, TEXT_COLOR);
+  const title = createText(config.xAxisTitle, xTitleStyle, TEXT_PRIMARY_COLOR);
   title.name = "Axis title";
   title.textAlignHorizontal = "CENTER";
   title.textAutoResize = "NONE";
-  title.resize(width, 16);
+  title.resize(width, xTitleStyle.lineHeight);
   axis.appendChild(title);
   title.layoutPositioning = "ABSOLUTE";
   title.x = 0;
@@ -285,7 +293,7 @@ function drawXAxis(
     height - 1,
     width,
     1,
-    AXIS_COLOR,
+    config.color.axisLine.value,
   );
   ruler.layoutPositioning = "ABSOLUTE";
   ruler.x = 0;
@@ -297,16 +305,19 @@ function drawSelectedLabel(
   labelText: string,
   groupWidth: number,
   height: number,
+  labelBgColor: string,
+  labelTextStyle: TypographyToken,
 ) {
   const labelWidth = Math.max(28, measureLabel(labelText) + 16);
+  const labelFrameHeight = Math.max(18, labelTextStyle.lineHeight);
   const labelFrame = createFrameNode(
     parent,
     "Label selected",
     groupWidth / 2 - labelWidth / 2,
     height + 4,
     labelWidth,
-    18,
-    HIGHLIGHT_COLOR,
+    labelFrameHeight,
+    labelBgColor,
   );
   Object.assign(labelFrame, {
     layoutMode: "HORIZONTAL",
@@ -316,18 +327,31 @@ function drawSelectedLabel(
     paddingRight: 8,
     counterAxisAlignItems: "CENTER",
   });
-  const label = createText(labelText, 12, false, "#FFFFFF");
+  const label = createText(labelText, labelTextStyle, TEXT_ON_DARK_COLOR);
   label.name = "Axis label";
   label.textAlignHorizontal = "CENTER";
   labelFrame.appendChild(label);
 }
 
-function drawDashedIndicator(parent: FrameNode, x: number, y1: number, y2: number) {
+function drawDashedIndicator(
+  parent: FrameNode,
+  x: number,
+  y1: number,
+  y2: number,
+  segmentColor: string,
+) {
   const top = Math.min(y1, y2);
   const bottom = Math.max(y1, y2);
-  const indicator = createFrameNode(parent, "Indicator line", x, top, 1, bottom - top);
+  const indicator = createFrameNode(
+    parent,
+    "Indicator line",
+    x,
+    top,
+    1,
+    bottom - top,
+  );
   for (let y = top; y < bottom; y += 7) {
-    createRect(indicator, "Indicator segment", 0, y - top, 1, 4, AXIS_COLOR);
+    createRect(indicator, "Indicator segment", 0, y - top, 1, 4, segmentColor);
   }
 }
 
@@ -368,13 +392,16 @@ function drawBars(
   });
   const groupWidth = width / config.labels.length;
   const visibleSeries =
-    config.barMode === "single" ? config.series.slice(0, 1) : config.series.slice(0, 2);
+    config.barMode === "single"
+      ? config.series.slice(0, 1)
+      : config.series.slice(0, 2);
   const barWidth =
     visibleSeries.length === 1
       ? clamp(groupWidth * 0.16, 5, 12)
       : clamp(groupWidth * 0.14, 5, 9);
   const gap = visibleSeries.length === 1 ? 0 : Math.max(3, barWidth * 0.75);
-  const totalBarWidth = visibleSeries.length * barWidth + (visibleSeries.length - 1) * gap;
+  const totalBarWidth =
+    visibleSeries.length * barWidth + (visibleSeries.length - 1) * gap;
 
   config.labels.forEach((label, labelIndex) => {
     const barGroup = createFrameNode(
@@ -388,9 +415,32 @@ function drawBars(
 
     const centerX = groupWidth / 2;
     if (labelIndex === config.selectedIndex) {
-      drawSelectedLabel(barGroup, label, groupWidth, height);
-      drawDashedIndicator(barGroup, centerX, 0, -40);
-      createRect(barGroup, "Highlighted BG", 0, 0, groupWidth, height, HIGHLIGHT_COLOR, 0.08);
+      const { labelBg, highlightBg } = config.color.selected;
+      drawSelectedLabel(
+        barGroup,
+        label,
+        groupWidth,
+        height,
+        labelBg.value,
+        config.color.typography.xAxisLabel,
+      );
+      drawDashedIndicator(
+        barGroup,
+        centerX,
+        0,
+        -40,
+        config.color.axisLine.value,
+      );
+      createRect(
+        barGroup,
+        "Highlighted BG",
+        0,
+        0,
+        groupWidth,
+        height,
+        highlightBg.value,
+        highlightBg.opacity ?? 0.08,
+      );
     }
 
     visibleSeries.forEach((series, seriesIndex) => {
@@ -411,8 +461,22 @@ function drawBars(
   });
 }
 
-function drawBarChart(parent: FrameNode, config: NormalizedVerticalBarChartConfig) {
-  const chart = createFrameNode(parent, "Chart", 0, 0, parent.width, parent.height, "#FFFFFF");
+function drawBarChart(
+  parent: FrameNode,
+  config: NormalizedVerticalBarChartConfig,
+) {
+  const yTitleRowHeight = config.color.typography.yAxisTitle.lineHeight;
+  const contentStackOffset = 40 + yTitleRowHeight;
+
+  const chart = createFrameNode(
+    parent,
+    "Chart",
+    0,
+    0,
+    parent.width,
+    parent.height,
+    chartBackground.value,
+  );
   Object.assign(chart, {
     layoutMode: "VERTICAL",
     primaryAxisSizingMode: "FIXED",
@@ -427,7 +491,15 @@ function drawBarChart(parent: FrameNode, config: NormalizedVerticalBarChartConfi
   chart.layoutSizingHorizontal = "FILL";
   chart.layoutSizingVertical = "FILL";
 
-  const titleFrame = createFrameNode(chart, "Y-axis title", 0, 0, parent.width - 32, 16, "#FFFFFF");
+  const titleFrame = createFrameNode(
+    chart,
+    "Y-axis title",
+    0,
+    0,
+    parent.width - 32,
+    yTitleRowHeight,
+    chartBackground.value,
+  );
   Object.assign(titleFrame, {
     layoutMode: "HORIZONTAL",
     primaryAxisSizingMode: "FIXED",
@@ -437,7 +509,14 @@ function drawBarChart(parent: FrameNode, config: NormalizedVerticalBarChartConfi
   titleFrame.layoutSizingHorizontal = "FILL";
   drawYAxisTitle(titleFrame, config);
 
-  const contentFrame = createFrameNode(chart, "Frame 2", 0, 0, parent.width - 32, parent.height - 56);
+  const contentFrame = createFrameNode(
+    chart,
+    "Frame 2",
+    0,
+    0,
+    parent.width - 32,
+    parent.height - contentStackOffset,
+  );
   contentFrame.layoutSizingHorizontal = "FILL";
   contentFrame.layoutSizingVertical = "FILL";
 
@@ -457,7 +536,9 @@ function drawBarChart(parent: FrameNode, config: NormalizedVerticalBarChartConfi
   drawBars(contentFrame, config, plotX, plotY, plotWidth, plotHeight);
 }
 
-export async function drawVerticalBarChart(chartData: Partial<VerticalBarChartConfig>) {
+export async function drawVerticalBarChart(
+  chartData: Partial<VerticalBarChartConfig>,
+) {
   const config = normalizeVerticalBarChartConfig(
     chartData,
     verticalBarChartConfig as unknown as VerticalBarChartConfig,
@@ -468,7 +549,7 @@ export async function drawVerticalBarChart(chartData: Partial<VerticalBarChartCo
   const chart = figma.createFrame();
   chart.name = ROOT_NAME;
   chart.resize(config.width, config.height);
-  chart.fills = [{ type: "SOLID", color: figma.util.rgb("#FFFFFF") }];
+  chart.fills = [{ type: "SOLID", color: figma.util.rgb(chartBackground.value) }];
   chart.clipsContent = true;
   Object.assign(chart, {
     layoutMode: "VERTICAL",

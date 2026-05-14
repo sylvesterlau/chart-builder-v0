@@ -1,5 +1,6 @@
 import { h } from "preact";
 import {
+  chartBackground,
   dataVisAt,
   semiDonutChartConfig,
   textColor,
@@ -93,7 +94,7 @@ function SemiDonutChartPreview({
     <div
       style={{
         alignItems: "center",
-        backgroundColor: "#ffffff",
+        backgroundColor: chartBackground.value,
         boxSizing: "border-box",
         display: "flex",
         flexDirection: "column",

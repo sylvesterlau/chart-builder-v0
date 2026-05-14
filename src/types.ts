@@ -1,3 +1,20 @@
+/** Figma-style paint: hex `value`, optional variable `key`, optional `opacity` (0–1). */
+export interface ColorToken {
+  value: string;
+  opacity?: number;
+  key?: string;
+}
+
+/** Figma-aligned text style; optional variable `key` and Figma style name override. */
+export interface TypographyToken {
+  fontFamily: string;
+  fontSize: number;
+  fontWeight: number;
+  lineHeight: number;
+  key?: string;
+  figmaFontStyle?: string;
+}
+
 // Define types for chart data
 export interface ChartDataItem {
   label: string;
@@ -38,6 +55,20 @@ export interface VerticalBarChartConfig {
   barMode: VerticalBarMode;
   yAxisPosition?: VerticalBarYAxisPosition;
   axisLineVisibility?: VerticalBarAxisLineVisibility;
+  color: {
+    axisLine: ColorToken;
+    gridLine: ColorToken;
+    selected: {
+      labelBg: ColorToken;
+      highlightBg: ColorToken;
+    };
+    typography: {
+      xAxisTitle: TypographyToken;
+      yAxisTitle: TypographyToken;
+      xAxisLabel: TypographyToken;
+    };
+    yAxisLabel: TypographyToken;
+  };
   periodCount: number;
   selectedIndex: number;
   width: number;

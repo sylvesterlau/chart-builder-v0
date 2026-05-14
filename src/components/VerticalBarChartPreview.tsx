@@ -1,4 +1,5 @@
 import { h } from "preact";
+import { chartBackground, textColor } from "../config";
 import {
   buildTicks,
   clamp,
@@ -6,6 +7,8 @@ import {
   isVerticalBarXAxisLineVisible,
   isVerticalBarYAxisLineVisible,
   niceMax,
+  rgbaFromHex,
+  verticalBarTextStyleToCss,
 } from "../helpers";
 import { VerticalBarChartConfig } from "../types";
 
@@ -42,13 +45,26 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
   const showYAxisLine = isVerticalBarYAxisLineVisible(
     config.axisLineVisibility,
   );
+  const axisLineColor = config.color.axisLine.value;
+  const gridLineColor = config.color.gridLine.value;
+  const { labelBg, highlightBg } = config.color.selected;
+  const { typography: ty, yAxisLabel: yLab } = config.color;
+  const highlightBgCss = rgbaFromHex(
+    highlightBg.value,
+    highlightBg.opacity ?? 0.08,
+  );
+  const xAxisLabelGap = 4;
+  const xAxisLabelRowHeight = ty.xAxisLabel.lineHeight;
+  const xAxisSelectedPillHeight = Math.max(18, xAxisLabelRowHeight);
+  const xAxisLabelBottomOffset = xAxisLabelGap + xAxisLabelRowHeight;
+  const xAxisSelectedBottomOffset = xAxisLabelGap + xAxisSelectedPillHeight;
 
   return (
     <div
       style={{
-        background: "#ffffff",
+        background: chartBackground.value,
         boxSizing: "border-box",
-        color: "#333333",
+        color: textColor.primary.value,
         fontFamily: "Inter, sans-serif",
         height: `${config.height}px`,
         overflow: "hidden",
@@ -61,11 +77,9 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
       <div
         style={{
           display: "flex",
-          fontSize: "12px",
-          fontWeight: 700,
-          height: "16px",
+          height: `${ty.yAxisTitle.lineHeight}px`,
           justifyContent: yAxisPosition === "right" ? "flex-end" : "flex-start",
-          lineHeight: "16px",
+          ...verticalBarTextStyleToCss(ty.yAxisTitle),
         }}
       >
         {config.yAxisTitle}
@@ -111,19 +125,17 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
                 >
                   <div
                     style={{
-                      background: showYAxisLine ? "#F1F1F1" : "transparent",
+                      background: showYAxisLine ? gridLineColor : "transparent",
                       height: "1px",
                       width: `${plotWidth}px`,
                     }}
                   />
                   <div
                     style={{
-                      fontSize: "12px",
                       left:
                         yAxisPosition === "right"
                           ? `${yAxisLabelX}px`
                           : undefined,
-                      lineHeight: "16px",
                       position: "absolute",
                       right:
                         yAxisPosition === "left"
@@ -132,6 +144,7 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
                       textAlign: yAxisPosition === "left" ? "right" : "left",
                       top: "-8px",
                       whiteSpace: "nowrap",
+                      ...verticalBarTextStyleToCss(yLab),
                     }}
                   >
                     {formatAxisNumber(tick)}
@@ -141,7 +154,7 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
             })}
             <div
               style={{
-                background: "#333333",
+                background: axisLineColor,
                 height: `${plotHeight + 1}px`,
                 left: yAxisPosition === "left" ? 0 : `${plotWidth - 1}px`,
                 position: "absolute",
@@ -174,7 +187,7 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
                 >
                   <div
                     style={{
-                      background: showXAxisLine ? "#F1F1F1" : "transparent",
+                      background: showXAxisLine ? gridLineColor : "transparent",
                       height: `${plotHeight}px`,
                       left: `${groupWidth / 2}px`,
                       position: "absolute",
@@ -185,13 +198,12 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
                   {isSelected ? null : (
                     <div
                       style={{
-                        bottom: "-20px",
-                        fontSize: "12px",
+                        bottom: `-${xAxisLabelBottomOffset}px`,
                         left: 0,
-                        lineHeight: "16px",
                         position: "absolute",
                         textAlign: "center",
                         width: "100%",
+                        ...verticalBarTextStyleToCss(ty.xAxisLabel),
                       }}
                     >
                       {label}
@@ -202,7 +214,7 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
             })}
             <div
               style={{
-                background: "#333333",
+                background: axisLineColor,
                 height: "1px",
                 left: 0,
                 position: "absolute",
@@ -213,13 +225,11 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
             <div
               style={{
                 bottom: "-44px",
-                fontSize: "12px",
-                fontWeight: 700,
                 left: 0,
-                lineHeight: "16px",
                 position: "absolute",
                 textAlign: "center",
                 width: `${plotWidth}px`,
+                ...verticalBarTextStyleToCss(ty.xAxisTitle),
               }}
             >
               {config.xAxisTitle}
@@ -259,7 +269,7 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
                   {labelIndex === config.selectedIndex ? (
                     <div
                       style={{
-                        background: "rgba(0,0,0,0.08)",
+                        background: highlightBgCss,
                         height: "100%",
                         inset: 0,
                         position: "absolute",
@@ -269,7 +279,7 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
                   {isSelected ? (
                     <div
                       style={{
-                        borderLeft: "1px dashed #333333",
+                        borderLeft: `1px dashed ${axisLineColor}`,
                         height: "40px",
                         left: "50%",
                         position: "absolute",
@@ -309,20 +319,19 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
                     <div
                       style={{
                         alignItems: "center",
-                        background: "#000000",
-                        bottom: "-20px",
-                        color: "#ffffff",
+                        background: labelBg.value,
+                        bottom: `-${xAxisSelectedBottomOffset}px`,
+                        color: textColor.onDark.value,
                         display: "flex",
-                        fontSize: "12px",
-                        height: "18px",
+                        height: `${xAxisSelectedPillHeight}px`,
                         justifyContent: "center",
                         left: "50%",
-                        lineHeight: "16px",
                         minWidth: "28px",
                         padding: "0 8px",
                         position: "absolute",
                         transform: "translateX(-50%)",
                         whiteSpace: "nowrap",
+                        ...verticalBarTextStyleToCss(ty.xAxisLabel),
                       }}
                     >
                       {label}

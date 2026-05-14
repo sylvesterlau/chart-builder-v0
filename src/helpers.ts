@@ -2,7 +2,9 @@
 import { dataVisAt, dataVisColor } from "./config";
 import {
   ChartData,
+  ColorToken,
   NormalizedVerticalBarChartConfig,
+  TypographyToken,
   VerticalBarAxisLineVisibility,
   VerticalBarChartConfig,
 } from "./types";
@@ -230,6 +232,73 @@ export function normalizeHexColor(value: unknown, fallback: string): string {
   return /^#[0-9a-f]{6}$/i.test(text) ? text : fallback;
 }
 
+export function mergeColorToken(
+  input: Partial<ColorToken> | undefined,
+  fallback: ColorToken,
+): ColorToken {
+  const value = normalizeHexColor(input?.value, fallback.value);
+  const next: ColorToken = { value };
+  const key = input?.key !== undefined ? String(input.key) : fallback.key;
+  if (key !== undefined) next.key = key;
+  const opacity =
+    input?.opacity !== undefined
+      ? clampNumber(
+          input.opacity,
+          0,
+          1,
+          fallback.opacity ?? 0,
+        )
+      : fallback.opacity;
+  if (opacity !== undefined) next.opacity = opacity;
+  return next;
+}
+
+/** CSS inline style fragment from vertical bar text tokens (preview). */
+export function verticalBarTextStyleToCss(
+  style: TypographyToken,
+): Record<string, string | number> {
+  return {
+    fontFamily: `${style.fontFamily}, sans-serif`,
+    fontSize: `${style.fontSize}px`,
+    fontWeight: style.fontWeight,
+    lineHeight: `${style.lineHeight}px`,
+  };
+}
+
+export function mergeVerticalBarTextStyle(
+  input: Partial<TypographyToken> | undefined,
+  fallback: TypographyToken,
+): TypographyToken {
+  const family = String(input?.fontFamily ?? "").trim();
+  const merged: TypographyToken = {
+    fontFamily: family || fallback.fontFamily,
+    fontSize: Math.round(clampNumber(input?.fontSize, 6, 96, fallback.fontSize)),
+    fontWeight: Math.round(
+      clampNumber(input?.fontWeight, 100, 900, fallback.fontWeight),
+    ),
+    lineHeight: Math.round(
+      clampNumber(input?.lineHeight, 8, 160, fallback.lineHeight),
+    ),
+  };
+  const key = input?.key !== undefined ? String(input.key) : fallback.key;
+  if (key !== undefined) merged.key = key;
+  const figma = input?.figmaFontStyle ?? fallback.figmaFontStyle;
+  if (figma !== undefined) merged.figmaFontStyle = figma;
+  return merged;
+}
+
+/** CSS `rgba(...)` from `#RRGGBB` and alpha in 0–1 (invalid hex → black). */
+export function rgbaFromHex(hex: string, alpha: number): string {
+  const text = String(hex || "").trim();
+  const match = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(text);
+  const a = clamp(Number(alpha) || 0, 0, 1);
+  if (!match) return `rgba(0,0,0,${a})`;
+  const r = parseInt(match[1], 16);
+  const g = parseInt(match[2], 16);
+  const b = parseInt(match[3], 16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
 export function formatAxisNumber(value: number): string {
   const roundedValue = Math.round(Number(value) || 0);
   const sign = roundedValue < 0 ? "-" : "";
@@ -327,6 +396,9 @@ export function normalizeVerticalBarChartConfig(
     ),
   );
 
+  const fallbackColor = fallback.color;
+  const inputColor = input.color;
+
   return {
     chartType: "verticalBar",
     barMode,
@@ -334,6 +406,38 @@ export function normalizeVerticalBarChartConfig(
     axisLineVisibility: normalizeVerticalBarAxisLineVisibility(
       input.axisLineVisibility,
     ),
+    color: {
+      axisLine: mergeColorToken(inputColor?.axisLine, fallbackColor.axisLine),
+      gridLine: mergeColorToken(inputColor?.gridLine, fallbackColor.gridLine),
+      selected: {
+        labelBg: mergeColorToken(
+          inputColor?.selected?.labelBg,
+          fallbackColor.selected.labelBg,
+        ),
+        highlightBg: mergeColorToken(
+          inputColor?.selected?.highlightBg,
+          fallbackColor.selected.highlightBg,
+        ),
+      },
+      typography: {
+        xAxisTitle: mergeVerticalBarTextStyle(
+          inputColor?.typography?.xAxisTitle,
+          fallbackColor.typography.xAxisTitle,
+        ),
+        yAxisTitle: mergeVerticalBarTextStyle(
+          inputColor?.typography?.yAxisTitle,
+          fallbackColor.typography.yAxisTitle,
+        ),
+        xAxisLabel: mergeVerticalBarTextStyle(
+          inputColor?.typography?.xAxisLabel,
+          fallbackColor.typography.xAxisLabel,
+        ),
+      },
+      yAxisLabel: mergeVerticalBarTextStyle(
+        inputColor?.yAxisLabel,
+        fallbackColor.yAxisLabel,
+      ),
+    },
     periodCount,
     selectedIndex,
     width: Math.round(clampNumber(input.width, 260, 1200, fallback.width)),

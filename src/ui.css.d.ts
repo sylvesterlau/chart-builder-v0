@@ -3,11 +3,10 @@ declare const styles: {
   readonly "chartItemDeleteButtonWrap": string;
   readonly "chartItemInput": string;
   readonly "chartItemInputField": string;
-  readonly "colorChip": string;
   readonly "colorColumn": string;
   readonly "colorGrid": string;
-  readonly "colorHex": string;
-  readonly "colorSwatch": string;
+  readonly "colorTokenBlock": string;
+  readonly "colorTokenRow": string;
   readonly "configValueList": string;
   readonly "configValueRow": string;
   readonly "divider": string;
@@ -28,10 +27,8 @@ declare const styles: {
   readonly "navTitle": string;
   readonly "section-title": string;
   readonly "sectionTitle": string;
-  readonly "tokenName": string;
   readonly "typographyTokenList": string;
   readonly "typographyTokenRow": string;
-  readonly "typographyTokenValue": string;
   readonly "variableKey": string;
   readonly "verticalBarButtonContent": string;
   readonly "verticalBarDataHeader": string;

@@ -1,3 +1,5 @@
+import type { ColorToken, TypographyToken } from "./types";
+
 // chart sample data — demo inputs, not visual tokens
 export const sampleData = {
   spending: {
@@ -60,7 +62,7 @@ export const ds = {
         { key: "", value: "#c64d24" },
         { key: "", value: "#266076" },
         { key: "", value: "#f14e73" },
-      ],
+      ] satisfies ReadonlyArray<ColorToken>,
     },
     text: {
       primary: {
@@ -71,7 +73,15 @@ export const ds = {
         key: "",
         value: "#545454",
       },
+      onDark: {
+        key: "",
+        value: "#ffffff",
+      } satisfies Readonly<ColorToken>,
     },
+    background: {
+      value: "#ffffff",
+      key: "",
+    } satisfies Readonly<ColorToken>,
   },
 
   chartTitle: {
@@ -80,6 +90,10 @@ export const ds = {
       fontSize: 19,
       fontWeight: 500,
       lineHeight: 23,
+    },
+    padding: {
+      horizontal: 16,
+      vertical: 8,
     },
   },
 
@@ -90,19 +104,19 @@ export const ds = {
         fontSize: 14,
         fontWeight: 400,
         lineHeight: 20,
-      },
+      } satisfies Readonly<TypographyToken>,
       value: {
         fontFamily: "Inter",
         fontSize: 14,
         fontWeight: 600,
         lineHeight: 20,
-      },
+      } satisfies Readonly<TypographyToken>,
       percentage: {
         fontFamily: "Inter",
         fontSize: 14,
         fontWeight: 400,
         lineHeight: 20,
-      },
+      } satisfies Readonly<TypographyToken>,
     },
     spacing: {
       horizontalPadding: 16,
@@ -113,7 +127,7 @@ export const ds = {
       divider: {
         key: "",
         value: "#EDEDED",
-      },
+      } satisfies Readonly<ColorToken>,
     },
   },
 
@@ -128,13 +142,13 @@ export const ds = {
             fontSize: 14,
             fontWeight: 400,
             lineHeight: 20,
-          },
+          } satisfies Readonly<TypographyToken>,
           value: {
             fontFamily: "Inter",
             fontSize: 19,
             fontWeight: 600,
             lineHeight: 27,
-          },
+          } satisfies Readonly<TypographyToken>,
         },
       },
     },
@@ -161,13 +175,13 @@ export const ds = {
             fontSize: 12,
             fontWeight: 400,
             lineHeight: 20,
-          },
+          } satisfies Readonly<TypographyToken>,
           percentage: {
             fontFamily: "Inter",
             fontSize: 12,
             fontWeight: 600,
             lineHeight: 20,
-          },
+          } satisfies Readonly<TypographyToken>,
         },
       },
     },
@@ -179,6 +193,51 @@ export const verticalBarChartConfig = {
   barMode: "dual" as const,
   yAxisPosition: "right" as const,
   axisLineVisibility: "y" as const,
+  color: {
+    axisLine: {
+      value: "#333333",
+      key: "",
+    } satisfies Readonly<ColorToken>,
+    gridLine: {
+      value: "#F1F1F1",
+      key: "",
+    } satisfies Readonly<ColorToken>,
+    selected: {
+      labelBg: {
+        value: "#000000",
+      } satisfies Readonly<ColorToken>,
+      highlightBg: {
+        value: "#000000",
+        opacity: 0.08,
+      } satisfies Readonly<ColorToken>,
+    },
+    typography: {
+      xAxisTitle: {
+        fontFamily: "Inter",
+        fontSize: 12,
+        fontWeight: 600,
+        lineHeight: 20,
+      } satisfies Readonly<TypographyToken>,
+      yAxisTitle: {
+        fontFamily: "Inter",
+        fontSize: 12,
+        fontWeight: 600,
+        lineHeight: 20,
+      } satisfies Readonly<TypographyToken>,
+      xAxisLabel: {
+        fontFamily: "Inter",
+        fontSize: 12,
+        fontWeight: 400,
+        lineHeight: 20,
+      } satisfies Readonly<TypographyToken>,
+    },
+    yAxisLabel: {
+      fontFamily: "Inter",
+      fontSize: 12,
+      fontWeight: 400,
+      lineHeight: 20,
+    } satisfies Readonly<TypographyToken>,
+  },
   periodCount: 6,
   selectedIndex: 3,
   width: 390,
@@ -214,9 +273,18 @@ export const dataVisColor = ds.colors.dataVis;
 export const textColor = ds.colors.text;
 export const dividerColor = ds.legend.color.divider;
 
+/** Canvas / chart area fill + pie·donut slice stroke (Figma + UI preview). */
+export const chartBackground = ds.colors.background;
+
+/** Chart title: padding + typography (`drawChartTitle.ts`, `ChartTitlePreview`, design system). */
+export const chartTitleConfig = {
+  padding: ds.chartTitle.padding,
+  typography: ds.chartTitle.typography,
+} as const;
+
 /** Flat typography map for APIs that expect `typography.chartTitle` etc. */
 export const typography = {
-  chartTitle: ds.chartTitle.typography,
+  chartTitle: chartTitleConfig.typography,
   legend: ds.legend.typography,
   indicator: ds.chart.pie.indicator.typography,
   totalValue: ds.chart.semiDonut.totalValue.typography,

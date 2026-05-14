@@ -49,7 +49,7 @@ function HomePage({ onNavigate }: HomePageProps) {
         />
         <List
           icon={<IconSettings24 />}
-          title="Util page"
+          title="Util"
           onClick={() => onNavigate("util")}
         />
       </div>

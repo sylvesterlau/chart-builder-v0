@@ -1,13 +1,16 @@
-import { dataVisAt, pieChartConfig, textColor, typography } from "../config";
+import {
+  chartBackground,
+  dataVisAt,
+  pieChartConfig,
+  textColor,
+  typography,
+} from "../config";
 import { formatLegendPercentageDisplay, getSum } from "../helpers";
 import { ChartData } from "../types";
 import { applyFigmaTypographyToken } from "./applyFigmaTypography";
 import { resolveFigmaFontStyle } from "./chartTypography";
-import {
-  createChartTitle,
-  createFinalFrame,
-  loadChartTitleFont,
-} from "./figmaOperations";
+import { createChartTitle, loadChartTitleFont } from "./drawChartTitle";
+import { createFinalFrame } from "./figmaOperations";
 import {
   createLegend,
   createLegendList,
@@ -46,7 +49,9 @@ function createPieSlice(
   slice.x = PIE_CENTER_X - pieRadius;
   slice.y = PIE_CENTER_Y - pieRadius;
   slice.fills = [{ type: "SOLID", color: figma.util.rgb(hexColor) }];
-  slice.strokes = [{ type: "SOLID", color: figma.util.rgb("#ffffff") }];
+  slice.strokes = [
+    { type: "SOLID", color: figma.util.rgb(chartBackground.value) },
+  ];
   slice.strokeWeight = pieChartConfig.indicator.sliceStrokeWeight;
   slice.strokeAlign = "CENTER";
   const sweep = endAngle - startAngle;
