@@ -4,11 +4,11 @@ import {
   buildTicks,
   clamp,
   formatAxisNumber,
-  isVerticalBarXAxisLineVisible,
-  isVerticalBarYAxisLineVisible,
+  isCartesianXAxisLineVisible,
+  isCartesianYAxisLineVisible,
   niceMax,
   rgbaFromHex,
-  verticalBarTextStyleToCss,
+  cartesianTextStyleToCss,
 } from "../helpers";
 import { VerticalBarChartConfig } from "../types";
 
@@ -32,23 +32,26 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
   );
   const ticks = buildTicks(maxValue, 3);
   const labels = config.labels.slice(0, config.periodCount);
-  const plotHeight = 170;
+  const { labelBg, highlightBg } = config.color.selected;
+  const { typography: ty, yAxisLabel: yLab } = config.color;
+  const yTitleRowHeight = ty.yAxisTitle.lineHeight;
+  const contentWidth = Math.max(1, config.width - 32);
+  const contentHeight = Math.max(1, config.height - 40 - yTitleRowHeight);
+  const plotHeight = Math.max(1, contentHeight - 54);
   const labelGutter = 46;
-  const plotWidth = 312;
+  const plotWidth = Math.max(1, contentWidth - labelGutter);
   const yAxisPosition = config.yAxisPosition ?? "right";
   const plotX = yAxisPosition === "right" ? 0 : labelGutter;
   const yAxisLabelX = yAxisPosition === "right" ? plotWidth + 8 : -8;
   const groupWidth = labels.length > 0 ? plotWidth / labels.length : plotWidth;
-  const showXAxisLine = isVerticalBarXAxisLineVisible(
+  const showXAxisLine = isCartesianXAxisLineVisible(
     config.axisLineVisibility,
   );
-  const showYAxisLine = isVerticalBarYAxisLineVisible(
+  const showYAxisLine = isCartesianYAxisLineVisible(
     config.axisLineVisibility,
   );
   const axisLineColor = config.color.axisLine.value;
   const gridLineColor = config.color.gridLine.value;
-  const { labelBg, highlightBg } = config.color.selected;
-  const { typography: ty, yAxisLabel: yLab } = config.color;
   const highlightBgCss = rgbaFromHex(
     highlightBg.value,
     highlightBg.opacity ?? 0.08,
@@ -77,19 +80,19 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
       <div
         style={{
           display: "flex",
-          height: `${ty.yAxisTitle.lineHeight}px`,
+          height: `${yTitleRowHeight}px`,
           justifyContent: yAxisPosition === "right" ? "flex-end" : "flex-start",
-          ...verticalBarTextStyleToCss(ty.yAxisTitle),
+          ...cartesianTextStyleToCss(ty.yAxisTitle),
         }}
       >
         {config.yAxisTitle}
       </div>
       <div
         style={{
-          height: "224px",
+          height: `${contentHeight}px`,
           marginTop: "8px",
           position: "relative",
-          width: "358px",
+          width: `${contentWidth}px`,
         }}
       >
         <div
@@ -144,7 +147,7 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
                       textAlign: yAxisPosition === "left" ? "right" : "left",
                       top: "-8px",
                       whiteSpace: "nowrap",
-                      ...verticalBarTextStyleToCss(yLab),
+                      ...cartesianTextStyleToCss(yLab),
                     }}
                   >
                     {formatAxisNumber(tick)}
@@ -203,7 +206,7 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
                         position: "absolute",
                         textAlign: "center",
                         width: "100%",
-                        ...verticalBarTextStyleToCss(ty.xAxisLabel),
+                        ...cartesianTextStyleToCss(ty.xAxisLabel),
                       }}
                     >
                       {label}
@@ -229,7 +232,7 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
                 position: "absolute",
                 textAlign: "center",
                 width: `${plotWidth}px`,
-                ...verticalBarTextStyleToCss(ty.xAxisTitle),
+                ...cartesianTextStyleToCss(ty.xAxisTitle),
               }}
             >
               {config.xAxisTitle}
@@ -331,7 +334,7 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
                         position: "absolute",
                         transform: "translateX(-50%)",
                         whiteSpace: "nowrap",
-                        ...verticalBarTextStyleToCss(ty.xAxisLabel),
+                        ...cartesianTextStyleToCss(ty.xAxisLabel),
                       }}
                     >
                       {label}

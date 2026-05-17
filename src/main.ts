@@ -1,8 +1,9 @@
 import { on, showUI } from "@create-figma-plugin/utilities";
 import { pluginUISize } from "./config";
-import { ChartData, VerticalBarChartConfig } from "./types";
+import { ChartData, LineChartConfig, VerticalBarChartConfig } from "./types";
 import { getTokenVarKey } from "./helpers";
 import { drawHorBarChart } from "./utils/drawHorBarChart";
+import { drawLineChart } from "./utils/drawLineChart";
 import { drawPieChart } from "./utils/drawPieChart";
 import { drawSemiDonutChart } from "./utils/drawSemiDonutChart";
 import { drawVerticalBarChart } from "./utils/drawVerticalBarChart";
@@ -36,6 +37,18 @@ export default function () {
     }
   }
 
+  async function handleLineChartData(
+    chartData: Partial<LineChartConfig>,
+  ) {
+    try {
+      await drawLineChart(chartData);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to create line chart.";
+      figma.notify(message, { error: true, timeout: 4000 });
+    }
+  }
+
   async function handleLookupTokenVarKey(tokenPath: string) {
     if (!tokenPath || !tokenPath.trim()) {
       figma.notify("Please enter a token path");
@@ -48,6 +61,7 @@ export default function () {
   on("SUBMIT_HORIZONTAL_BAR_CHART_DATA", handleHorizontalBarChartData);
   on("SUBMIT_PIE_CHART_DATA", handlePieChartData);
   on("SUBMIT_VERTICAL_BAR_CHART_DATA", handleVerticalBarChartData);
+  on("SUBMIT_LINE_CHART_DATA", handleLineChartData);
   on("LOOKUP_TOKEN_VAR_KEY", handleLookupTokenVarKey);
   on("RESIZE_PLUGIN_UI_WINDOW", handleResizePluginUiWindow);
 

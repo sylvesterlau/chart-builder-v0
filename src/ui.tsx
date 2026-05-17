@@ -3,6 +3,7 @@ import { h } from "preact";
 import { useState } from "preact/hooks";
 import HomePage from "./pages/HomePage";
 import HorizontalBarPage from "./pages/HorizontalBarPage";
+import LineChartPage from "./pages/LineChartPage";
 import VerticalBarPage from "./pages/VerticalBarPage";
 import UtilPage from "./pages/UtilPage";
 
@@ -14,6 +15,7 @@ export type Pages =
   | "horizontalBar"
   | "pieDonutChart"
   | "verticalBar"
+  | "lineChart"
   | "util"
   | "designSystemConfig";
 
@@ -33,6 +35,8 @@ function Plugin() {
         return <HorizontalBarPage onBack={navigateToHome} />;
       case "verticalBar":
         return <VerticalBarPage onBack={navigateToHome} />;
+      case "lineChart":
+        return <LineChartPage onBack={navigateToHome} />;
       case "pieDonutChart":
         return <PieDonutChartPage onBack={navigateToHome} />;
       case "util":
