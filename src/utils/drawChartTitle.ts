@@ -1,8 +1,7 @@
 import { chartTitleConfig, textColor } from "../config";
+import { applyColorTokenToFills } from "./applyColorToken";
 import { applyFigmaTypographyToken } from "./applyFigmaTypography";
 import { resolveFigmaFontStyle } from "./chartTypography";
-
-const chartTextPrimaryHex = textColor.primary.value;
 
 export async function loadChartTitleFont() {
   const token = chartTitleConfig.typography;
@@ -12,7 +11,7 @@ export async function loadChartTitleFont() {
   });
 }
 
-export function createChartTitle(title: string): FrameNode | null {
+export async function createChartTitle(title: string): Promise<FrameNode | null> {
   const trimmedTitle = title.trim();
   if (!trimmedTitle) {
     return null;
@@ -40,12 +39,8 @@ export function createChartTitle(title: string): FrameNode | null {
   applyFigmaTypographyToken(titleNode, chartTitleConfig.typography);
   titleNode.characters = trimmedTitle;
   titleNode.layoutGrow = 1;
-  titleNode.fills = [
-    {
-      type: "SOLID",
-      color: figma.util.rgb(chartTextPrimaryHex),
-    },
-  ];
+
+  await applyColorTokenToFills(titleNode, textColor.primary);
 
   titleFrame.appendChild(titleNode);
   return titleFrame;

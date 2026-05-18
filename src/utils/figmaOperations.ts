@@ -1,5 +1,6 @@
 // Figma operations
 import { chartBackground } from "../config";
+import { applyColorTokenToFills } from "./applyColorToken";
 
 // check Theme collection by ID
 export async function checkThemeCol(colID: string) {
@@ -7,7 +8,7 @@ export async function checkThemeCol(colID: string) {
     await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync();
   const themeColExists =
     Array.isArray(libraryCollections) &&
-    !!libraryCollections.find((col: any) => col.key === colID);
+    !!libraryCollections.find((col: { key: string }) => col.key === colID);
   if (!themeColExists) {
     figma.notify(
       "📚Hive Design Toolkit is missing. Please check Team Library.",
@@ -17,7 +18,7 @@ export async function checkThemeCol(colID: string) {
 }
 
 // Draw final frame
-export function createFinalFrame() {
+export async function createFinalFrame(): Promise<FrameNode> {
   const finalFrame = figma.createFrame();
   finalFrame.resize(390, 0);
   Object.assign(finalFrame, {
@@ -32,11 +33,6 @@ export function createFinalFrame() {
     paddingTop: 16,
     paddingBottom: 16,
   });
-  finalFrame.fills = [
-    {
-      type: "SOLID",
-      color: figma.util.rgb(chartBackground.value),
-    },
-  ];
+  await applyColorTokenToFills(finalFrame, chartBackground);
   return finalFrame;
 }

@@ -1,6 +1,8 @@
-import { dataVisAt, dataVisColor } from "../config";
+import { dataVisAt } from "../config";
 import { ChartData } from "../types";
 import { getSum, transformToPercents, TransformedChartItem } from "../helpers";
+import type { ColorToken } from "../types";
+import { applyColorTokenToFills } from "./applyColorToken";
 import { createChartTitle, loadChartTitleFont } from "./drawChartTitle";
 import { createFinalFrame } from "./figmaOperations";
 import {
@@ -9,15 +11,14 @@ import {
   loadLegendFonts,
 } from "./drawLegend";
 
-// Draw horizontal bar
-export function createHorBar(
+async function createHorBar(
   startPercent: number,
   endPercent: number,
   exactPercent: number,
-  layerName: string = "bar",
-  hexColor: string = dataVisColor.general[0].value,
+  layerName: string,
+  fillToken: ColorToken,
   isFirst: Boolean = false,
-): RectangleNode | null {
+): Promise<RectangleNode | null> {
   if (endPercent - startPercent <= 0) {
     return null;
   }
@@ -28,21 +29,17 @@ export function createHorBar(
     x: startPercent,
     name: layerName,
   });
-  const convertedColor = figma.util.rgb(hexColor);
-  const fillColor = convertedColor;
-  bar.fills = [{ type: "SOLID", color: fillColor }];
+  await applyColorTokenToFills(bar, fillToken);
   return bar;
 }
 
 export async function drawHorBarChart(chartData: ChartData) {
-  // check if form value sum > 0
   const sum: number = getSum(chartData);
   if (sum <= 0) {
     figma.notify("Please enter correct value for items");
     return;
   }
   await figma.currentPage.loadAsync();
-  // Transform data with helper
   const transformedData: TransformedChartItem[] = transformToPercents(
     chartData.data,
   );
@@ -75,7 +72,6 @@ export async function drawHorBarChart(chartData: ChartData) {
     paddingBottom: 16,
     layoutAlign: "STRETCH",
   });
-  // create chart frame
   const chartFrame = figma.createFrame();
   chartFrame.fills = [];
   chartFrame.resize(358, 12);
@@ -87,31 +83,29 @@ export async function drawHorBarChart(chartData: ChartData) {
     itemSpacing: 2,
     layoutAlign: "STRETCH",
   });
-  // use indexed for loop (compatible with older TS targets)
   for (let i = 0; i < transformedData.length; i++) {
     const item = transformedData[i];
     const layerName = `${item.label} (${item.value})`;
     const isFirstSlice = i == 0 ? true : false;
-    const fallbackColor = dataVisAt(i).value;
+    const barColor = dataVisAt(i);
     if (item.value > 0) {
-      const bar = createHorBar(
+      const bar = await createHorBar(
         item.startPercent,
         item.endPercent,
         item.exactPercent,
         layerName,
-        fallbackColor,
+        barColor,
         isFirstSlice,
       );
       if (bar) {
         chartFrame.appendChild(bar);
       }
       if (legendList) {
-        const legend = createLegend(
+        const legend = await createLegend(
           item.label,
           item.value,
           item.exactPercent,
-          item.colorToken ?? null,
-          fallbackColor,
+          barColor,
           showPercentage,
           valuePrefix,
           valueSuffix,
@@ -123,9 +117,8 @@ export async function drawHorBarChart(chartData: ChartData) {
       }
     }
   }
-  // create final frame
-  const finalFrame = createFinalFrame();
-  const titleFrame = createChartTitle(chartTitle);
+  const finalFrame = await createFinalFrame();
+  const titleFrame = await createChartTitle(chartTitle);
   if (titleFrame) {
     finalFrame.appendChild(titleFrame);
   }

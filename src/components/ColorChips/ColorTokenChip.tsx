@@ -1,12 +1,13 @@
 import { Fragment, h } from "preact";
 import { clamp, rgbaFromHex } from "../../helpers";
 import type { ColorToken } from "../../types";
+import {
+  colorTokenChipLabel,
+  colorTokenHasVariableBinding,
+  colorTokenSwatchHex,
+} from "../../utils/colorTokenDisplay";
+import { useColorTokenSwatches } from "./colorTokenSwatchContext";
 import styles from "./ColorTokenChip.module.css";
-
-function hexDigits(hex: string): string {
-  const trimmed = hex.trim().replace(/^#/, "");
-  return trimmed.toUpperCase();
-}
 
 function isFullOpacity(alpha: number | undefined): boolean {
   return alpha === undefined || Math.abs(alpha - 1) < 1e-6;
@@ -23,6 +24,9 @@ export interface ColorTokenChipProps {
 
 export function ColorTokenChip(props: ColorTokenChipProps) {
   const { token, fallbackOpacity } = props;
+  const resolvedSwatches = useColorTokenSwatches();
+  const swatchHex = colorTokenSwatchHex(token, resolvedSwatches);
+
   const alpha =
     token.opacity !== undefined
       ? clamp(token.opacity, 0, 1)
@@ -33,18 +37,23 @@ export function ColorTokenChip(props: ColorTokenChipProps) {
   const showOpacityPercent = alpha !== undefined && !isFullOpacity(alpha);
   const previewBackground =
     alpha !== undefined && !isFullOpacity(alpha)
-      ? rgbaFromHex(token.value, alpha)
-      : token.value;
+      ? rgbaFromHex(swatchHex, alpha)
+      : swatchHex;
   const pct = alpha !== undefined ? Math.round(alpha * 100) : 0;
+  const label = colorTokenChipLabel(token);
+  const boundVariable = colorTokenHasVariableBinding(token);
+  const chipClass = boundVariable
+    ? `${styles.chip} ${styles.chipBound}`
+    : styles.chip;
 
   return (
-    <div className={styles.chip}>
+    <div className={chipClass}>
       <div className={styles.segment}>
         <div
           className={styles.swatch}
           style={{ backgroundColor: previewBackground }}
         />
-        <span className={styles.hex}>{hexDigits(token.value)}</span>
+        <span className={styles.hex}>{label}</span>
       </div>
       {showOpacityPercent ? (
         <Fragment>

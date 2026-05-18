@@ -1,4 +1,4 @@
-import { on, showUI } from "@create-figma-plugin/utilities";
+import { emit, on, showUI } from "@create-figma-plugin/utilities";
 import { pluginUISize } from "./config";
 import { ChartData, VerticalBarChartConfig } from "./types";
 import { getTokenVarKey } from "./helpers";
@@ -6,6 +6,7 @@ import { drawHorBarChart } from "./utils/drawHorBarChart";
 import { drawPieChart } from "./utils/drawPieChart";
 import { drawSemiDonutChart } from "./utils/drawSemiDonutChart";
 import { drawVerticalBarChart } from "./utils/drawVerticalBarChart";
+import { resolveColorTokenSwatchMap } from "./utils/resolveColorTokenSwatches";
 
 export default function () {
   function handleResizePluginUiWindow(size: { width: number; height: number }) {
@@ -44,15 +45,23 @@ export default function () {
     await getTokenVarKey(tokenPath);
   }
 
+  async function publishColorTokenSwatchValues() {
+    const values = await resolveColorTokenSwatchMap();
+    emit("COLOR_TOKEN_SWATCH_VALUES", values);
+  }
+
   on("SUBMIT_SEMI_DONUT_CHART_DATA", handleSemiDonutChartData);
   on("SUBMIT_HORIZONTAL_BAR_CHART_DATA", handleHorizontalBarChartData);
   on("SUBMIT_PIE_CHART_DATA", handlePieChartData);
   on("SUBMIT_VERTICAL_BAR_CHART_DATA", handleVerticalBarChartData);
   on("LOOKUP_TOKEN_VAR_KEY", handleLookupTokenVarKey);
   on("RESIZE_PLUGIN_UI_WINDOW", handleResizePluginUiWindow);
+  on("REQUEST_COLOR_TOKEN_SWATCH_VALUES", publishColorTokenSwatchValues);
 
   showUI({
     width: pluginUISize.homePage.width,
     height: pluginUISize.homePage.height,
   });
+
+  void publishColorTokenSwatchValues();
 }

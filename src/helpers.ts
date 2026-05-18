@@ -1,5 +1,5 @@
 // helpers.ts for reused function
-import { dataVisAt, dataVisColor } from "./config";
+import { dataVisAt } from "./config";
 import {
   ChartData,
   ColorToken,
@@ -79,64 +79,6 @@ export function transformToPercents(
     startPercent = result.endPercent;
     return result;
   });
-}
-// Bind a team variable to a SolidPaint
-export async function bindVariableKeyToPaint(
-  variableKey: string | null,
-  basePaint: Paint,
-): Promise<Paint> {
-  // default base paint (first Data Vis swatch when binding fails / missing variable)
-  const defaultSolid: SolidPaint = {
-    type: "SOLID",
-    color: figma.util.rgb(dataVisColor.general[0].value),
-  };
-  const paintToUse: SolidPaint =
-    (basePaint as SolidPaint).type === "SOLID"
-      ? (basePaint as SolidPaint)
-      : defaultSolid;
-  if (!variableKey) return paintToUse;
-  let importedVar: Variable | null = null;
-  try {
-    importedVar = await figma.variables.importVariableByKeyAsync(variableKey);
-  } catch (err) {
-    // Missing team-library variables should not block creating the chart.
-    return paintToUse;
-  }
-  try {
-    // deep clone paint to avoid mutating shared fills
-    const clonedPaint: Paint =
-      typeof (globalThis as any).structuredClone === "function"
-        ? (globalThis as any).structuredClone(paintToUse)
-        : JSON.parse(JSON.stringify(paintToUse));
-    // @ts-ignore - setBoundVariableForPaint may not be in typings
-    const bound = figma.variables.setBoundVariableForPaint(
-      clonedPaint as any,
-      "color",
-      importedVar as any,
-    );
-    return bound as Paint;
-  } catch (err) {
-    console.error(
-      "bindVariableKeyToPaint: setBoundVariableForPaint failed",
-      err,
-    );
-    // try to read color from importedVar.valuesByMode
-    try {
-      if (importedVar && (importedVar as any).valuesByMode) {
-        const modeId = Object.keys((importedVar as any).valuesByMode)[0];
-        const val = (importedVar as any).valuesByMode[modeId];
-        if (val && typeof val === "object" && "r" in val) {
-          return {
-            type: "SOLID",
-            color: { r: val.r, g: val.g, b: val.b },
-          } as SolidPaint;
-        }
-      }
-    } catch (e) {
-      console.error("bindVariableKeyToPaint: fallback read failed", e);
-    }
-    return paintToUse;
-  }
 }
 // token lookup handler (search all available library collections)
 export async function getTokenVarKey(tokenPath: string) {

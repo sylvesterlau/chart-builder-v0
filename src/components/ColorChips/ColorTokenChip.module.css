@@ -1,6 +1,7 @@
 .chip {
   align-items: center;
   background-color: var(--figma-color-bg-secondary);
+  border: 1px solid transparent;
   border-radius: 6px;
   box-sizing: border-box;
   display: inline-flex;
@@ -8,8 +9,15 @@
   flex-shrink: 0;
   max-width: 100%;
   min-height: 28px;
-  padding: 3px 3px 3px 5px;
   width: fit-content;
+  padding: 0 4px;
+}
+
+/* Bound Figma variable — matches Dev Mode variable chip */
+.chipBound {
+  background-color: var(--figma-color-bg);
+  border-color: var(--figma-color-border);
+  padding: 0 4px;
 }
 
 .segment {
@@ -19,7 +27,6 @@
   flex-direction: row;
   gap: 6px;
   min-height: 22px;
-  padding: 0 6px 0 3px;
 }
 
 .divider {

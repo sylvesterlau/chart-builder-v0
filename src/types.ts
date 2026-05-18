@@ -2,6 +2,7 @@
 export interface ColorToken {
   value: string;
   opacity?: number;
+  /** Library import key for `importVariableByKeyAsync`. */
   key?: string;
 }
 
