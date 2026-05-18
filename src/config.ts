@@ -196,9 +196,15 @@ export const ds = {
         /** Offset from line end to label anchor (px). */
         labelCenterOffset: 30,
         /** Separator stroke between pie/donut slices (SVG path stroke + Figma ellipse). */
-        sliceStrokeWeight: 1.5,
+        sliceStrokeWeight: {
+          value: 1.5,
+          key: "e7a7a7e1c7572287d371c5fb928b4cac8879bda6",
+        } satisfies NumberToken,
         /** Indicator leader line stroke (SVG line + Figma vector). */
-        leaderLineStrokeWeight: 1.5,
+        leaderLineStrokeWeight: {
+          value: 1.5,
+          key: "02a12e48d546e86ffbc3cbe52bf3027d21b40815",
+        } satisfies NumberToken,
         typography: {
           label: {
             fontFamily: "Inter",

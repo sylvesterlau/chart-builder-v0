@@ -6,7 +6,7 @@ import { drawHorBarChart } from "./utils/drawHorBarChart";
 import { drawPieChart } from "./utils/drawPieChart";
 import { drawSemiDonutChart } from "./utils/drawSemiDonutChart";
 import { drawVerticalBarChart } from "./utils/drawVerticalBarChart";
-import { resolveColorTokenSwatchMap } from "./utils/resolveColorTokenSwatches";
+import { resolveColorTokenPayload } from "./utils/resolveColorTokenSwatches";
 import { resolveNumberTokenPayload } from "./utils/resolveNumberTokenValues";
 
 export default function () {
@@ -44,8 +44,8 @@ export default function () {
   }
 
   async function publishColorTokenSwatchValues() {
-    const values = await resolveColorTokenSwatchMap();
-    emit("COLOR_TOKEN_SWATCH_VALUES", values);
+    const payload = await resolveColorTokenPayload();
+    emit("COLOR_TOKEN_SWATCH_VALUES", payload);
   }
 
   async function publishNumberTokenResolvedValues() {

@@ -1,6 +1,7 @@
 import { IconNumber16 } from "@create-figma-plugin/ui";
 import { h } from "preact";
 import type { NumberToken } from "../../types";
+import { TokenChipTooltip } from "../TokenChipTooltip/TokenChipTooltip";
 import {
   getNumberTokenVariableName,
   numberTokenHasVariableBinding,
@@ -23,8 +24,8 @@ export function NumberTokenChip(props: NumberTokenChipProps) {
     ? `${styles.chip} ${styles.chipBound}`
     : styles.chip;
 
-  return (
-    <div className={chipClass} title={variableName ?? String(resolved)}>
+  const chipContent = (
+    <div className={chipClass}>
       <span className={styles.icon}>
         <IconNumber16 />
       </span>
@@ -37,5 +38,15 @@ export function NumberTokenChip(props: NumberTokenChipProps) {
         <span className={styles.value}>{String(resolved)}</span>
       )}
     </div>
+  );
+
+  if (!boundVariable || !variableName) {
+    return chipContent;
+  }
+
+  return (
+    <TokenChipTooltip tokenName={variableName} meta={String(resolved)}>
+      {chipContent}
+    </TokenChipTooltip>
   );
 }

@@ -17,6 +17,14 @@ import {
 import type { ColorToken, NumberToken } from "../types";
 import uiStyles from "../ui.css";
 import { collectTypographyTokenPaths } from "../utils/chartTypography";
+import { isNumberToken } from "../utils/numberTokenDisplay";
+
+function ConfigMetricChip(props: { value: unknown }) {
+  if (isNumberToken(props.value)) {
+    return <NumberTokenChip token={props.value} />;
+  }
+  return <NumChip value={props.value as number} />;
+}
 
 interface DesignSystemConfigPageProps {
   onBack: () => void;
@@ -66,7 +74,7 @@ function pieLayoutEntries(): Array<[string, string | number]> {
   return Object.entries(layout);
 }
 
-function pieIndicatorMetricEntries(): Array<[string, string | number]> {
+function pieIndicatorMetricEntries(): Array<[string, unknown]> {
   const { typography: _, ...metrics } = ds.chart.pie.indicator;
   return Object.entries(metrics);
 }
@@ -354,7 +362,7 @@ function DesignSystemConfigPage({ onBack }: DesignSystemConfigPageProps) {
                 return (
                   <div key={key} className={uiStyles.configValueRow}>
                     <span className={uiStyles.fieldLabel}>{key}</span>
-                    <NumChip value={value} />
+                    <ConfigMetricChip value={value} />
                   </div>
                 );
               })}
@@ -388,20 +396,6 @@ function DesignSystemConfigPage({ onBack }: DesignSystemConfigPageProps) {
                   <div key={role} className={uiStyles.colorColumn}>
                     <div className={uiStyles.variableKey}>{role}</div>
                     <ColorTokenChip token={token as ColorToken} />
-                    {token.key ? (
-                      <div
-                        className={uiStyles.fieldLabel}
-                        style={{
-                          fontSize: 10,
-                          marginTop: 4,
-                          opacity: 0.7,
-                          wordBreak: "break-all",
-                        }}
-                        title={token.key}
-                      >
-                        key: {token.key}
-                      </div>
-                    ) : null}
                   </div>
                 );
               })}

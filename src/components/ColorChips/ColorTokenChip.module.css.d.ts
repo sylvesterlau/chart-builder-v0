@@ -8,6 +8,11 @@ declare const styles: {
   readonly "opacityValue": string;
   readonly "segment": string;
   readonly "swatch": string;
+  readonly "swatchAlphaOverlay": string;
+  readonly "swatchChecker": string;
+  readonly "swatchLeft": string;
+  readonly "swatchRight": string;
+  readonly "swatchSplit": string;
 };
 export = styles;
 

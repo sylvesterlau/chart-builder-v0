@@ -14,6 +14,7 @@ import {
 import { applyFigmaTypographyToken } from "./applyFigmaTypography";
 import { resolveFigmaFontStyle } from "./chartTypography";
 import { createChartTitle, loadChartTitleFont } from "./drawChartTitle";
+import { applyStrokeWeight } from "./applyNumberToken";
 import { createFinalFrame } from "./figmaOperations";
 import {
   createLegend,
@@ -50,7 +51,7 @@ async function createPieSlice(
   slice.resize(pieRadius * 2, pieRadius * 2);
   slice.x = PIE_CENTER_X - pieRadius;
   slice.y = PIE_CENTER_Y - pieRadius;
-  slice.strokeWeight = pieChartConfig.indicator.sliceStrokeWeight;
+  await applyStrokeWeight(slice, pieChartConfig.indicator.sliceStrokeWeight);
   slice.strokeAlign = "CENTER";
   const sweep = endAngle - startAngle;
   if (sweep >= 359.999) {
@@ -203,7 +204,10 @@ export async function drawPieChart(chartData: ChartData) {
           data: `M ${lineStartPoint.x} ${lineStartPoint.y} L ${lineEndPoint.x} ${lineEndPoint.y}`,
         },
       ];
-      line.strokeWeight = pieChartConfig.indicator.leaderLineStrokeWeight;
+      await applyStrokeWeight(
+        line,
+        pieChartConfig.indicator.leaderLineStrokeWeight,
+      );
       await applyColorTokenToStrokes(line, sliceColor);
       chartFrame.appendChild(line);
 

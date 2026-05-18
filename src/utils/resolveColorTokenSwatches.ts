@@ -1,10 +1,22 @@
+import { dotToSlash } from "../helpers";
 import { collectConfigColorTokenKeys } from "./colorTokenDisplay";
 
 export type ColorTokenSwatchMap = Record<string, string>;
+export type ColorTokenNameMap = Record<string, string>;
+
+export interface ColorTokenResolvedPayload {
+  values: ColorTokenSwatchMap;
+  names: ColorTokenNameMap;
+}
 
 function variableIdToImportKey(id: string): string | null {
   const match = id.match(/VariableID:([a-f0-9]{40})/i);
   return match ? match[1] : null;
+}
+
+function figmaVariableDisplayName(variable: Variable): string {
+  const raw = variable.name?.trim() ?? "";
+  return raw ? dotToSlash(raw) : "";
 }
 
 function rgbaToHex(color: RGBA): string {
@@ -56,10 +68,11 @@ async function resolveColorVariable(variable: Variable): Promise<RGBA | null> {
   return null;
 }
 
-/** Resolve config variable keys to hex via `importVariableByKeyAsync` (main thread only). */
-export async function resolveColorTokenSwatchMap(): Promise<ColorTokenSwatchMap> {
+/** Resolve config color tokens via library import (main thread only). */
+export async function resolveColorTokenPayload(): Promise<ColorTokenResolvedPayload> {
   const keys = collectConfigColorTokenKeys();
-  const map: ColorTokenSwatchMap = {};
+  const values: ColorTokenSwatchMap = {};
+  const names: ColorTokenNameMap = {};
 
   for (const key of keys) {
     try {
@@ -67,14 +80,18 @@ export async function resolveColorTokenSwatchMap(): Promise<ColorTokenSwatchMap>
       if (variable.resolvedType !== "COLOR") {
         continue;
       }
+      const displayName = figmaVariableDisplayName(variable);
+      if (displayName) {
+        names[key] = displayName;
+      }
       const rgba = await resolveColorVariable(variable);
       if (rgba) {
-        map[key] = rgbaToHex(rgba);
+        values[key] = rgbaToHex(rgba);
       }
     } catch {
       // Library variable unavailable — chip falls back to config value.
     }
   }
 
-  return map;
+  return { values, names };
 }

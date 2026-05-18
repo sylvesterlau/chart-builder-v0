@@ -2,31 +2,41 @@ import { emit, on } from "@create-figma-plugin/utilities";
 import { createContext, h } from "preact";
 import { useContext, useEffect, useState } from "preact/hooks";
 import type { ComponentChildren } from "preact";
+import type { ColorTokenResolvedPayload } from "../../utils/resolveColorTokenSwatches";
 
-const ColorTokenSwatchContext = createContext<Readonly<Record<string, string>>>(
-  {},
-);
+const EMPTY_PAYLOAD: ColorTokenResolvedPayload = { values: {}, names: {} };
 
-export function ColorTokenSwatchProvider(props: { children: ComponentChildren }) {
-  const [swatches, setSwatches] = useState<Readonly<Record<string, string>>>({});
+const ColorTokenResolvedContext =
+  createContext<ColorTokenResolvedPayload>(EMPTY_PAYLOAD);
 
-  useEffect(function subscribeColorTokenSwatches() {
-    const handler = function handleColorTokenSwatchValues(
-      values: Record<string, string>,
+export function ColorTokenSwatchProvider(props: {
+  children: ComponentChildren;
+}) {
+  const [resolved, setResolved] =
+    useState<ColorTokenResolvedPayload>(EMPTY_PAYLOAD);
+
+  useEffect(function subscribeColorTokenResolved() {
+    const handler = function handleColorTokenResolvedValues(
+      payload: ColorTokenResolvedPayload,
     ) {
-      setSwatches(values);
+      setResolved(payload);
     };
     on("COLOR_TOKEN_SWATCH_VALUES", handler);
     emit("REQUEST_COLOR_TOKEN_SWATCH_VALUES");
   }, []);
 
   return (
-    <ColorTokenSwatchContext.Provider value={swatches}>
+    <ColorTokenResolvedContext.Provider value={resolved}>
       {props.children}
-    </ColorTokenSwatchContext.Provider>
+    </ColorTokenResolvedContext.Provider>
   );
 }
 
+export function useColorTokenResolved(): ColorTokenResolvedPayload {
+  return useContext(ColorTokenResolvedContext);
+}
+
+/** @deprecated Prefer `useColorTokenResolved().values` */
 export function useColorTokenSwatches(): Readonly<Record<string, string>> {
-  return useContext(ColorTokenSwatchContext);
+  return useColorTokenResolved().values;
 }

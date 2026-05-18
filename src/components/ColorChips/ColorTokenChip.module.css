@@ -71,6 +71,43 @@
   width: 14px;
 }
 
+.swatchSplit {
+  border: 1px solid var(--figma-color-border);
+  border-radius: 3px;
+  box-sizing: border-box;
+  display: flex;
+  flex-shrink: 0;
+  height: 14px;
+  overflow: hidden;
+  width: 14px;
+}
+
+.swatchLeft {
+  box-sizing: border-box;
+  flex: 0 0 50%;
+  height: 100%;
+  min-width: 0;
+}
+
+.swatchRight {
+  box-sizing: border-box;
+  flex: 0 0 50%;
+  height: 100%;
+  min-width: 0;
+  position: relative;
+}
+
+.swatchChecker {
+  display: block;
+  height: 100%;
+  width: 100%;
+}
+
+.swatchAlphaOverlay {
+  inset: 0;
+  position: absolute;
+}
+
 .hex {
   color: var(--figma-color-text);
   font-size: 11px;

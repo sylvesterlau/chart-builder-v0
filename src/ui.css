@@ -454,8 +454,9 @@
   box-sizing: border-box;
   color: var(--figma-color-text-secondary);
   flex: 1;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-    "Liberation Mono", "Courier New", monospace;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
   font-size: 11px;
   line-height: 16px;
   min-width: 0;

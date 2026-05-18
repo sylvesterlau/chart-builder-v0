@@ -5,6 +5,8 @@ import { LegendStyle, PiePageChartKind } from "../types";
 import { ChartItem } from "./ChartItemInput";
 import ChartTitlePreview from "./ChartTitlePreview";
 import LegendPreview from "./LegendPreview";
+import { useNumberTokenResolved } from "./NumChips/numberTokenValueContext";
+import { numberTokenResolvedValue } from "../utils/numberTokenDisplay";
 
 const chartTextPrimaryHex = textColor.primary.value;
 
@@ -103,6 +105,15 @@ function PieDonutPreview({
   valuePrefix,
   valueSuffix,
 }: PieDonutPreviewProps) {
+  const { values: resolvedNumbers } = useNumberTokenResolved();
+  const sliceStrokeWeight = numberTokenResolvedValue(
+    pieChartConfig.indicator.sliceStrokeWeight,
+    resolvedNumbers,
+  );
+  const leaderLineStrokeWeight = numberTokenResolvedValue(
+    pieChartConfig.indicator.leaderLineStrokeWeight,
+    resolvedNumbers,
+  );
   const pieRadius = showIndicator
     ? pieChartConfig.radius
     : pieChartConfig.radiusLarge;
@@ -206,16 +217,14 @@ function PieDonutPreview({
                       x2={lineEndPoint.x}
                       y2={lineEndPoint.y}
                       stroke={color}
-                      strokeWidth={
-                        pieChartConfig.indicator.leaderLineStrokeWeight
-                      }
+                      strokeWidth={leaderLineStrokeWeight}
                     />
                   ) : null}
                   <path
                     d={path}
                     fill={color}
                     stroke={chartBackground.value}
-                    strokeWidth={pieChartConfig.indicator.sliceStrokeWeight}
+                    strokeWidth={sliceStrokeWeight}
                   />
                   {showIndicator ? (
                     <text

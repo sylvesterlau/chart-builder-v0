@@ -9,6 +9,8 @@ export type LayoutNumberField =
 
 type LayoutBindableNode = FrameNode | ComponentNode | InstanceNode;
 
+type StrokeWeightBindableNode = EllipseNode | VectorNode | LineNode;
+
 /** Non-empty variable import key, or null when binding should be skipped. */
 export function numberTokenVariableKey(token: NumberToken): string | null {
   const key = token.key?.trim();
@@ -98,4 +100,25 @@ export async function applyLegendSpacing(
   await applyHorizontalPadding(node, spacing.horizontalPadding);
   await applyVerticalPadding(node, spacing.verticalPadding);
   await applyItemSpacing(node, spacing.gap);
+}
+
+/** Bind `strokeWeight` on geometry nodes (ellipse, vector, line, etc.). */
+export async function applyStrokeWeight(
+  node: StrokeWeightBindableNode,
+  token: NumberToken,
+): Promise<void> {
+  node.strokeWeight = token.value;
+  const key = numberTokenVariableKey(token);
+  if (!key) {
+    return;
+  }
+  const variable = await importFloatVariable(key);
+  if (!variable) {
+    return;
+  }
+  try {
+    node.setBoundVariable("strokeWeight", variable);
+  } catch (err) {
+    console.error("applyStrokeWeight: setBoundVariable failed", err);
+  }
 }
