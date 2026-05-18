@@ -1,5 +1,6 @@
 import {
   Button,
+  Divider,
   IconCopySmall24,
   Stack,
   Text,
@@ -10,15 +11,20 @@ import { emit, on } from "@create-figma-plugin/utilities";
 import { h } from "preact";
 import { useCallback, useEffect, useState } from "preact/hooks";
 import { parseTokenPathLines } from "../helpers";
-import type { TokenVarKeyLookupResult } from "../types";
+import type {
+  SelectedTextStyleKeyResult,
+  TokenVarKeyLookupResult,
+} from "../types";
 import { copyTextToClipboard } from "../utils/copyToClipboard";
 import uiStyles from "../ui.css";
 
-function lookupStatusLabel(result: TokenVarKeyLookupResult): string {
-  if (result.status === "multiple") {
+type LookupStatus = "found" | "multiple" | "not_found" | "error";
+
+function lookupStatusLabel(status: LookupStatus): string {
+  if (status === "multiple") {
     return "Multiple matches";
   }
-  if (result.status === "error") {
+  if (status === "error") {
     return "Error";
   }
   return "Not found";
@@ -57,12 +63,16 @@ function TokenLookupCopyButton(props: TokenLookupCopyButtonProps) {
   );
 }
 
-/** Batch lookup Figma variable import keys by token path (Design system Util tab). */
+/** Variable batch lookup + text style key from selection (Design system Util). */
 export function TokenKeyLookupPanel() {
   const [tokenPaths, setTokenPaths] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(false);
-  const [results, setResults] = useState<TokenVarKeyLookupResult[]>([]);
-  const [hasSearched, setHasSearched] = useState<boolean>(false);
+  const [varLoading, setVarLoading] = useState<boolean>(false);
+  const [styleLoading, setStyleLoading] = useState<boolean>(false);
+  const [varResults, setVarResults] = useState<TokenVarKeyLookupResult[]>([]);
+  const [styleResult, setStyleResult] =
+    useState<SelectedTextStyleKeyResult | null>(null);
+  const [varHasSearched, setVarHasSearched] = useState<boolean>(false);
+  const [styleHasRead, setStyleHasRead] = useState<boolean>(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   const handleCopyKey = useCallback(function (key: string) {
@@ -75,56 +85,72 @@ export function TokenKeyLookupPanel() {
     }, 1500);
   }, []);
 
-  useEffect(function subscribeLookupResults() {
+  useEffect(function subscribeVarLookupResults() {
     return on("TOKEN_VAR_KEY_LOOKUP_RESULTS", function (payload) {
-      setResults(payload);
-      setLoading(false);
-      setHasSearched(true);
+      setVarResults(payload);
+      setVarLoading(false);
+      setVarHasSearched(true);
     });
   }, []);
 
-  const handleLookup = useCallback(
+  useEffect(function subscribeSelectedTextStyleResult() {
+    return on("SELECTED_TEXT_STYLE_KEY_RESULT", function (payload) {
+      setStyleResult(payload);
+      setStyleLoading(false);
+      setStyleHasRead(true);
+    });
+  }, []);
+
+  const handleVarLookup = useCallback(
     function () {
       const paths = parseTokenPathLines(tokenPaths);
       if (paths.length === 0) {
-        setResults([]);
-        setHasSearched(true);
+        setVarResults([]);
+        setVarHasSearched(true);
         return;
       }
-      setLoading(true);
+      setVarLoading(true);
       emit("LOOKUP_TOKEN_VAR_KEYS", paths);
     },
     [tokenPaths],
   );
 
+  const handleReadSelectedStyle = useCallback(function () {
+    setStyleLoading(true);
+    emit("READ_SELECTED_TEXT_STYLE_KEY");
+  }, []);
+
   return (
     <div>
-      <Text className={uiStyles.sectionTitle}>Token key lookup</Text>
+      <Text className={uiStyles.sectionTitle}>Variable key lookup</Text>
       <VerticalSpace space="extraSmall" />
-      <Text>Lookup variable import keys (one path per line)</Text>
+      <Text>
+        Lookup variable import keys for importVariableByKeyAsync (one path per
+        line)
+      </Text>
       <VerticalSpace space="small" />
       <Stack space="extraSmall">
         <TextboxMultiline
           grow
           value={tokenPaths}
           onValueInput={setTokenPaths}
-          placeholder={"token/path/1\ntoken/path/2\ntoken/path/3"}
+          placeholder={"dataVis/1\ntext/primary"}
         />
-        <Button fullWidth disabled={loading} onClick={handleLookup}>
-          {loading ? "Looking up…" : "Lookup"}
+        <Button fullWidth disabled={varLoading} onClick={handleVarLookup}>
+          {varLoading ? "Looking up…" : "Lookup"}
         </Button>
       </Stack>
 
-      {hasSearched ? (
+      {varHasSearched ? (
         <div>
           <VerticalSpace space="medium" />
           <Text className={uiStyles.sectionTitle}>Results</Text>
           <VerticalSpace space="small" />
-          {results.length === 0 ? (
+          {varResults.length === 0 ? (
             <Text>Enter at least one token path.</Text>
           ) : (
             <div className={uiStyles.tokenLookupList}>
-              {results.map(function (result) {
+              {varResults.map(function (result) {
                 const showCopyOnRow =
                   result.status === "found" && Boolean(result.key);
                 const rowCopyVisible =
@@ -148,7 +174,7 @@ export function TokenKeyLookupPanel() {
                         />
                       ) : (
                         <span className={uiStyles.tokenLookupStatus}>
-                          {lookupStatusLabel(result)}
+                          {lookupStatusLabel(result.status)}
                         </span>
                       )}
                     </div>
@@ -193,6 +219,71 @@ export function TokenKeyLookupPanel() {
               })}
             </div>
           )}
+        </div>
+      ) : null}
+
+      <VerticalSpace space="large" />
+      <Divider />
+      <VerticalSpace space="large" />
+
+      <Text className={uiStyles.sectionTitle}>Text style key from selection</Text>
+      <VerticalSpace space="extraSmall" />
+      <Text>
+        Select one text layer that already uses a text style, then read its
+        import key for importStyleByKeyAsync
+      </Text>
+      <VerticalSpace space="small" />
+      <Button fullWidth disabled={styleLoading} onClick={handleReadSelectedStyle}>
+        {styleLoading ? "Reading…" : "Read from selection"}
+      </Button>
+
+      {styleHasRead && styleResult ? (
+        <div>
+          <VerticalSpace space="medium" />
+          <Text className={uiStyles.sectionTitle}>Result</Text>
+          <VerticalSpace space="small" />
+          <div className={uiStyles.tokenLookupList}>
+            <div
+              className={
+                styleResult.status === "found" && copiedKey === styleResult.key
+                  ? `${uiStyles.tokenLookupRow} ${uiStyles.tokenLookupRowCopyVisible}`
+                  : uiStyles.tokenLookupRow
+              }
+            >
+              {styleResult.layerName ? (
+                <Text className={uiStyles.tokenLookupMessage}>
+                  Layer: {styleResult.layerName}
+                </Text>
+              ) : null}
+              {styleResult.styleName ? (
+                <Text className={uiStyles.tokenLookupMessage}>
+                  Style: {styleResult.styleName}
+                </Text>
+              ) : null}
+              <div className={uiStyles.tokenLookupHeader}>
+                <span className={uiStyles.tokenLookupPath}>import key</span>
+                {styleResult.status === "found" && styleResult.key ? (
+                  <TokenLookupCopyButton
+                    keyValue={styleResult.key}
+                    copied={copiedKey === styleResult.key}
+                    onCopy={handleCopyKey}
+                  />
+                ) : (
+                  <span className={uiStyles.tokenLookupStatus}>
+                    {lookupStatusLabel(styleResult.status)}
+                  </span>
+                )}
+              </div>
+              {styleResult.status === "found" && styleResult.key ? (
+                <code className={uiStyles.tokenLookupKey}>{styleResult.key}</code>
+              ) : null}
+              {styleResult.message && styleResult.status !== "found" ? (
+                <Text className={uiStyles.tokenLookupMessage}>
+                  {styleResult.message}
+                </Text>
+              ) : null}
+            </div>
+          </div>
         </div>
       ) : null}
     </div>

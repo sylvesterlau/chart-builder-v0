@@ -11,8 +11,10 @@ import {
   applyColorTokenToFills,
   applyColorTokenToStrokes,
 } from "./applyColorToken";
-import { applyFigmaTypographyToken } from "./applyFigmaTypography";
-import { resolveFigmaFontStyle } from "./chartTypography";
+import {
+  applyTypographyTokenToText,
+  loadTypographyTokenFontsBatch,
+} from "./applyTypographyToken";
 import { createChartTitle, loadChartTitleFont } from "./drawChartTitle";
 import { applyStrokeWeight } from "./applyNumberToken";
 import { createFinalFrame } from "./figmaOperations";
@@ -95,14 +97,14 @@ async function createIndicatorTextFrame(
   textFrame.itemSpacing = 0;
 
   const labelNode = figma.createText();
-  applyFigmaTypographyToken(labelNode, typography.indicator.label);
+  await applyTypographyTokenToText(labelNode, typography.indicator.label);
   labelNode.characters = label;
   textFrame.appendChild(labelNode);
   await applyColorTokenToFills(labelNode, textColor.primary);
 
   if (showIndicatorPercentage) {
     const percentNode = figma.createText();
-    applyFigmaTypographyToken(percentNode, typography.indicator.percentage);
+    await applyTypographyTokenToText(percentNode, typography.indicator.percentage);
     percentNode.characters = `${formatLegendPercentageDisplay(percentage)}%`;
     textFrame.appendChild(percentNode);
     await applyColorTokenToFills(percentNode, textColor.primary);
@@ -147,16 +149,10 @@ export async function drawPieChart(chartData: ChartData) {
   }
   if (showIndicator) {
     const ind = typography.indicator;
-    await figma.loadFontAsync({
-      family: ind.label.fontFamily,
-      style: resolveFigmaFontStyle(ind.label),
-    });
-    if (showIndicatorPercentage) {
-      await figma.loadFontAsync({
-        family: ind.percentage.fontFamily,
-        style: resolveFigmaFontStyle(ind.percentage),
-      });
-    }
+    const tokens = showIndicatorPercentage
+      ? [ind.label, ind.percentage]
+      : [ind.label];
+    await loadTypographyTokenFontsBatch(tokens);
   }
 
   const chartItems = chartData.data

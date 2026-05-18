@@ -33,12 +33,27 @@ export interface TokenVarKeyLookupResult {
   message?: string;
 }
 
+export type SelectedTextStyleKeyStatus = "found" | "not_found" | "error";
+
+/** Result of reading text style import key from the current selection. */
+export interface SelectedTextStyleKeyResult {
+  status: SelectedTextStyleKeyStatus;
+  /** Selected text layer name. */
+  layerName?: string;
+  /** Figma text style name (e.g. `heading/medium`). */
+  styleName?: string;
+  /** Import key for `figma.importStyleByKeyAsync`. */
+  key?: string;
+  message?: string;
+}
+
 /** Figma-aligned text style; optional variable `key` and Figma style name override. */
 export interface TypographyToken {
   fontFamily: string;
   fontSize: number;
   fontWeight: number;
   lineHeight: number;
+  /** Library import key for `figma.importStyleByKeyAsync`. */
   key?: string;
   figmaFontStyle?: string;
 }

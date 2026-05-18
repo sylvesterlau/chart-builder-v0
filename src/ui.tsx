@@ -8,6 +8,7 @@ import PieDonutChartPage from "./pages/PieDonutChartPage";
 import DesignSystemConfigPage from "./pages/DesignSystemConfigPage";
 import { ColorTokenSwatchProvider } from "./components/ColorChips/colorTokenSwatchContext";
 import { NumberTokenValueProvider } from "./components/NumChips/numberTokenValueContext";
+import { TypographyTokenValueProvider } from "./components/TypographyChips/typographyTokenValueContext";
 
 export type Pages =
   | "home"
@@ -42,7 +43,11 @@ function Plugin() {
   };
   return (
     <ColorTokenSwatchProvider>
-      <NumberTokenValueProvider>{renderPage()}</NumberTokenValueProvider>
+      <NumberTokenValueProvider>
+        <TypographyTokenValueProvider>
+          {renderPage()}
+        </TypographyTokenValueProvider>
+      </NumberTokenValueProvider>
     </ColorTokenSwatchProvider>
   );
 }

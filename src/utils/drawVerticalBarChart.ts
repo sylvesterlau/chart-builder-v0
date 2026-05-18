@@ -18,18 +18,24 @@ import {
   VerticalBarChartConfig,
 } from "../types";
 import { applyColorTokenToFills, applyColorTokenToStrokes } from "./applyColorToken";
+import {
+  applyTypographyTokenToText,
+  loadTypographyTokenFontsBatch,
+} from "./applyTypographyToken";
 
 const ROOT_NAME = "_demo/bar chart/1";
-const FONT_REGULAR: FontName = { family: "Inter", style: "Regular" };
-const FONT_BOLD: FontName = { family: "Inter", style: "Bold" };
 
-async function loadVerticalBarFonts() {
-  try {
-    await figma.loadFontAsync(FONT_REGULAR);
-    await figma.loadFontAsync(FONT_BOLD);
-  } catch {
-    await figma.loadFontAsync({ family: "Inter", style: "Medium" });
-  }
+function verticalBarTypographyTokens(
+  config: NormalizedVerticalBarChartConfig,
+): TypographyToken[] {
+  const { typography: ty, yAxisLabel } = config.color;
+  return [ty.xAxisTitle, ty.yAxisTitle, ty.xAxisLabel, yAxisLabel];
+}
+
+async function loadVerticalBarFonts(
+  config: NormalizedVerticalBarChartConfig,
+) {
+  await loadTypographyTokenFontsBatch(verticalBarTypographyTokens(config));
 }
 
 async function createFrameNode(
@@ -104,9 +110,7 @@ async function createText(
   token: ColorToken,
 ): Promise<TextNode> {
   const text = figma.createText();
-  text.fontName = style.fontWeight >= 600 ? FONT_BOLD : FONT_REGULAR;
-  text.fontSize = style.fontSize;
-  text.lineHeight = { unit: "PIXELS", value: style.lineHeight };
+  await applyTypographyTokenToText(text, style);
   text.characters = String(characters);
   text.textAutoResize = "WIDTH_AND_HEIGHT";
   await applyColorTokenToFills(text, token);
@@ -560,7 +564,7 @@ export async function drawVerticalBarChart(
     verticalBarChartConfig as unknown as VerticalBarChartConfig,
   );
   await figma.currentPage.loadAsync();
-  await loadVerticalBarFonts();
+  await loadVerticalBarFonts(config);
 
   const chart = figma.createFrame();
   chart.name = ROOT_NAME;

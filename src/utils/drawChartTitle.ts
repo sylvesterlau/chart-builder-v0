@@ -1,15 +1,13 @@
 import { chartTitleConfig, textColor } from "../config";
 import { applyChartTitlePadding } from "./applyNumberToken";
 import { applyColorTokenToFills } from "./applyColorToken";
-import { applyFigmaTypographyToken } from "./applyFigmaTypography";
-import { resolveFigmaFontStyle } from "./chartTypography";
+import {
+  applyTypographyTokenToText,
+  loadTypographyTokenFonts,
+} from "./applyTypographyToken";
 
 export async function loadChartTitleFont() {
-  const token = chartTitleConfig.typography;
-  await figma.loadFontAsync({
-    family: token.fontFamily,
-    style: resolveFigmaFontStyle(token),
-  });
+  await loadTypographyTokenFonts(chartTitleConfig.typography);
 }
 
 export async function createChartTitle(title: string): Promise<FrameNode | null> {
@@ -35,7 +33,7 @@ export async function createChartTitle(title: string): Promise<FrameNode | null>
   await applyChartTitlePadding(titleFrame, chartTitleConfig.padding);
 
   titleNode.name = trimmedTitle;
-  applyFigmaTypographyToken(titleNode, chartTitleConfig.typography);
+  await applyTypographyTokenToText(titleNode, chartTitleConfig.typography);
   titleNode.characters = trimmedTitle;
   titleNode.layoutGrow = 1;
 

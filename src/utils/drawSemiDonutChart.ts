@@ -8,8 +8,10 @@ import { getSum, transformToPercents, TransformedChartItem } from "../helpers";
 import { ChartData } from "../types";
 import type { ColorToken } from "../types";
 import { applyColorTokenToFills } from "./applyColorToken";
-import { applyFigmaTypographyToken } from "./applyFigmaTypography";
-import { resolveFigmaFontStyle } from "./chartTypography";
+import {
+  applyTypographyTokenToText,
+  loadTypographyTokenFontsBatch,
+} from "./applyTypographyToken";
 import { createChartTitle, loadChartTitleFont } from "./drawChartTitle";
 import { createFinalFrame } from "./figmaOperations";
 import { createLegend, createLegendList, loadLegendFonts } from "./drawLegend";
@@ -52,21 +54,14 @@ async function createTotalValueFrame(
 ): Promise<FrameNode> {
   const titleTok = typography.totalValue.title;
   const valueTok = typography.totalValue.value;
-  await figma.loadFontAsync({
-    family: titleTok.fontFamily,
-    style: resolveFigmaFontStyle(titleTok),
-  });
-  await figma.loadFontAsync({
-    family: valueTok.fontFamily,
-    style: resolveFigmaFontStyle(valueTok),
-  });
+  await loadTypographyTokenFontsBatch([titleTok, valueTok]);
 
   const titleNode = figma.createText();
-  applyFigmaTypographyToken(titleNode, titleTok);
+  await applyTypographyTokenToText(titleNode, titleTok);
   titleNode.characters = title;
 
   const totalValueNode = figma.createText();
-  applyFigmaTypographyToken(totalValueNode, valueTok);
+  await applyTypographyTokenToText(totalValueNode, valueTok);
   totalValueNode.characters = formatValueText(
     sumValue,
     valuePrefix,

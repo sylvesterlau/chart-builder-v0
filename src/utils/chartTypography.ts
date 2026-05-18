@@ -44,6 +44,15 @@ export function collectTypographyTokenPaths(
  * Order matches CSS shorthand: `italic bold 1.2em "Fira Sans", sans-serif`
  * → here: `normal | italic`, weight, size/line-height, quoted family + fallback.
  */
+export function formatTypographyMetricsShorthand(metrics: {
+  fontFamily: string;
+  fontSize: number;
+  lineHeight: number;
+  fontWeight: number;
+}): string {
+  return `"${metrics.fontFamily}" ${metrics.fontSize}/${metrics.lineHeight} · ${metrics.fontWeight}`;
+}
+
 export function formatTypographyTokenAsCssFontShorthand(
   token: ChartTypographyToken,
 ): string {
@@ -57,6 +66,21 @@ export function formatTypographyTokenAsCssFontShorthand(
  * Map numeric CSS-like weight to common Figma static style names.
  * Font families spell styles differently; use `token.figmaFontStyle` when needed.
  */
+/** Map Figma `fontName.style` to approximate CSS font-weight. */
+export function fontWeightFromFigmaStyle(style: string): number {
+  const s = style.trim().toLowerCase();
+  if (s.includes("thin")) return 100;
+  if (s.includes("extra") && s.includes("light")) return 200;
+  if (s.includes("light")) return 300;
+  if (s.includes("regular") || s === "normal" || s === "book") return 400;
+  if (s.includes("medium")) return 500;
+  if (s.includes("semi") && s.includes("bold")) return 600;
+  if (s.includes("bold") && !s.includes("semi") && !s.includes("extra")) return 700;
+  if (s.includes("extra") && s.includes("bold")) return 800;
+  if (s.includes("black") || s.includes("heavy")) return 900;
+  return 400;
+}
+
 export function figmaFontStyleFromNumericWeight(fontWeight: number): string {
   if (fontWeight < 150) return "Thin";
   if (fontWeight < 250) return "Extra Light";

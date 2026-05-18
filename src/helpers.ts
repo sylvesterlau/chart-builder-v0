@@ -4,6 +4,7 @@ import {
   ChartData,
   ColorToken,
   NormalizedVerticalBarChartConfig,
+  SelectedTextStyleKeyResult,
   TokenVarKeyLookupMatch,
   TokenVarKeyLookupResult,
   TypographyToken,
@@ -182,6 +183,95 @@ export async function lookupTokenVarKeys(
         message,
       };
     });
+  }
+}
+
+/**
+ * Read text style import key from the single selected text layer.
+ * Works on consumer files when the layer uses a published library text style.
+ */
+export async function readSelectedTextLayerStyleKey(): Promise<SelectedTextStyleKeyResult> {
+  const selection = figma.currentPage.selection;
+
+  if (selection.length === 0) {
+    return {
+      status: "error",
+      message: "Select one text layer on the canvas",
+    };
+  }
+
+  if (selection.length > 1) {
+    return {
+      status: "error",
+      message: "Select only one text layer",
+    };
+  }
+
+  const node = selection[0];
+  if (node.type !== "TEXT") {
+    return {
+      status: "error",
+      message: "Selection is not a text layer",
+    };
+  }
+
+  const layerName = node.name;
+  const styleId = node.textStyleId;
+
+  if (styleId === figma.mixed) {
+    return {
+      status: "not_found",
+      layerName,
+      message:
+        "This layer uses different text styles per character — select a layer with one style",
+    };
+  }
+
+  if (!styleId) {
+    return {
+      status: "not_found",
+      layerName,
+      message: "No text style on this layer",
+    };
+  }
+
+  try {
+    const style = await figma.getStyleByIdAsync(styleId);
+    if (!style || style.type !== "TEXT") {
+      return {
+        status: "not_found",
+        layerName,
+        message: "Could not resolve text style on this layer",
+      };
+    }
+
+    const textStyle = style as TextStyle;
+    const styleName = textStyle.name?.trim() || "";
+    const key = textStyle.key?.trim() || "";
+
+    if (!key) {
+      return {
+        status: "not_found",
+        layerName,
+        styleName: styleName || undefined,
+        message: "Style has no import key",
+      };
+    }
+
+    return {
+      status: "found",
+      layerName,
+      styleName: styleName || undefined,
+      key,
+    };
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "Failed to read text style";
+    return {
+      status: "error",
+      layerName,
+      message,
+    };
   }
 }
 

@@ -11,8 +11,10 @@ import {
   applyColorTokenToFills,
   applyColorTokenToStrokes,
 } from "./applyColorToken";
-import { applyFigmaTypographyToken } from "./applyFigmaTypography";
-import { resolveFigmaFontStyle } from "./chartTypography";
+import {
+  applyTypographyTokenToText,
+  loadTypographyTokenFontsBatch,
+} from "./applyTypographyToken";
 
 const legendTextColor = textColor.primary;
 const legendDividerColor = dividerColor;
@@ -26,18 +28,7 @@ function formatLegendValue(value: number, prefix: string, suffix: string) {
 
 export async function loadLegendFonts() {
   const { label, value, percentage } = typography.legend;
-  await figma.loadFontAsync({
-    family: label.fontFamily,
-    style: resolveFigmaFontStyle(label),
-  });
-  await figma.loadFontAsync({
-    family: value.fontFamily,
-    style: resolveFigmaFontStyle(value),
-  });
-  await figma.loadFontAsync({
-    family: percentage.fontFamily,
-    style: resolveFigmaFontStyle(percentage),
-  });
+  await loadTypographyTokenFontsBatch([label, value, percentage]);
 }
 
 export async function createLegend(
@@ -100,14 +91,14 @@ export async function createLegend(
 
     const labelNode = figma.createText();
     labelNode.name = label;
-    applyFigmaTypographyToken(labelNode, typography.legend.label);
+    await applyTypographyTokenToText(labelNode, typography.legend.label);
     labelNode.characters = label;
     Object.assign(labelNode, { layoutAlign: "STRETCH" });
     textNodes.push(labelNode);
 
     const valueNode = figma.createText();
     valueNode.name = "Legend value";
-    applyFigmaTypographyToken(valueNode, typography.legend.value);
+    await applyTypographyTokenToText(valueNode, typography.legend.value);
     valueNode.characters = valueTextInline;
     Object.assign(valueNode, { layoutAlign: "MIN" });
     textNodes.push(valueNode);
@@ -127,7 +118,7 @@ export async function createLegend(
     if (percentText !== null) {
       const percentNode = figma.createText();
       percentNode.name = "Legend percent";
-      applyFigmaTypographyToken(percentNode, typography.legend.percentage);
+      await applyTypographyTokenToText(percentNode, typography.legend.percentage);
       percentNode.characters = percentText;
       Object.assign(percentNode, { layoutAlign: "MIN" });
       textNodes.push(percentNode);
@@ -154,14 +145,14 @@ export async function createLegend(
   } else {
     const labelNode = figma.createText();
     labelNode.name = inlineLabelText;
-    applyFigmaTypographyToken(labelNode, typography.legend.label);
+    await applyTypographyTokenToText(labelNode, typography.legend.label);
     labelNode.characters = inlineLabelText;
     labelNode.layoutGrow = 1;
     textNodes.push(labelNode);
 
     const valueNode = figma.createText();
     valueNode.name = "Legend value";
-    applyFigmaTypographyToken(valueNode, typography.legend.value);
+    await applyTypographyTokenToText(valueNode, typography.legend.value);
     valueNode.characters = valueTextInline;
     textNodes.push(valueNode);
 
