@@ -5,9 +5,15 @@ import { useEffect, useState } from "preact/hooks";
 import NavTab from "../components/navTab/NavTab";
 import { ColorTokenChip } from "../components/ColorChips/ColorTokenChip";
 import { NumChip } from "../components/NumChips/NumChip";
+import { NumberTokenChip } from "../components/NumChips/NumberTokenChip";
 import { TypographyTokenChip } from "../components/TypographyChips/TypographyTokenChip";
-import { chartTitleConfig, ds, pluginUISize, verticalBarChartConfig } from "../config";
-import type { ColorToken } from "../types";
+import {
+  chartTitleConfig,
+  ds,
+  pluginUISize,
+  verticalBarChartConfig,
+} from "../config";
+import type { ColorToken, NumberToken } from "../types";
 import uiStyles from "../ui.css";
 import { collectTypographyTokenPaths } from "../utils/chartTypography";
 
@@ -228,16 +234,16 @@ function DesignSystemConfigPage({ onBack }: DesignSystemConfigPageProps) {
             <VerticalSpace space="small" />
             <div className={uiStyles.configValueList}>
               <div className={uiStyles.configValueRow}>
-                <span className={uiStyles.fieldLabel}>
-                  chartTitle.padding.horizontal
-                </span>
-                <NumChip value={chartTitleConfig.padding.horizontal} />
+                <span className={uiStyles.fieldLabel}>padding.horizontal</span>
+                <NumberTokenChip
+                  token={chartTitleConfig.padding.horizontal as NumberToken}
+                />
               </div>
               <div className={uiStyles.configValueRow}>
-                <span className={uiStyles.fieldLabel}>
-                  chartTitle.padding.vertical
-                </span>
-                <NumChip value={chartTitleConfig.padding.vertical} />
+                <span className={uiStyles.fieldLabel}>padding.vertical</span>
+                <NumberTokenChip
+                  token={chartTitleConfig.padding.vertical as NumberToken}
+                />
               </div>
             </div>
             <VerticalSpace space="small" />
@@ -255,11 +261,11 @@ function DesignSystemConfigPage({ onBack }: DesignSystemConfigPageProps) {
             <Text className={uiStyles.sectionTitle}>Spacing</Text>
             <VerticalSpace space="small" />
             <div className={uiStyles.configValueList}>
-              {Object.entries(ds.legend.spacing).map(function ([key, value]) {
+              {Object.entries(ds.legend.spacing).map(function ([key, token]) {
                 return (
                   <div key={key} className={uiStyles.configValueRow}>
                     <span className={uiStyles.fieldLabel}>{key}</span>
-                    <NumChip value={value} />
+                    <NumberTokenChip token={token as NumberToken} />
                   </div>
                 );
               })}

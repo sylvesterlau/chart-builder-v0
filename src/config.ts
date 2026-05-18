@@ -1,4 +1,4 @@
-import type { ColorToken, TypographyToken } from "./types";
+import type { ColorToken, NumberToken, TypographyToken } from "./types";
 
 // chart sample data — demo inputs, not visual tokens
 export const sampleData = {
@@ -107,8 +107,14 @@ export const ds = {
       lineHeight: 23,
     },
     padding: {
-      horizontal: 16,
-      vertical: 8,
+      horizontal: {
+        value: 16,
+        key: "b53449f649ed6c7b19d70d515454342346f4e064",
+      } satisfies NumberToken,
+      vertical: {
+        value: 8,
+        key: "958a0d4a08f694b42b1c052cead41a901e796118",
+      } satisfies NumberToken,
     },
   },
 
@@ -134,9 +140,18 @@ export const ds = {
       } satisfies Readonly<TypographyToken>,
     },
     spacing: {
-      horizontalPadding: 16,
-      verticalPadding: 12,
-      gap: 8,
+      horizontalPadding: {
+        value: 16,
+        key: "f70676fabdbeee4adc99373eb788957ad7e2d71d",
+      } satisfies NumberToken,
+      verticalPadding: {
+        value: 12,
+        key: "deb8773dea736196da7559874f5b7a6c7ab50472",
+      } satisfies NumberToken,
+      gap: {
+        value: 8,
+        key: "cb58133bee7f18a9cce49cbc9c63c806e4f816b1",
+      } satisfies NumberToken,
     },
     color: {
       divider: {

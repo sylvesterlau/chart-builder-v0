@@ -1,4 +1,5 @@
 import { chartTitleConfig, textColor } from "../config";
+import { applyChartTitlePadding } from "./applyNumberToken";
 import { applyColorTokenToFills } from "./applyColorToken";
 import { applyFigmaTypographyToken } from "./applyFigmaTypography";
 import { resolveFigmaFontStyle } from "./chartTypography";
@@ -28,12 +29,10 @@ export async function createChartTitle(title: string): Promise<FrameNode | null>
     primaryAxisSizingMode: "FIXED",
     counterAxisSizingMode: "AUTO",
     counterAxisAlignItems: "CENTER",
-    paddingLeft: chartTitleConfig.padding.horizontal,
-    paddingRight: chartTitleConfig.padding.horizontal,
-    paddingTop: chartTitleConfig.padding.vertical,
-    paddingBottom: chartTitleConfig.padding.vertical,
     layoutAlign: "STRETCH",
   });
+
+  await applyChartTitlePadding(titleFrame, chartTitleConfig.padding);
 
   titleNode.name = trimmedTitle;
   applyFigmaTypographyToken(titleNode, chartTitleConfig.typography);

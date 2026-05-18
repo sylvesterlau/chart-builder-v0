@@ -7,6 +7,7 @@ import { drawPieChart } from "./utils/drawPieChart";
 import { drawSemiDonutChart } from "./utils/drawSemiDonutChart";
 import { drawVerticalBarChart } from "./utils/drawVerticalBarChart";
 import { resolveColorTokenSwatchMap } from "./utils/resolveColorTokenSwatches";
+import { resolveNumberTokenPayload } from "./utils/resolveNumberTokenValues";
 
 export default function () {
   function handleResizePluginUiWindow(size: { width: number; height: number }) {
@@ -50,6 +51,18 @@ export default function () {
     emit("COLOR_TOKEN_SWATCH_VALUES", values);
   }
 
+  async function publishNumberTokenResolvedValues() {
+    const payload = await resolveNumberTokenPayload();
+    emit("NUMBER_TOKEN_RESOLVED_VALUES", payload);
+  }
+
+  async function publishDesignTokenValues() {
+    await Promise.all([
+      publishColorTokenSwatchValues(),
+      publishNumberTokenResolvedValues(),
+    ]);
+  }
+
   on("SUBMIT_SEMI_DONUT_CHART_DATA", handleSemiDonutChartData);
   on("SUBMIT_HORIZONTAL_BAR_CHART_DATA", handleHorizontalBarChartData);
   on("SUBMIT_PIE_CHART_DATA", handlePieChartData);
@@ -57,11 +70,12 @@ export default function () {
   on("LOOKUP_TOKEN_VAR_KEY", handleLookupTokenVarKey);
   on("RESIZE_PLUGIN_UI_WINDOW", handleResizePluginUiWindow);
   on("REQUEST_COLOR_TOKEN_SWATCH_VALUES", publishColorTokenSwatchValues);
+  on("REQUEST_NUMBER_TOKEN_RESOLVED_VALUES", publishNumberTokenResolvedValues);
 
   showUI({
     width: pluginUISize.homePage.width,
     height: pluginUISize.homePage.height,
   });
 
-  void publishColorTokenSwatchValues();
+  void publishDesignTokenValues();
 }

@@ -9,6 +9,7 @@ import UtilPage from "./pages/UtilPage";
 import PieDonutChartPage from "./pages/PieDonutChartPage";
 import DesignSystemConfigPage from "./pages/DesignSystemConfigPage";
 import { ColorTokenSwatchProvider } from "./components/ColorChips/colorTokenSwatchContext";
+import { NumberTokenValueProvider } from "./components/NumChips/numberTokenValueContext";
 
 export type Pages =
   | "home"
@@ -45,7 +46,9 @@ function Plugin() {
     }
   };
   return (
-    <ColorTokenSwatchProvider>{renderPage()}</ColorTokenSwatchProvider>
+    <ColorTokenSwatchProvider>
+      <NumberTokenValueProvider>{renderPage()}</NumberTokenValueProvider>
+    </ColorTokenSwatchProvider>
   );
 }
 

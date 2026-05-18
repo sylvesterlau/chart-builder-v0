@@ -6,6 +6,7 @@ import {
 } from "../config";
 import { formatLegendPercentageDisplay } from "../helpers";
 import type { ColorToken } from "../types";
+import { applyLegendSpacing } from "./applyNumberToken";
 import {
   applyColorTokenToFills,
   applyColorTokenToStrokes,
@@ -80,13 +81,10 @@ export async function createLegend(
     primaryAxisSizingMode: "FIXED",
     counterAxisSizingMode: "AUTO",
     counterAxisAlignItems: isStacked ? "MIN" : "CENTER",
-    itemSpacing: legendSpacingConfig.gap,
-    paddingLeft: legendSpacingConfig.horizontalPadding,
-    paddingRight: legendSpacingConfig.horizontalPadding,
-    paddingTop: legendSpacingConfig.verticalPadding,
-    paddingBottom: legendSpacingConfig.verticalPadding,
     layoutAlign: "STRETCH",
   });
+
+  await applyLegendSpacing(legend, legendSpacingConfig);
 
   legend.strokeAlign = "INSIDE";
   legend.strokeWeight = 1;

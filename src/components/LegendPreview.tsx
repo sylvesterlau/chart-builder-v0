@@ -6,8 +6,10 @@ import {
   textColor,
   typography,
 } from "../config";
+import { useNumberTokenResolved } from "./NumChips/numberTokenValueContext";
 import { typographyTokenToCss } from "../utils/chartTypography";
 import { formatLegendPercentageDisplay } from "../helpers";
+import { numberTokenResolvedValue } from "../utils/numberTokenDisplay";
 import { LegendStyle } from "../types";
 
 const chartTextPrimaryHex = textColor.primary.value;
@@ -49,8 +51,18 @@ function LegendPreview({
     return null;
   }
 
-  const rowPadding = `${legendSpacingConfig.verticalPadding}px ${legendSpacingConfig.horizontalPadding}px`;
-  const rowGap = `${legendSpacingConfig.gap}px`;
+  const { values: resolvedNumbers } = useNumberTokenResolved();
+  const verticalPadding = numberTokenResolvedValue(
+    legendSpacingConfig.verticalPadding,
+    resolvedNumbers,
+  );
+  const horizontalPadding = numberTokenResolvedValue(
+    legendSpacingConfig.horizontalPadding,
+    resolvedNumbers,
+  );
+  const gap = numberTokenResolvedValue(legendSpacingConfig.gap, resolvedNumbers);
+  const rowPadding = `${verticalPadding}px ${horizontalPadding}px`;
+  const rowGap = `${gap}px`;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>

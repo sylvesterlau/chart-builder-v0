@@ -1,3 +1,10 @@
+/** Figma FLOAT variable: numeric `value` with optional library import `key`. */
+export interface NumberToken {
+  value: number;
+  /** Library import key for `importVariableByKeyAsync`. */
+  key?: string;
+}
+
 /** Figma-style paint: hex `value`, optional variable `key`, optional `opacity` (0–1). */
 export interface ColorToken {
   value: string;
