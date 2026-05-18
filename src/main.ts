@@ -1,7 +1,7 @@
 import { emit, on, showUI } from "@create-figma-plugin/utilities";
 import { pluginUISize } from "./config";
 import { ChartData, VerticalBarChartConfig } from "./types";
-import { getTokenVarKey } from "./helpers";
+import { lookupTokenVarKeys } from "./helpers";
 import { drawHorBarChart } from "./utils/drawHorBarChart";
 import { drawPieChart } from "./utils/drawPieChart";
 import { drawSemiDonutChart } from "./utils/drawSemiDonutChart";
@@ -38,12 +38,9 @@ export default function () {
     }
   }
 
-  async function handleLookupTokenVarKey(tokenPath: string) {
-    if (!tokenPath || !tokenPath.trim()) {
-      figma.notify("Please enter a token path");
-      return;
-    }
-    await getTokenVarKey(tokenPath);
+  async function handleLookupTokenVarKeys(paths: string[]) {
+    const results = await lookupTokenVarKeys(paths);
+    emit("TOKEN_VAR_KEY_LOOKUP_RESULTS", results);
   }
 
   async function publishColorTokenSwatchValues() {
@@ -67,7 +64,7 @@ export default function () {
   on("SUBMIT_HORIZONTAL_BAR_CHART_DATA", handleHorizontalBarChartData);
   on("SUBMIT_PIE_CHART_DATA", handlePieChartData);
   on("SUBMIT_VERTICAL_BAR_CHART_DATA", handleVerticalBarChartData);
-  on("LOOKUP_TOKEN_VAR_KEY", handleLookupTokenVarKey);
+  on("LOOKUP_TOKEN_VAR_KEYS", handleLookupTokenVarKeys);
   on("RESIZE_PLUGIN_UI_WINDOW", handleResizePluginUiWindow);
   on("REQUEST_COLOR_TOKEN_SWATCH_VALUES", publishColorTokenSwatchValues);
   on("REQUEST_NUMBER_TOKEN_RESOLVED_VALUES", publishNumberTokenResolvedValues);

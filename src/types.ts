@@ -13,6 +13,26 @@ export interface ColorToken {
   key?: string;
 }
 
+/** One row from Util page batch variable-key lookup. */
+export interface TokenVarKeyLookupMatch {
+  key: string;
+  collectionName: string;
+  libraryName?: string;
+}
+
+export type TokenVarKeyLookupStatus = "found" | "multiple" | "not_found" | "error";
+
+export interface TokenVarKeyLookupResult {
+  /** User-entered path (trimmed line). */
+  path: string;
+  /** Normalized name used for library search (`dotToSlash`). */
+  tokenName: string;
+  status: TokenVarKeyLookupStatus;
+  key?: string;
+  matches?: TokenVarKeyLookupMatch[];
+  message?: string;
+}
+
 /** Figma-aligned text style; optional variable `key` and Figma style name override. */
 export interface TypographyToken {
   fontFamily: string;

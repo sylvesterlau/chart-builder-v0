@@ -4,8 +4,6 @@ import { useState } from "preact/hooks";
 import HomePage from "./pages/HomePage";
 import HorizontalBarPage from "./pages/HorizontalBarPage";
 import VerticalBarPage from "./pages/VerticalBarPage";
-import UtilPage from "./pages/UtilPage";
-
 import PieDonutChartPage from "./pages/PieDonutChartPage";
 import DesignSystemConfigPage from "./pages/DesignSystemConfigPage";
 import { ColorTokenSwatchProvider } from "./components/ColorChips/colorTokenSwatchContext";
@@ -16,7 +14,6 @@ export type Pages =
   | "horizontalBar"
   | "pieDonutChart"
   | "verticalBar"
-  | "util"
   | "designSystemConfig";
 
 function Plugin() {
@@ -37,8 +34,6 @@ function Plugin() {
         return <VerticalBarPage onBack={navigateToHome} />;
       case "pieDonutChart":
         return <PieDonutChartPage onBack={navigateToHome} />;
-      case "util":
-        return <UtilPage onBack={navigateToHome} />;
       case "designSystemConfig":
         return <DesignSystemConfigPage onBack={navigateToHome} />;
       default:

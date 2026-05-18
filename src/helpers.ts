@@ -4,6 +4,8 @@ import {
   ChartData,
   ColorToken,
   NormalizedVerticalBarChartConfig,
+  TokenVarKeyLookupMatch,
+  TokenVarKeyLookupResult,
   TypographyToken,
   VerticalBarAxisLineVisibility,
   VerticalBarChartConfig,
@@ -80,57 +82,106 @@ export function transformToPercents(
     return result;
   });
 }
-// token lookup handler (search all available library collections)
-export async function getTokenVarKey(tokenPath: string) {
-  try {
-    const tokenName = dotToSlash(tokenPath);
-    const collections =
-      await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync();
-    const matches: Array<{
-      key: string;
-      name: string;
-      collectionName: string;
-      libraryName?: string;
-    }> = [];
-    for (let i = 0; i < collections.length; i++) {
-      const collection = collections[i];
-      const varsInCollection =
-        await figma.teamLibrary.getVariablesInLibraryCollectionAsync(
-          collection.key,
-        );
-      for (let j = 0; j < varsInCollection.length; j++) {
-        const v = varsInCollection[j];
-        if ((v.name || "") === tokenName && v.key) {
-          matches.push({
-            key: v.key,
-            name: v.name || tokenName,
-            collectionName: (collection as any).name || "Unknown Collection",
-            libraryName: (collection as any).libraryName,
-          });
-        }
-      }
+/** Split multiline util input into unique non-empty token paths. */
+export function parseTokenPathLines(input: string): string[] {
+  const seen = new Set<string>();
+  const paths: string[] = [];
+  for (const line of input.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || seen.has(trimmed)) {
+      continue;
     }
-    if (matches.length === 1) {
-      const match = matches[0];
-      figma.notify(`Token found: ${match.key}`);
-      console.log(
-        `Token "${tokenPath}" -> Key: ${match.key} (Collection: ${match.collectionName})`,
+    seen.add(trimmed);
+    paths.push(trimmed);
+  }
+  return paths;
+}
+
+type LibraryVariableIndexEntry = TokenVarKeyLookupMatch & { name: string };
+
+async function buildLibraryVariableIndex(): Promise<LibraryVariableIndexEntry[]> {
+  const collections =
+    await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync();
+  const index: LibraryVariableIndexEntry[] = [];
+
+  for (let i = 0; i < collections.length; i++) {
+    const collection = collections[i];
+    const varsInCollection =
+      await figma.teamLibrary.getVariablesInLibraryCollectionAsync(
+        collection.key,
       );
-    } else if (matches.length > 1) {
-      figma.notify(`Found ${matches.length} matches. Check console.`);
-      console.log(`Multiple matches found for "${tokenPath}":`);
-      matches.forEach((m, idx) => {
-        console.log(
-          `${idx + 1}. key=${m.key}, collection=${m.collectionName}, library=${m.libraryName || "Unknown Library"}`,
-        );
+    const collectionName =
+      (collection as { name?: string }).name || "Unknown Collection";
+    const libraryName = (collection as { libraryName?: string }).libraryName;
+
+    for (let j = 0; j < varsInCollection.length; j++) {
+      const variable = varsInCollection[j];
+      if (!variable.key) {
+        continue;
+      }
+      index.push({
+        name: variable.name || "",
+        key: variable.key,
+        collectionName,
+        libraryName,
       });
-    } else {
-      figma.notify(`Token "${tokenPath}" not found in any collection`);
-      console.log(`Token "${tokenPath}" not found in any available collection`);
     }
+  }
+
+  return index;
+}
+
+/** Batch lookup import keys for token paths in enabled team libraries. */
+export async function lookupTokenVarKeys(
+  paths: string[],
+): Promise<TokenVarKeyLookupResult[]> {
+  try {
+    const index = await buildLibraryVariableIndex();
+
+    return paths.map(function (path): TokenVarKeyLookupResult {
+      const tokenName = dotToSlash(path);
+      const matches = index.filter(function (entry) {
+        return entry.name === tokenName;
+      });
+
+      if (matches.length === 1) {
+        return {
+          path,
+          tokenName,
+          status: "found",
+          key: matches[0].key,
+          matches,
+        };
+      }
+
+      if (matches.length > 1) {
+        return {
+          path,
+          tokenName,
+          status: "multiple",
+          matches,
+          message: `${matches.length} matches — see keys below`,
+        };
+      }
+
+      return {
+        path,
+        tokenName,
+        status: "not_found",
+        message: "Not found in any enabled library collection",
+      };
+    });
   } catch (err) {
-    console.error("Token lookup failed:", err);
-    figma.notify("Token lookup failed. Check console for details.");
+    const message =
+      err instanceof Error ? err.message : "Token lookup failed";
+    return paths.map(function (path): TokenVarKeyLookupResult {
+      return {
+        path,
+        tokenName: dotToSlash(path),
+        status: "error",
+        message,
+      };
+    });
   }
 }
 

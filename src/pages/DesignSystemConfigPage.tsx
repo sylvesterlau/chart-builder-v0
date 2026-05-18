@@ -3,6 +3,7 @@ import { emit } from "@create-figma-plugin/utilities";
 import { h } from "preact";
 import { useEffect, useState } from "preact/hooks";
 import NavTab from "../components/navTab/NavTab";
+import { TokenKeyLookupPanel } from "../components/TokenKeyLookupPanel";
 import { ColorTokenChip } from "../components/ColorChips/ColorTokenChip";
 import { NumChip } from "../components/NumChips/NumChip";
 import { NumberTokenChip } from "../components/NumChips/NumberTokenChip";
@@ -26,7 +27,8 @@ type DesignSystemTabId =
   | "legend"
   | "semiDonut"
   | "pieDonut"
-  | "verticalBar";
+  | "verticalBar"
+  | "util";
 
 /** Plugin UI dimensions while Design system page is open. */
 const DESIGN_SYSTEM_WINDOW = { width: 490, height: 490 } as const;
@@ -40,6 +42,7 @@ const DESIGN_SYSTEM_TABS: ReadonlyArray<{
   { id: "semiDonut", label: "Semi-donut" },
   { id: "pieDonut", label: "Pie & donut" },
   { id: "verticalBar", label: "Vertical bar" },
+  { id: "util", label: "Util" },
 ];
 
 /** Strip section prefix from typography row paths for shorter labels. */
@@ -448,6 +451,8 @@ function DesignSystemConfigPage({ onBack }: DesignSystemConfigPageProps) {
             />
           </div>
         ) : null}
+
+        {activeTab === "util" ? <TokenKeyLookupPanel /> : null}
       </main>
     </div>
   );
