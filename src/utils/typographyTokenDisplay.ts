@@ -84,6 +84,27 @@ export function typographyTokenResolvedMetrics(
   return metricsFromToken(token);
 }
 
+/** CSS inline styles for chart preview (mode-aware when resolved). */
+export function typographyTokenToPreviewCss(
+  token: TypographyToken,
+  valuesByKey: Readonly<Record<string, ResolvedTypographyMetrics>>,
+): Record<string, string | number> {
+  const metrics = typographyTokenResolvedMetrics(token, valuesByKey);
+  return {
+    fontFamily: `${metrics.fontFamily}, sans-serif`,
+    fontSize: `${metrics.fontSize}px`,
+    fontWeight: metrics.fontWeight,
+    lineHeight: `${metrics.lineHeight}px`,
+  };
+}
+
+export function typographyResolvedLineHeight(
+  token: TypographyToken,
+  valuesByKey: Readonly<Record<string, ResolvedTypographyMetrics>>,
+): number {
+  return typographyTokenResolvedMetrics(token, valuesByKey).lineHeight;
+}
+
 export function typographyTokenChipSummary(
   token: TypographyToken,
   valuesByKey: Readonly<Record<string, ResolvedTypographyMetrics>>,

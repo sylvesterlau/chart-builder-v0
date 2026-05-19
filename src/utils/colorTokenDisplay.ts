@@ -1,4 +1,5 @@
 import { ds, verticalBarChartConfig } from "../config";
+import { rgbaFromHex } from "../helpers";
 import type { ColorToken } from "../types";
 
 const CONFIG_COLOR_TOKEN_KEYS = new Set<string>();
@@ -80,4 +81,16 @@ export function colorTokenSwatchHex(
     return resolvedByKey[key];
   }
   return token.value;
+}
+
+/** CSS color for preview surfaces (applies token opacity when set). */
+export function colorTokenPreviewBackground(
+  token: ColorToken,
+  resolvedByKey: Readonly<Record<string, string>>,
+): string {
+  const hex = colorTokenSwatchHex(token, resolvedByKey);
+  if (token.opacity !== undefined && token.opacity < 1) {
+    return rgbaFromHex(hex, token.opacity);
+  }
+  return hex;
 }

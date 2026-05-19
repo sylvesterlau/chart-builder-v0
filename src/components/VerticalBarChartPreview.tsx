@@ -8,15 +8,24 @@ import {
   isVerticalBarYAxisLineVisible,
   niceMax,
   rgbaFromHex,
-  verticalBarTextStyleToCss,
 } from "../helpers";
 import { VerticalBarChartConfig } from "../types";
+import { useColorTokenResolved } from "./ColorChips/colorTokenSwatchContext";
+import { useTypographyTokenResolved } from "./TypographyChips/typographyTokenValueContext";
+import { colorTokenPreviewBackground } from "../utils/colorTokenDisplay";
+import {
+  typographyResolvedLineHeight,
+  typographyTokenToPreviewCss,
+} from "../utils/typographyTokenDisplay";
 
 interface VerticalBarChartPreviewProps {
   config: VerticalBarChartConfig;
 }
 
 function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
+  const { values: resolvedColors } = useColorTokenResolved();
+  const { values: resolvedTypography } = useTypographyTokenResolved();
+
   const visibleSeries =
     config.barMode === "single"
       ? config.series.slice(0, 1)
@@ -45,27 +54,51 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
   const showYAxisLine = isVerticalBarYAxisLineVisible(
     config.axisLineVisibility,
   );
-  const axisLineColor = config.color.axisLine.value;
-  const gridLineColor = config.color.gridLine.value;
+  const axisLineColor = colorTokenPreviewBackground(
+    config.color.axisLine,
+    resolvedColors,
+  );
+  const gridLineColor = colorTokenPreviewBackground(
+    config.color.gridLine,
+    resolvedColors,
+  );
   const { labelBg, highlightBg } = config.color.selected;
   const { typography: ty, yAxisLabel: yLab } = config.color;
   const highlightBgCss = rgbaFromHex(
-    highlightBg.value,
+    colorTokenPreviewBackground(highlightBg, resolvedColors),
     highlightBg.opacity ?? 0.08,
   );
   const xAxisLabelGap = 4;
-  const xAxisLabelRowHeight = ty.xAxisLabel.lineHeight;
+  const xAxisLabelRowHeight = typographyResolvedLineHeight(
+    ty.xAxisLabel,
+    resolvedTypography,
+  );
   const xAxisSelectedPillHeight = Math.max(18, xAxisLabelRowHeight);
   const xAxisLabelBottomOffset = xAxisLabelGap + xAxisLabelRowHeight;
   const xAxisSelectedBottomOffset = xAxisLabelGap + xAxisSelectedPillHeight;
+  const yAxisTitleCss = typographyTokenToPreviewCss(
+    ty.yAxisTitle,
+    resolvedTypography,
+  );
+  const yAxisLabelCss = typographyTokenToPreviewCss(yLab, resolvedTypography);
+  const xAxisLabelCss = typographyTokenToPreviewCss(
+    ty.xAxisLabel,
+    resolvedTypography,
+  );
+  const xAxisTitleCss = typographyTokenToPreviewCss(
+    ty.xAxisTitle,
+    resolvedTypography,
+  );
+  const defaultFontFamily =
+    typographyTokenToPreviewCss(ty.xAxisLabel, resolvedTypography).fontFamily;
 
   return (
     <div
       style={{
-        background: chartBackground.value,
+        background: colorTokenPreviewBackground(chartBackground, resolvedColors),
         boxSizing: "border-box",
-        color: textColor.primary.value,
-        fontFamily: "Inter, sans-serif",
+        color: colorTokenPreviewBackground(textColor.primary, resolvedColors),
+        fontFamily: defaultFontFamily,
         height: `${config.height}px`,
         overflow: "hidden",
         padding: "16px",
@@ -77,9 +110,9 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
       <div
         style={{
           display: "flex",
-          height: `${ty.yAxisTitle.lineHeight}px`,
+          height: `${typographyResolvedLineHeight(ty.yAxisTitle, resolvedTypography)}px`,
           justifyContent: yAxisPosition === "right" ? "flex-end" : "flex-start",
-          ...verticalBarTextStyleToCss(ty.yAxisTitle),
+          ...yAxisTitleCss,
         }}
       >
         {config.yAxisTitle}
@@ -144,7 +177,7 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
                       textAlign: yAxisPosition === "left" ? "right" : "left",
                       top: "-8px",
                       whiteSpace: "nowrap",
-                      ...verticalBarTextStyleToCss(yLab),
+                      ...yAxisLabelCss,
                     }}
                   >
                     {formatAxisNumber(tick)}
@@ -203,7 +236,7 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
                         position: "absolute",
                         textAlign: "center",
                         width: "100%",
-                        ...verticalBarTextStyleToCss(ty.xAxisLabel),
+                        ...xAxisLabelCss,
                       }}
                     >
                       {label}
@@ -229,7 +262,7 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
                 position: "absolute",
                 textAlign: "center",
                 width: `${plotWidth}px`,
-                ...verticalBarTextStyleToCss(ty.xAxisTitle),
+                ...xAxisTitleCss,
               }}
             >
               {config.xAxisTitle}
@@ -319,9 +352,15 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
                     <div
                       style={{
                         alignItems: "center",
-                        background: labelBg.value,
+                        background: colorTokenPreviewBackground(
+                          labelBg,
+                          resolvedColors,
+                        ),
                         bottom: `-${xAxisSelectedBottomOffset}px`,
-                        color: textColor.onDark.value,
+                        color: colorTokenPreviewBackground(
+                          textColor.onDark,
+                          resolvedColors,
+                        ),
                         display: "flex",
                         height: `${xAxisSelectedPillHeight}px`,
                         justifyContent: "center",
@@ -331,7 +370,7 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
                         position: "absolute",
                         transform: "translateX(-50%)",
                         whiteSpace: "nowrap",
-                        ...verticalBarTextStyleToCss(ty.xAxisLabel),
+                        ...xAxisLabelCss,
                       }}
                     >
                       {label}

@@ -10,7 +10,9 @@ export function typographyTokenStyleKey(token: TypographyToken): string | null {
 
 const importedTextStyleCache = new Map<string, TextStyle>();
 
-export async function importTextStyleByKey(key: string): Promise<TextStyle | null> {
+export async function importTextStyleByKey(
+  key: string,
+): Promise<TextStyle | null> {
   const cached = importedTextStyleCache.get(key);
   if (cached) {
     return cached;
@@ -37,8 +39,64 @@ async function loadFontName(fontName: FontName): Promise<void> {
   }
 }
 
+/** Font names from style definition plus every mode of a bound fontFamily variable. */
+async function collectFontNamesForTextStyle(
+  style: TextStyle,
+): Promise<FontName[]> {
+  const fontStyle = style.fontName.style;
+  const fontNames: FontName[] = [style.fontName];
+  const seenFamilies = new Set<string>([style.fontName.family]);
+
+  const alias = style.boundVariables?.fontFamily;
+  if (!alias) {
+    return fontNames;
+  }
+
+  try {
+    const variable = await figma.variables.getVariableByIdAsync(alias.id);
+    if (!variable || variable.resolvedType !== "STRING") {
+      return fontNames;
+    }
+
+    for (const modeId of Object.keys(variable.valuesByMode)) {
+      const value = variable.valuesByMode[modeId];
+      if (typeof value !== "string") {
+        continue;
+      }
+      const family = value.trim();
+      if (!family || seenFamilies.has(family)) {
+        continue;
+      }
+      seenFamilies.add(family);
+      fontNames.push({ family, style: fontStyle });
+    }
+  } catch {
+    // Variable unavailable in this file; style.fontName is still loaded.
+  }
+
+  return fontNames;
+}
+
 async function loadFontsForTextStyle(style: TextStyle): Promise<void> {
-  await loadFontName(style.fontName);
+  const fontNames = await collectFontNamesForTextStyle(style);
+  for (const fontName of fontNames) {
+    await loadFontName(fontName);
+  }
+}
+
+/** Load fonts resolved on the node (e.g. after text style bind in active variable mode). */
+async function loadResolvedTextNodeFont(node: TextNode): Promise<void> {
+  const length = node.characters.length;
+  const fontNames =
+    length > 0 && node.fontName === figma.mixed
+      ? node.getRangeAllFontNames(0, length)
+      : node.fontName === figma.mixed
+        ? []
+        : [node.fontName];
+
+  for (const fontName of fontNames) {
+    await loadFontName(fontName);
+  }
 }
 
 /** Load fonts required before setting characters / text style on a node. */
@@ -79,7 +137,13 @@ export async function applyTypographyTokenToText(
 
   try {
     await loadFontsForTextStyle(style);
+    // Empty nodes may not resolve variable-bound fontFamily until they have content.
+    if (node.characters.length === 0) {
+      node.fontName = style.fontName;
+      node.characters = " ";
+    }
     await node.setTextStyleIdAsync(style.id);
+    await loadResolvedTextNodeFont(node);
   } catch {
     applyFigmaTypographyToken(node, token);
   }

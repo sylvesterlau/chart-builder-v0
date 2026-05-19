@@ -1,6 +1,11 @@
 import { fontWeightFromFigmaStyle } from "./chartTypography";
 import { importTextStyleByKey } from "./applyTypographyToken";
 import { collectConfigTypographyTokenKeys } from "./typographyTokenDisplay";
+import {
+  getVariableByIdOrImport,
+  resolveFloatVariableValue,
+  resolveStringVariableValue,
+} from "./resolveVariableValues";
 
 export interface ResolvedTypographyMetrics {
   fontFamily: string;
@@ -17,24 +22,54 @@ export interface TypographyTokenResolvedPayload {
   names: TypographyTokenNameMap;
 }
 
-function textStyleLineHeightPx(style: TextStyle): number {
+function textStyleLineHeightPx(
+  style: TextStyle,
+  fontSize: number,
+): number {
   const lh = style.lineHeight;
   if (lh && typeof lh === "object" && "unit" in lh) {
     if (lh.unit === "PIXELS") {
       return lh.value;
     }
     if (lh.unit === "PERCENT") {
-      return Math.round((style.fontSize * lh.value) / 100);
+      return Math.round((fontSize * lh.value) / 100);
     }
   }
-  return style.fontSize;
+  return fontSize;
 }
 
-function metricsFromTextStyle(style: TextStyle): ResolvedTypographyMetrics {
+async function metricsFromTextStyle(
+  style: TextStyle,
+): Promise<ResolvedTypographyMetrics> {
+  let fontFamily = style.fontName.family;
+  let fontSize = style.fontSize;
+
+  const fontFamilyAlias = style.boundVariables?.fontFamily;
+  if (fontFamilyAlias) {
+    const variable = await getVariableByIdOrImport(fontFamilyAlias.id);
+    if (variable?.resolvedType === "STRING") {
+      const resolved = await resolveStringVariableValue(variable);
+      if (resolved) {
+        fontFamily = resolved;
+      }
+    }
+  }
+
+  const fontSizeAlias = style.boundVariables?.fontSize;
+  if (fontSizeAlias) {
+    const variable = await getVariableByIdOrImport(fontSizeAlias.id);
+    if (variable?.resolvedType === "FLOAT") {
+      const resolved = await resolveFloatVariableValue(variable);
+      if (resolved !== null) {
+        fontSize = resolved;
+      }
+    }
+  }
+
   return {
-    fontFamily: style.fontName.family,
-    fontSize: style.fontSize,
-    lineHeight: textStyleLineHeightPx(style),
+    fontFamily,
+    fontSize,
+    lineHeight: textStyleLineHeightPx(style, fontSize),
     fontWeight: fontWeightFromFigmaStyle(style.fontName.style),
   };
 }
@@ -55,7 +90,7 @@ export async function resolveTypographyTokenPayload(): Promise<TypographyTokenRe
       if (styleName) {
         names[key] = styleName;
       }
-      values[key] = metricsFromTextStyle(style);
+      values[key] = await metricsFromTextStyle(style);
     } catch {
       // Library style unavailable — UI falls back to config fields.
     }

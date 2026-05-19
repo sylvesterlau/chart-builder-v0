@@ -5,10 +5,15 @@ import { LegendStyle, PiePageChartKind } from "../types";
 import { ChartItem } from "./ChartItemInput";
 import ChartTitlePreview from "./ChartTitlePreview";
 import LegendPreview from "./LegendPreview";
+import { useColorTokenResolved } from "./ColorChips/colorTokenSwatchContext";
 import { useNumberTokenResolved } from "./NumChips/numberTokenValueContext";
+import { useTypographyTokenResolved } from "./TypographyChips/typographyTokenValueContext";
+import {
+  colorTokenPreviewBackground,
+  colorTokenSwatchHex,
+} from "../utils/colorTokenDisplay";
 import { numberTokenResolvedValue } from "../utils/numberTokenDisplay";
-
-const chartTextPrimaryHex = textColor.primary.value;
+import { typographyTokenResolvedMetrics } from "../utils/typographyTokenDisplay";
 
 const PIE_PREVIEW_WIDTH = pieChartConfig.frameWidth;
 const PIE_PREVIEW_HEIGHT = pieChartConfig.frameHeight;
@@ -106,6 +111,21 @@ function PieDonutPreview({
   valueSuffix,
 }: PieDonutPreviewProps) {
   const { values: resolvedNumbers } = useNumberTokenResolved();
+  const { values: resolvedColors } = useColorTokenResolved();
+  const { values: resolvedTypography } = useTypographyTokenResolved();
+  const chartTextPrimary = colorTokenPreviewBackground(
+    textColor.primary,
+    resolvedColors,
+  );
+  const chartBg = colorTokenPreviewBackground(chartBackground, resolvedColors);
+  const indicatorLabelMetrics = typographyTokenResolvedMetrics(
+    typography.indicator.label,
+    resolvedTypography,
+  );
+  const indicatorPercentMetrics = typographyTokenResolvedMetrics(
+    typography.indicator.percentage,
+    resolvedTypography,
+  );
   const sliceStrokeWeight = numberTokenResolvedValue(
     pieChartConfig.indicator.sliceStrokeWeight,
     resolvedNumbers,
@@ -147,7 +167,7 @@ function PieDonutPreview({
     <div
       style={{
         alignItems: "center",
-        backgroundColor: chartBackground.value,
+        backgroundColor: chartBg,
         boxSizing: "border-box",
         display: "flex",
         flexDirection: "column",
@@ -167,7 +187,7 @@ function PieDonutPreview({
         >
           {slices.map(
             ({ item, startAngle, endAngle, midAngle, percentage }) => {
-              const color = dataVisAt(item.index).value;
+              const color = colorTokenSwatchHex(dataVisAt(item.index), resolvedColors);
               const path =
                 chartKind === "donut"
                   ? describeDonutSlice(
@@ -223,23 +243,23 @@ function PieDonutPreview({
                   <path
                     d={path}
                     fill={color}
-                    stroke={chartBackground.value}
+                    stroke={chartBg}
                     strokeWidth={sliceStrokeWeight}
                   />
                   {showIndicator ? (
                     <text
                       x={labelCenterPoint.x}
                       y={labelCenterPoint.y}
-                      fill={chartTextPrimaryHex}
-                      fontFamily={`${typography.indicator.label.fontFamily}, sans-serif`}
-                      fontSize={typography.indicator.label.fontSize}
+                      fill={chartTextPrimary}
+                      fontFamily={`${indicatorLabelMetrics.fontFamily}, sans-serif`}
+                      fontSize={indicatorLabelMetrics.fontSize}
                       textAnchor="middle"
                       dominantBaseline="middle"
                     >
                       <tspan
                         x={labelCenterPoint.x}
                         dy={showIndicatorPercentage ? "-0.6em" : "0"}
-                        fontWeight={typography.indicator.label.fontWeight}
+                        fontWeight={indicatorLabelMetrics.fontWeight}
                       >
                         {item.label || `Item ${item.index + 1}`}
                       </tspan>
@@ -247,7 +267,7 @@ function PieDonutPreview({
                         <tspan
                           x={labelCenterPoint.x}
                           dy="1.2em"
-                          fontWeight={typography.indicator.percentage.fontWeight}
+                          fontWeight={indicatorPercentMetrics.fontWeight}
                         >
                           {formatLegendPercentageDisplay(percentage)}%
                         </tspan>

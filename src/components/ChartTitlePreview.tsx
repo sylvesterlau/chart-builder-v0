@@ -1,8 +1,11 @@
 import { h } from "preact";
 import { chartTitleConfig, textColor } from "../config";
+import { useColorTokenResolved } from "./ColorChips/colorTokenSwatchContext";
 import { useNumberTokenResolved } from "./NumChips/numberTokenValueContext";
+import { useTypographyTokenResolved } from "./TypographyChips/typographyTokenValueContext";
+import { colorTokenPreviewBackground } from "../utils/colorTokenDisplay";
 import { numberTokenResolvedValue } from "../utils/numberTokenDisplay";
-import { typographyTokenToCss } from "../utils/chartTypography";
+import { typographyTokenToPreviewCss } from "../utils/typographyTokenDisplay";
 
 interface ChartTitlePreviewProps {
   title: string;
@@ -10,6 +13,9 @@ interface ChartTitlePreviewProps {
 
 function ChartTitlePreview({ title }: ChartTitlePreviewProps) {
   const { values: resolvedNumbers } = useNumberTokenResolved();
+  const { values: resolvedColors } = useColorTokenResolved();
+  const { values: resolvedTypography } = useTypographyTokenResolved();
+
   if (!title.trim()) {
     return null;
   }
@@ -34,10 +40,13 @@ function ChartTitlePreview({ title }: ChartTitlePreviewProps) {
     >
       <div
         style={{
-          color: textColor.primary.value,
+          color: colorTokenPreviewBackground(textColor.primary, resolvedColors),
           flex: 1,
           minWidth: 0,
-          ...typographyTokenToCss(chartTitleConfig.typography),
+          ...typographyTokenToPreviewCss(
+            chartTitleConfig.typography,
+            resolvedTypography,
+          ),
         }}
       >
         {title}

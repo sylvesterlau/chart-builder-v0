@@ -72,6 +72,17 @@ export default function () {
     ]);
   }
 
+  let republishTimer: ReturnType<typeof setTimeout> | null = null;
+  function scheduleRepublishDesignTokens() {
+    if (republishTimer !== null) {
+      clearTimeout(republishTimer);
+    }
+    republishTimer = setTimeout(() => {
+      republishTimer = null;
+      void publishDesignTokenValues();
+    }, 200);
+  }
+
   on("SUBMIT_SEMI_DONUT_CHART_DATA", handleSemiDonutChartData);
   on("SUBMIT_HORIZONTAL_BAR_CHART_DATA", handleHorizontalBarChartData);
   on("SUBMIT_PIE_CHART_DATA", handlePieChartData);
@@ -92,4 +103,7 @@ export default function () {
   });
 
   void publishDesignTokenValues();
+
+  figma.on("currentpagechange", scheduleRepublishDesignTokens);
+  figma.on("selectionchange", scheduleRepublishDesignTokens);
 }
