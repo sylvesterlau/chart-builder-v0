@@ -53,8 +53,30 @@ function ColorTokenSwatch(props: {
   swatchHex: string;
   previewBackground: string;
   alpha: number | undefined;
+  circular?: boolean;
 }) {
-  const { boundVariable, swatchHex, previewBackground, alpha } = props;
+  const { boundVariable, swatchHex, previewBackground, alpha, circular } =
+    props;
+
+  if (circular) {
+    if (boundVariable && hasPartialOpacity(alpha)) {
+      return (
+        <div className={styles.chipCircular}>
+          <TransparencyCheckerboard />
+          <div
+            className={styles.swatchCircularOverlay}
+            style={{ backgroundColor: previewBackground }}
+          />
+        </div>
+      );
+    }
+    return (
+      <div
+        className={styles.chipCircular}
+        style={{ backgroundColor: previewBackground }}
+      />
+    );
+  }
 
   if (!boundVariable) {
     return (
@@ -98,10 +120,13 @@ export interface ColorTokenChipProps {
    * (e.g. `0.08` for highlight fill default).
    */
   fallbackOpacity?: number;
+  /** `circular` — 24×24 color dot, no label; tooltip unchanged. */
+  variant?: "default" | "circular";
 }
 
 export function ColorTokenChip(props: ColorTokenChipProps) {
-  const { token, fallbackOpacity } = props;
+  const { token, fallbackOpacity, variant = "default" } = props;
+  const circular = variant === "circular";
   const { values: resolvedSwatches, names: resolvedNames } =
     useColorTokenResolved();
   const swatchHex = colorTokenSwatchHex(token, resolvedSwatches);
@@ -115,7 +140,10 @@ export function ColorTokenChip(props: ColorTokenChipProps) {
 
   const boundVariable = colorTokenHasVariableBinding(token);
   const showOpacityPercent =
-    !boundVariable && alpha !== undefined && !isFullOpacity(alpha);
+    !circular &&
+    !boundVariable &&
+    alpha !== undefined &&
+    !isFullOpacity(alpha);
   const previewBackground =
     alpha !== undefined && !isFullOpacity(alpha)
       ? rgbaFromHex(swatchHex, alpha)
@@ -129,6 +157,23 @@ export function ColorTokenChip(props: ColorTokenChipProps) {
   const chipClass = boundVariable
     ? `${styles.chip} ${styles.chipBound}`
     : styles.chip;
+
+  if (circular) {
+    return (
+      <TokenChipTooltip
+        tokenName={tooltipTokenName}
+        meta={`${tooltipHex} · ${tooltipOpacity}`}
+      >
+        <ColorTokenSwatch
+          boundVariable={boundVariable}
+          swatchHex={swatchHex}
+          previewBackground={previewBackground}
+          alpha={alpha}
+          circular
+        />
+      </TokenChipTooltip>
+    );
+  }
 
   return (
     <TokenChipTooltip

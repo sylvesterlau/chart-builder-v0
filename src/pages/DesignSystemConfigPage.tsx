@@ -205,13 +205,14 @@ function DesignSystemConfigPage({ onBack }: DesignSystemConfigPageProps) {
           <div>
             <Text className={uiStyles.sectionTitle}>Chart colors</Text>
             <VerticalSpace space="medium" />
-            <div className={uiStyles.colorGrid}>
+            <div className={uiStyles.chartColorSwatchGrid}>
               {ds.colors.dataVis.general.map(function (token, index) {
                 return (
-                  <div key={index} className={uiStyles.colorColumn}>
-                    <div className={uiStyles.variableKey}>{`${index + 1}`}</div>
-                    <ColorTokenChip token={token as ColorToken} />
-                  </div>
+                  <ColorTokenChip
+                    key={index}
+                    token={token as ColorToken}
+                    variant="circular"
+                  />
                 );
               })}
             </div>
@@ -262,6 +263,7 @@ function DesignSystemConfigPage({ onBack }: DesignSystemConfigPageProps) {
               pathPrefix="chartTitle.typography"
               root={chartTitleConfig.typography}
             />
+            <VerticalSpace space="extraLarge" />
           </div>
         ) : null}
 

@@ -6,9 +6,11 @@
   box-sizing: border-box;
   display: inline-flex;
   flex-direction: row;
-  flex-shrink: 0;
-  max-width: 100%;
+  flex-shrink: 1;
+  max-width: 140px;
   min-height: 28px;
+  min-width: 0;
+  overflow: hidden;
   width: fit-content;
   padding: 0 4px;
 }
@@ -25,8 +27,11 @@
   box-sizing: border-box;
   display: inline-flex;
   flex-direction: row;
+  flex: 1;
   gap: 6px;
   min-height: 22px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .divider {
@@ -113,4 +118,31 @@
   font-size: 11px;
   font-weight: 400;
   line-height: 16px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chipCircular {
+  border: 1px solid var(--figma-color-border);
+  border-radius: 50%;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  height: 20px;
+  overflow: hidden;
+  position: relative;
+  width: 20px;
+}
+
+.swatchCircularOverlay {
+  border-radius: 50%;
+  inset: 0;
+  position: absolute;
+}
+
+.chipCircular .swatchChecker {
+  border-radius: 50%;
+  height: 100%;
+  width: 100%;
 }

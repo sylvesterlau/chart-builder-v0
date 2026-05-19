@@ -1,4 +1,5 @@
 declare const styles: {
+  readonly "chartColorSwatchGrid": string;
   readonly "chartItemDeleteButton": string;
   readonly "chartItemDeleteButtonWrap": string;
   readonly "chartItemInput": string;

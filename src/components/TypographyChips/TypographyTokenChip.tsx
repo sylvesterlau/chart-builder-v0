@@ -40,6 +40,8 @@ export function TypographyTokenChip(props: TypographyTokenChipProps) {
   }
 
   return (
-    <TokenChipTooltip tokenName={summary}>{chipContent}</TokenChipTooltip>
+    <TokenChipTooltip tokenName={styleName!} meta={summary}>
+      {chipContent}
+    </TokenChipTooltip>
   );
 }
