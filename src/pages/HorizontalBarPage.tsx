@@ -16,6 +16,7 @@ import ChartItemInput, { ChartItem } from "../components/ChartItemInput";
 import HorizontalBarChartPreview from "../components/HorizontalBarChartPreview";
 import { pluginUISize, sampleData } from "../config";
 import { LegendStyle } from "../types";
+import { useRefreshDesignTokensOnMount } from "../utils/useRefreshDesignTokens";
 import styles from "../ui.css";
 interface HorizontalBarPageProps {
   onBack: () => void;
@@ -55,6 +56,7 @@ function sanitizeDecimalInput(value: string) {
   return sanitizedValue;
 }
 function HorizontalBarPage({ onBack }: HorizontalBarPageProps) {
+  useRefreshDesignTokensOnMount();
   const [chartTitle, setChartTitle] = useState<string>("Chart title");
   const [items, setItems] = useState<ChartItem[]>(createSampleItems);
   const [legendStyle, setLegendStyle] = useState<LegendStyle>("leftAndRight");

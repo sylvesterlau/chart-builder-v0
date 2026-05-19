@@ -17,6 +17,7 @@ import PieDonutPreview from "../components/PieDonutPreview";
 import SemiDonutChartPreview from "../components/SemiDonutChartPreview";
 import { pluginUISize, sampleData } from "../config";
 import { LegendStyle, PiePageChartKind } from "../types";
+import { useRefreshDesignTokensOnMount } from "../utils/useRefreshDesignTokens";
 import styles from "../ui.css";
 
 interface PieDonutChartPageProps {
@@ -73,6 +74,7 @@ function sanitizeDecimalInput(value: string) {
 }
 
 function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
+  useRefreshDesignTokensOnMount();
   const [chartKind, setChartKind] = useState<PiePageChartKind>("pie");
   const [chartTitle, setChartTitle] = useState<string>("Chart title");
   const [items, setItems] = useState<ChartItem[]>(createSampleItems);

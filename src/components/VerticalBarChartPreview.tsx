@@ -1,5 +1,5 @@
 import { h } from "preact";
-import { chartBackground, textColor } from "../config";
+import { chartBackground, dataVisColor, textColor } from "../config";
 import {
   buildTicks,
   clamp,
@@ -12,7 +12,7 @@ import {
 import { VerticalBarChartConfig } from "../types";
 import { useColorTokenResolved } from "./ColorChips/colorTokenSwatchContext";
 import { useTypographyTokenResolved } from "./TypographyChips/typographyTokenValueContext";
-import { colorTokenPreviewBackground } from "../utils/colorTokenDisplay";
+import { colorTokenPreviewBackground, colorTokenSwatchHex } from "../utils/colorTokenDisplay";
 import {
   typographyResolvedLineHeight,
   typographyTokenToPreviewCss,
@@ -336,7 +336,10 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
                       <div
                         key={series.name}
                         style={{
-                          background: series.color,
+                          background: colorTokenSwatchHex(
+                            dataVisColor.general[seriesIndex],
+                            resolvedColors,
+                          ),
                           bottom: "1px",
                           height: `${barHeight}px`,
                           left: `calc(50% - ${totalWidth / 2}px + ${
