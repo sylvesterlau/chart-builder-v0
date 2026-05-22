@@ -13,17 +13,15 @@ import { emit } from "@create-figma-plugin/utilities";
 import { h } from "preact";
 import { useCallback, useEffect, useState } from "preact/hooks";
 import ChartItemInput, { ChartItem } from "../components/ChartItemInput";
-import PieDonutPreview from "../components/PieDonutPreview";
+import SemiDonutChartPreview from "../components/SemiDonutChartPreview";
 import { pluginUISize, sampleData } from "../config";
 import { LegendStyle } from "../types";
 import { useRefreshDesignTokensOnMount } from "../utils/useRefreshDesignTokens";
 import styles from "../ui.css";
 
-interface PieDonutChartPageProps {
+interface SemiDonutChartPageProps {
   onBack: () => void;
 }
-
-type PieDonutChartKind = "pie" | "donut";
 
 const MIN_ITEMS = 2;
 const MAX_ITEMS = 10;
@@ -32,10 +30,6 @@ const LEGEND_STYLE_OPTIONS: Array<DropdownOption> = [
   { text: "None", value: "none" },
   { text: "Left and right", value: "leftAndRight" },
   { text: "Top and bottom", value: "topAndBottom" },
-];
-const CHART_KIND_OPTIONS: Array<DropdownOption> = [
-  { text: "Pie", value: "pie" },
-  { text: "Donut", value: "donut" },
 ];
 
 function createEmptyItem(index: number): ChartItem {
@@ -72,16 +66,15 @@ function sanitizeDecimalInput(value: string) {
   return sanitizedValue;
 }
 
-function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
+function SemiDonutChartPage({ onBack }: SemiDonutChartPageProps) {
   useRefreshDesignTokensOnMount();
-  const [chartKind, setChartKind] = useState<PieDonutChartKind>("pie");
   const [chartTitle, setChartTitle] = useState<string>("Chart title");
   const [items, setItems] = useState<ChartItem[]>(createSampleItems);
   const [legendStyle, setLegendStyle] = useState<LegendStyle>("leftAndRight");
   const [showPercentage, setShowPercentage] = useState<boolean>(true);
-  const [showIndicator, setShowIndicator] = useState<boolean>(true);
-  const [showIndicatorPercentage, setShowIndicatorPercentage] =
-    useState<boolean>(true);
+  const [showTotalValue, setShowTotalValue] = useState<boolean>(true);
+  const [totalValueTitle, setTotalValueTitle] =
+    useState<string>("Total Asset Value");
   const [valuePrefix, setValuePrefix] = useState<string>("");
   const [valueSuffix, setValueSuffix] = useState<string>("HKD");
 
@@ -140,35 +133,31 @@ function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
 
   const handleGenerateButtonClick = useCallback(
     function () {
-      emit("SUBMIT_PIE_CHART_DATA", {
+      emit("SUBMIT_SEMI_DONUT_CHART_DATA", {
         data: items.map((item) => ({
           label: item.label,
           value: item.value,
         })),
         chartTitle,
-        pieChartKind: chartKind,
         legendStyle,
         showPercentage,
-        showIndicator,
-        showIndicatorPercentage,
         valuePrefix,
         valueSuffix,
+        showTotalValue,
+        totalValueTitle,
       });
     },
     [
-      chartKind,
       items,
       chartTitle,
       legendStyle,
       showPercentage,
-      showIndicator,
-      showIndicatorPercentage,
       valuePrefix,
       valueSuffix,
+      showTotalValue,
+      totalValueTitle,
     ],
   );
-
-  const pageTitle = chartKind === "donut" ? "Donut chart" : "Pie chart";
 
   return (
     <div className={styles.horizontalBarPage}>
@@ -182,40 +171,23 @@ function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
           >
             ←
           </button>
-          <Text className={styles.horizontalBarTypeTitle}>{pageTitle}</Text>
+          <Text className={styles.horizontalBarTypeTitle}>Semi-donut chart</Text>
         </div>
         <div className={styles.horizontalBarPreviewPanel}>
-          <PieDonutPreview
-            chartKind={chartKind}
+          <SemiDonutChartPreview
             chartTitle={chartTitle}
             items={items}
             legendStyle={legendStyle}
-            showIndicator={showIndicator}
-            showIndicatorPercentage={showIndicatorPercentage}
             showPercentage={showPercentage}
             valuePrefix={valuePrefix}
             valueSuffix={valueSuffix}
+            showTotalValue={showTotalValue}
+            totalValueTitle={totalValueTitle}
           />
         </div>
       </div>
       <div className={styles.horizontalBarRightPanel}>
         <div className={styles.horizontalBarControls}>
-          <Stack space="small">
-            <Text className={styles.sectionTitle}>Type</Text>
-            <div className={styles.fieldRow}>
-              <Text className={styles.fieldLabel}>Chart</Text>
-              <Dropdown
-                onValueChange={(value) =>
-                  setChartKind(value as PieDonutChartKind)
-                }
-                options={CHART_KIND_OPTIONS}
-                value={chartKind}
-              />
-            </div>
-          </Stack>
-          <VerticalSpace space="medium" />
-          <div className={styles.divider} />
-          <VerticalSpace space="medium" />
           <Stack space="small">
             <Text className={styles.sectionTitle}>Chart title</Text>
             <Textbox
@@ -275,21 +247,20 @@ function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
           <div className={styles.divider} />
           <VerticalSpace space="medium" />
           <Stack space="small">
-            <Text className={styles.sectionTitle}>Indicator</Text>
+            <Text className={styles.sectionTitle}>Total value</Text>
             <div className={styles.fieldRow}>
               <Text className={styles.fieldLabel}>Show</Text>
-              <Toggle onValueChange={setShowIndicator} value={showIndicator}>
+              <Toggle onValueChange={setShowTotalValue} value={showTotalValue}>
                 {" "}
               </Toggle>
             </div>
             <div className={styles.fieldRow}>
-              <Text className={styles.fieldLabel}>Percentage</Text>
-              <Toggle
-                onValueChange={setShowIndicatorPercentage}
-                value={showIndicatorPercentage}
-              >
-                {" "}
-              </Toggle>
+              <Text className={styles.fieldLabel}>Tile</Text>
+              <Textbox
+                onValueInput={setTotalValueTitle}
+                value={totalValueTitle}
+                placeholder="Total value title"
+              />
             </div>
             <div className={styles.divider} />
             <VerticalSpace space="medium" />
@@ -339,4 +310,4 @@ function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
   );
 }
 
-export default PieDonutChartPage;
+export default SemiDonutChartPage;
