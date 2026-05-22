@@ -7,8 +7,8 @@ import {
 import {
   clamp,
   formatAxisNumber,
-  isVerticalBarXAxisLineVisible,
-  isVerticalBarYAxisLineVisible,
+  isCartesianXAxisLineVisible,
+  isCartesianYAxisLineVisible,
   normalizeVerticalBarChartConfig,
 } from "../helpers";
 import {
@@ -199,7 +199,7 @@ async function drawYAxis(
       config.color.gridLine,
       1,
     );
-    axisLine.opacity = isVerticalBarYAxisLineVisible(config.axisLineVisibility)
+    axisLine.opacity = isCartesianYAxisLineVisible(config.axisLineVisibility)
       ? 1
       : 0;
 
@@ -276,7 +276,7 @@ async function drawXAxis(
       1,
       height,
       config.color.gridLine,
-      isVerticalBarXAxisLineVisible(config.axisLineVisibility) ? 1 : 0,
+      isCartesianXAxisLineVisible(config.axisLineVisibility) ? 1 : 0,
     );
     const label = await createText(labelText, xLabelStyle, textColor.primary);
     label.name = "Axis label";

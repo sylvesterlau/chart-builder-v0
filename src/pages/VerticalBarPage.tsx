@@ -18,9 +18,9 @@ import { dataVisColor, pluginUISize, verticalBarChartConfig } from "../config";
 import {
   VerticalBarChartConfig,
   VerticalBarChartSeries,
-  VerticalBarAxisLineVisibility,
+  CartesianAxisLineVisibility,
   VerticalBarMode,
-  VerticalBarYAxisPosition,
+  CartesianYAxisPosition,
 } from "../types";
 import { useRefreshDesignTokensOnMount } from "../utils/useRefreshDesignTokens";
 import styles from "../ui.css";
@@ -126,9 +126,9 @@ function VerticalBarPage({ onBack }: VerticalBarPageProps) {
   const sample = verticalBarChartConfig;
   const [barMode, setBarMode] = useState<VerticalBarMode>(sample.barMode);
   const [yAxisPosition, setYAxisPosition] =
-    useState<VerticalBarYAxisPosition>(sample.yAxisPosition);
+    useState<CartesianYAxisPosition>(sample.yAxisPosition);
   const [axisLineVisibility, setAxisLineVisibility] =
-    useState<VerticalBarAxisLineVisibility>(
+    useState<CartesianAxisLineVisibility>(
       sample.axisLineVisibility ?? "both",
     );
   const [selectedIndex, setSelectedIndex] = useState<number | null>(
@@ -337,7 +337,7 @@ function VerticalBarPage({ onBack }: VerticalBarPageProps) {
               <Text className={styles.fieldLabel}>Y side</Text>
               <Dropdown
                 onValueChange={(value) =>
-                  setYAxisPosition(value as VerticalBarYAxisPosition)
+                  setYAxisPosition(value as CartesianYAxisPosition)
                 }
                 options={Y_AXIS_POSITION_OPTIONS}
                 value={yAxisPosition}
@@ -348,7 +348,7 @@ function VerticalBarPage({ onBack }: VerticalBarPageProps) {
               <Dropdown
                 onValueChange={(value) =>
                   setAxisLineVisibility(
-                    value as VerticalBarAxisLineVisibility,
+                    value as CartesianAxisLineVisibility,
                   )
                 }
                 options={AXIS_LINE_VISIBILITY_OPTIONS}
@@ -439,9 +439,11 @@ function VerticalBarPage({ onBack }: VerticalBarPageProps) {
                   Add item
                 </span>
               </Button>
-              <Button secondary fullWidth onClick={handleGenerateSampleData}>
-                Generate random data
-              </Button>
+              <div className={styles.dataSectionActions}>
+                <Button secondary fullWidth onClick={handleGenerateSampleData}>
+                  Generate random data
+                </Button>
+              </div>
             </Stack>
           </div>
         </div>

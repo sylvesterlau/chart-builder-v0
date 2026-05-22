@@ -4,8 +4,8 @@ import {
   buildTicks,
   clamp,
   formatAxisNumber,
-  isVerticalBarXAxisLineVisible,
-  isVerticalBarYAxisLineVisible,
+  isCartesianXAxisLineVisible,
+  isCartesianYAxisLineVisible,
   niceMax,
   rgbaFromHex,
 } from "../helpers";
@@ -41,17 +41,22 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
   );
   const ticks = buildTicks(maxValue, 3);
   const labels = config.labels.slice(0, config.periodCount);
-  const plotHeight = 170;
+  const { labelBg, highlightBg } = config.color.selected;
+  const { typography: ty, yAxisLabel: yLab } = config.color;
+  const yTitleRowHeight = ty.yAxisTitle.lineHeight;
+  const contentWidth = Math.max(1, config.width - 32);
+  const contentHeight = Math.max(1, config.height - 40 - yTitleRowHeight);
+  const plotHeight = Math.max(1, contentHeight - 54);
   const labelGutter = 46;
-  const plotWidth = 312;
+  const plotWidth = Math.max(1, contentWidth - labelGutter);
   const yAxisPosition = config.yAxisPosition ?? "right";
   const plotX = yAxisPosition === "right" ? 0 : labelGutter;
   const yAxisLabelX = yAxisPosition === "right" ? plotWidth + 8 : -8;
   const groupWidth = labels.length > 0 ? plotWidth / labels.length : plotWidth;
-  const showXAxisLine = isVerticalBarXAxisLineVisible(
+  const showXAxisLine = isCartesianXAxisLineVisible(
     config.axisLineVisibility,
   );
-  const showYAxisLine = isVerticalBarYAxisLineVisible(
+  const showYAxisLine = isCartesianYAxisLineVisible(
     config.axisLineVisibility,
   );
   const axisLineColor = colorTokenPreviewBackground(
@@ -62,8 +67,6 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
     config.color.gridLine,
     resolvedColors,
   );
-  const { labelBg, highlightBg } = config.color.selected;
-  const { typography: ty, yAxisLabel: yLab } = config.color;
   const highlightBgCss = rgbaFromHex(
     colorTokenPreviewBackground(highlightBg, resolvedColors),
     highlightBg.opacity ?? 0.08,
@@ -119,10 +122,10 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
       </div>
       <div
         style={{
-          height: "224px",
+          height: `${contentHeight}px`,
           marginTop: "8px",
           position: "relative",
-          width: "358px",
+          width: `${contentWidth}px`,
         }}
       >
         <div

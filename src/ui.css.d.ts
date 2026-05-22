@@ -10,9 +10,12 @@ declare const styles: {
   readonly "colorTokenRow": string;
   readonly "configValueList": string;
   readonly "configValueRow": string;
+  readonly "dataSectionActions": string;
   readonly "divider": string;
   readonly "field-label": string;
   readonly "field-row": string;
+  readonly "fieldGroupLabel": string;
+  readonly "fieldHintError": string;
   readonly "fieldLabel": string;
   readonly "fieldRow": string;
   readonly "horizontalBarActions": string;

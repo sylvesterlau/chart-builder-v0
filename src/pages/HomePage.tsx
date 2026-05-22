@@ -15,6 +15,7 @@ interface HomePageProps {
       | "pieDonutChart"
       | "horizontalBar"
       | "verticalBar"
+      | "lineChart"
       | "designSystemConfig",
   ) => void;
 }
@@ -39,6 +40,11 @@ function HomePage({ onNavigate }: HomePageProps) {
           icon={<IconLayoutAlignBottom24 />}
           title="Vertical bar chart"
           onClick={() => onNavigate("verticalBar")}
+        />
+        <List
+          icon={<IconLine24 />}
+          title="Line chart"
+          onClick={() => onNavigate("lineChart")}
         />
         <List
           icon={<IconVariableColor24 />}
