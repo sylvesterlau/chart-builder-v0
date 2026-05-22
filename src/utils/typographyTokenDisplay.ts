@@ -1,4 +1,4 @@
-import { ds, verticalBarChartConfig } from "../config";
+import { ds, lineChartConfig, verticalBarChartConfig } from "../config";
 import type { TypographyToken } from "../types";
 import type { ResolvedTypographyMetrics } from "./resolveTypographyTokenValues";
 import { formatTypographyMetricsShorthand } from "./chartTypography";
@@ -42,6 +42,7 @@ function registerTypographyTokenKeys(obj: unknown): void {
 
 registerTypographyTokenKeys(ds);
 registerTypographyTokenKeys(verticalBarChartConfig);
+registerTypographyTokenKeys(lineChartConfig);
 
 export function typographyTokenHasStyleBinding(token: TypographyToken): boolean {
   return Boolean(token.key?.trim());

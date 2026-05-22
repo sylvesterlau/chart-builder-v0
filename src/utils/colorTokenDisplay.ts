@@ -1,4 +1,4 @@
-import { ds, verticalBarChartConfig } from "../config";
+import { ds, lineChartConfig, verticalBarChartConfig } from "../config";
 import { rgbaFromHex } from "../helpers";
 import type { ColorToken } from "../types";
 
@@ -35,6 +35,7 @@ function registerColorTokenKeys(obj: unknown): void {
 registerColorTokenKeys(ds.colors);
 registerColorTokenKeys(ds.legend.color);
 registerColorTokenKeys(verticalBarChartConfig.color);
+registerColorTokenKeys(lineChartConfig.color);
 
 /** Whether the token is bound to a Figma library variable. */
 export function colorTokenHasVariableBinding(token: ColorToken): boolean {

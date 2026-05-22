@@ -1,13 +1,22 @@
 import { h } from "preact";
-import { chartBackground, textColor } from "../config";
+import { chartBackground, dataVisColor, textColor } from "../config";
 import {
   clamp,
   formatAxisNumber,
   isCartesianXAxisLineVisible,
   isCartesianYAxisLineVisible,
-  cartesianTextStyleToCss,
 } from "../helpers";
 import { LineChartConfig } from "../types";
+import { useColorTokenResolved } from "./ColorChips/colorTokenSwatchContext";
+import { useTypographyTokenResolved } from "./TypographyChips/typographyTokenValueContext";
+import {
+  colorTokenPreviewBackground,
+  colorTokenSwatchHex,
+} from "../utils/colorTokenDisplay";
+import {
+  typographyResolvedLineHeight,
+  typographyTokenToPreviewCss,
+} from "../utils/typographyTokenDisplay";
 
 interface LineChartPreviewProps {
   config: LineChartConfig;
@@ -32,11 +41,15 @@ function createLinePath(
     .join(" ");
 }
 
-function markerStyle(seriesIndex: number, color: string) {
+function markerStyle(
+  seriesIndex: number,
+  color: string,
+  chartBgColor: string,
+) {
   if (seriesIndex === 1) {
     return {
       background: color,
-      outline: "1.5px solid #ffffff",
+      outline: `1.5px solid ${chartBgColor}`,
       borderRadius: "1px",
       height: "9.5px",
       width: "9.5px",
@@ -45,7 +58,7 @@ function markerStyle(seriesIndex: number, color: string) {
   if (seriesIndex === 2) {
     return {
       background: color,
-      filter: "drop-shadow(0 0 0 #ffffff) drop-shadow(0 0 1.5px #ffffff)",
+      filter: `drop-shadow(0 0 0 ${chartBgColor}) drop-shadow(0 0 1.5px ${chartBgColor})`,
       clipPath: "polygon(50% 0, 100% 100%, 0 100%)",
       height: "11px",
       width: "12px",
@@ -53,7 +66,7 @@ function markerStyle(seriesIndex: number, color: string) {
   }
   return {
     background: color,
-    outline: "1.5px solid #ffffff",
+    outline: `1.5px solid ${chartBgColor}`,
     borderRadius: "50%",
     height: "11px",
     width: "11px",
@@ -61,6 +74,9 @@ function markerStyle(seriesIndex: number, color: string) {
 }
 
 function LineChartPreview({ config }: LineChartPreviewProps) {
+  const { values: resolvedColors } = useColorTokenResolved();
+  const { values: resolvedTypography } = useTypographyTokenResolved();
+
   const visibleSeries =
     config.lineMode === "single"
       ? config.series.slice(0, 1)
@@ -69,17 +85,21 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
   const maxValue =
     Number(config.maxValue) > minValue ? Number(config.maxValue) : minValue + 1;
   const valueRange = Math.max(1, maxValue - minValue);
-  const ticks = config.maxValue > config.minValue
-    ? [
-        Math.round(maxValue),
-        Math.round(maxValue - valueRange / 3),
-        Math.round(maxValue - (valueRange / 3) * 2),
-        Math.round(minValue),
-      ]
-    : [maxValue, minValue];
+  const ticks =
+    config.maxValue > config.minValue
+      ? [
+          Math.round(maxValue),
+          Math.round(maxValue - valueRange / 3),
+          Math.round(maxValue - (valueRange / 3) * 2),
+          Math.round(minValue),
+        ]
+      : [maxValue, minValue];
   const { labelBg } = config.color.selected;
   const { typography: ty, yAxisLabel: yLab } = config.color;
-  const yTitleRowHeight = ty.yAxisTitle.lineHeight;
+  const yTitleRowHeight = typographyResolvedLineHeight(
+    ty.yAxisTitle,
+    resolvedTypography,
+  );
   const contentWidth = Math.max(1, config.width - 32);
   const contentHeight = Math.max(1, config.height - 40 - yTitleRowHeight);
   const plotHeight = Math.max(1, contentHeight - 30);
@@ -95,14 +115,31 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
     ? config.xAxisLabels
     : ["", "", "", "", "", "", ""];
   const xGroupWidth = xAxisWidth / xAxisLabels.length;
-  const showXAxisLine = isCartesianXAxisLineVisible(
-    config.axisLineVisibility,
+  const showXAxisLine = isCartesianXAxisLineVisible(config.axisLineVisibility);
+  const showYAxisLine = isCartesianYAxisLineVisible(config.axisLineVisibility);
+  const axisLineColor = colorTokenPreviewBackground(
+    config.color.axisLine,
+    resolvedColors,
   );
-  const showYAxisLine = isCartesianYAxisLineVisible(
-    config.axisLineVisibility,
+  const gridLineColor = colorTokenPreviewBackground(
+    config.color.gridLine,
+    resolvedColors,
   );
-  const axisLineColor = config.color.axisLine.value;
-  const gridLineColor = config.color.gridLine.value;
+  const chartBgColor = colorTokenPreviewBackground(
+    chartBackground,
+    resolvedColors,
+  );
+  const yAxisTitleCss = typographyTokenToPreviewCss(
+    ty.yAxisTitle,
+    resolvedTypography,
+  );
+  const yAxisLabelCss = typographyTokenToPreviewCss(yLab, resolvedTypography);
+  const xAxisLabelCss = typographyTokenToPreviewCss(
+    ty.xAxisLabel,
+    resolvedTypography,
+  );
+  const defaultFontFamily =
+    typographyTokenToPreviewCss(ty.xAxisLabel, resolvedTypography).fontFamily;
   const selectedIndex = config.selectedIndex;
   const hasSelection = selectedIndex >= 0;
   const selectedRatio =
@@ -110,18 +147,17 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
       ? selectedIndex / (config.pointCount - 1)
       : 0;
   const selectedX = selectedRatio * lineWidth;
-  const selectedLabel =
-    hasSelection
-      ? config.pointLabels[selectedIndex] || `P${selectedIndex + 1}`
-      : "";
+  const selectedLabel = hasSelection
+    ? config.pointLabels[selectedIndex] || `P${selectedIndex + 1}`
+    : "";
 
   return (
     <div
       style={{
-        background: chartBackground.value,
+        background: chartBgColor,
         boxSizing: "border-box",
-        color: textColor.primary.value,
-        fontFamily: "Inter, sans-serif",
+        color: colorTokenPreviewBackground(textColor.primary, resolvedColors),
+        fontFamily: defaultFontFamily,
         height: `${config.height}px`,
         overflow: "hidden",
         padding: "16px",
@@ -135,7 +171,7 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
           display: "flex",
           height: `${yTitleRowHeight}px`,
           justifyContent: yAxisPosition === "right" ? "flex-end" : "flex-start",
-          ...cartesianTextStyleToCss(ty.yAxisTitle),
+          ...yAxisTitleCss,
         }}
       >
         {config.yAxisTitle}
@@ -193,7 +229,7 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
                     textAlign: yAxisPosition === "left" ? "right" : "left",
                     top: "-8px",
                     whiteSpace: "nowrap",
-                    ...cartesianTextStyleToCss(yLab),
+                    ...yAxisLabelCss,
                   }}
                 >
                   {formatAxisNumber(tick)}
@@ -252,7 +288,7 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
                     textAlign: "center",
                     transform: "translateX(-50%)",
                     whiteSpace: "nowrap",
-                    ...cartesianTextStyleToCss(ty.xAxisLabel),
+                    ...xAxisLabelCss,
                   }}
                 >
                   {label}
@@ -287,7 +323,7 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
             viewBox={`0 0 ${lineWidth} ${plotHeight}`}
             width={lineWidth}
           >
-            {visibleSeries.map((series) => (
+            {visibleSeries.map((series, seriesIndex) => (
               <path
                 d={createLinePath(
                   series.values,
@@ -298,7 +334,10 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
                 )}
                 fill="none"
                 key={series.name}
-                stroke={series.color}
+                stroke={colorTokenSwatchHex(
+                  dataVisColor.general[seriesIndex],
+                  resolvedColors,
+                )}
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth="1.5"
@@ -322,9 +361,12 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
             <div
               style={{
                 alignItems: "center",
-                background: labelBg.value,
+                background: colorTokenPreviewBackground(labelBg, resolvedColors),
                 bottom: "-22px",
-                color: textColor.onDark.value,
+                color: colorTokenPreviewBackground(
+                  textColor.onDark,
+                  resolvedColors,
+                ),
                 display: "flex",
                 height: "18px",
                 justifyContent: "center",
@@ -333,7 +375,7 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
                 position: "absolute",
                 transform: "translateX(-50%)",
                 whiteSpace: "nowrap",
-                ...cartesianTextStyleToCss(ty.xAxisLabel),
+                ...xAxisLabelCss,
               }}
             >
               {selectedLabel}
@@ -349,6 +391,10 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
                 const y =
                   clamp(1 - (value - minValue) / valueRange, 0, 1) *
                   plotHeight;
+                const seriesColor = colorTokenSwatchHex(
+                  dataVisColor.general[seriesIndex],
+                  resolvedColors,
+                );
                 return (
                   <div
                     key={`${series.name}-marker`}
@@ -364,7 +410,9 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
                       width: "12px",
                     }}
                   >
-                    <div style={markerStyle(seriesIndex, series.color)} />
+                    <div
+                      style={markerStyle(seriesIndex, seriesColor, chartBgColor)}
+                    />
                   </div>
                 );
               })

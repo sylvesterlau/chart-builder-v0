@@ -22,6 +22,7 @@ import {
   CartesianYAxisPosition,
 } from "../types";
 import styles from "../ui.css";
+import { useRefreshDesignTokensOnMount } from "../utils/useRefreshDesignTokens";
 
 interface LineChartPageProps {
   onBack: () => void;
@@ -395,6 +396,7 @@ function createRandomSeriesInRange(
 
 function LineChartPage({ onBack }: LineChartPageProps) {
   const sample = lineChartConfig;
+  useRefreshDesignTokensOnMount();
   const [lineMode, setLineMode] = useState<LineChartMode>(sample.lineMode);
   const [yAxisPosition, setYAxisPosition] =
     useState<CartesianYAxisPosition>(sample.yAxisPosition);

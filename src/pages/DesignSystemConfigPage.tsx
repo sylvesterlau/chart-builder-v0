@@ -9,8 +9,10 @@ import { NumChip } from "../components/NumChips/NumChip";
 import { NumberTokenChip } from "../components/NumChips/NumberTokenChip";
 import { TypographyTokenChip } from "../components/TypographyChips/TypographyTokenChip";
 import {
+  cartesianChartConfig,
   chartTitleConfig,
   ds,
+  lineChartConfig,
   pluginUISize,
   verticalBarChartConfig,
 } from "../config";
@@ -36,6 +38,7 @@ type DesignSystemTabId =
   | "semiDonut"
   | "pieDonut"
   | "verticalBar"
+  | "lineChart"
   | "util";
 
 /** Plugin UI dimensions while Design system page is open. */
@@ -50,6 +53,7 @@ const DESIGN_SYSTEM_TABS: ReadonlyArray<{
   { id: "semiDonut", label: "Semi-donut" },
   { id: "pieDonut", label: "Pie & donut" },
   { id: "verticalBar", label: "Vertical bar" },
+  { id: "lineChart", label: "Line chart" },
   { id: "util", label: "Util" },
 ];
 
@@ -80,6 +84,73 @@ function pieIndicatorMetricEntries(): Array<[string, unknown]> {
 }
 
 const vbColor = verticalBarChartConfig.color;
+const lineColor = lineChartConfig.color;
+const cartesianColor = cartesianChartConfig.color;
+
+function CartesianChartTokenPanel(props: {
+  pathPrefix: string;
+  color: typeof cartesianColor;
+}) {
+  const { pathPrefix, color } = props;
+  return (
+    <div>
+      <Text className={uiStyles.sectionTitle}>Axis & grid</Text>
+      <VerticalSpace space="small" />
+      <Stack space="small">
+        {(
+          [
+            ["axisLine", color.axisLine],
+            ["gridLine", color.gridLine],
+          ] as const
+        ).map(function ([role, token]) {
+          return (
+            <div key={role} className={uiStyles.colorColumn}>
+              <div className={uiStyles.variableKey}>{role}</div>
+              <ColorTokenChip token={token as ColorToken} />
+            </div>
+          );
+        })}
+      </Stack>
+      <VerticalSpace space="small" />
+      <Divider />
+      <VerticalSpace space="medium" />
+
+      <Text className={uiStyles.sectionTitle}>Selected state</Text>
+      <VerticalSpace space="small" />
+      <Stack space="small">
+        <div className={uiStyles.colorColumn}>
+          <div className={uiStyles.variableKey}>labelBg</div>
+          <ColorTokenChip token={color.selected.labelBg} />
+        </div>
+        <div className={uiStyles.colorColumn}>
+          <div className={uiStyles.variableKey}>highlightBg</div>
+          <ColorTokenChip
+            token={color.selected.highlightBg}
+            fallbackOpacity={0.08}
+          />
+        </div>
+      </Stack>
+      <VerticalSpace space="small" />
+      <Divider />
+      <VerticalSpace space="medium" />
+
+      <Text className={uiStyles.sectionTitle}>
+        Axis titles & labels · typography
+      </Text>
+      <VerticalSpace space="small" />
+      <TypographyBlock pathPrefix={`${pathPrefix}.typography`} root={color.typography} />
+      <VerticalSpace space="small" />
+      <Divider />
+      <VerticalSpace space="medium" />
+
+      <Text className={uiStyles.sectionTitle}>
+        Y-axis tick labels · typography
+      </Text>
+      <VerticalSpace space="small" />
+      <TypographyBlock pathPrefix={`${pathPrefix}.yAxisLabel`} root={color.yAxisLabel} />
+    </div>
+  );
+}
 
 function TypographyBlock(props: { pathPrefix: string; root: unknown }) {
   const { pathPrefix, root } = props;
@@ -384,68 +455,17 @@ function DesignSystemConfigPage({ onBack }: DesignSystemConfigPageProps) {
         ) : null}
 
         {activeTab === "verticalBar" ? (
-          <div>
-            <Text className={uiStyles.sectionTitle}>Axis & grid</Text>
-            <VerticalSpace space="small" />
-            <Stack space="small">
-              {(
-                [
-                  ["axisLine", vbColor.axisLine],
-                  ["gridLine", vbColor.gridLine],
-                ] as const
-              ).map(function ([role, token]) {
-                return (
-                  <div key={role} className={uiStyles.colorColumn}>
-                    <div className={uiStyles.variableKey}>{role}</div>
-                    <ColorTokenChip token={token as ColorToken} />
-                  </div>
-                );
-              })}
-            </Stack>
-            <VerticalSpace space="small" />
-            <Divider />
-            <VerticalSpace space="medium" />
+          <CartesianChartTokenPanel
+            pathPrefix="verticalBar.color"
+            color={vbColor}
+          />
+        ) : null}
 
-            <Text className={uiStyles.sectionTitle}>Selected state</Text>
-            <VerticalSpace space="small" />
-            <Stack space="small">
-              <div className={uiStyles.colorColumn}>
-                <div className={uiStyles.variableKey}>labelBg</div>
-                <ColorTokenChip token={vbColor.selected.labelBg} />
-              </div>
-              <div className={uiStyles.colorColumn}>
-                <div className={uiStyles.variableKey}>highlightBg</div>
-                <ColorTokenChip
-                  token={vbColor.selected.highlightBg}
-                  fallbackOpacity={0.08}
-                />
-              </div>
-            </Stack>
-            <VerticalSpace space="small" />
-            <Divider />
-            <VerticalSpace space="medium" />
-
-            <Text className={uiStyles.sectionTitle}>
-              Axis titles & labels · typography
-            </Text>
-            <VerticalSpace space="small" />
-            <TypographyBlock
-              pathPrefix="verticalBar.color.typography"
-              root={vbColor.typography}
-            />
-            <VerticalSpace space="small" />
-            <Divider />
-            <VerticalSpace space="medium" />
-
-            <Text className={uiStyles.sectionTitle}>
-              Y-axis tick labels · typography
-            </Text>
-            <VerticalSpace space="small" />
-            <TypographyBlock
-              pathPrefix="verticalBar.color.yAxisLabel"
-              root={vbColor.yAxisLabel}
-            />
-          </div>
+        {activeTab === "lineChart" ? (
+          <CartesianChartTokenPanel
+            pathPrefix="lineChart.color"
+            color={lineColor}
+          />
         ) : null}
 
         {activeTab === "util" ? <TokenKeyLookupPanel /> : null}
