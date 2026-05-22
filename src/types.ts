@@ -66,7 +66,7 @@ export interface ChartDataItem {
 }
 export type LegendStyle = "none" | "leftAndRight" | "topAndBottom";
 
-/** Unified pie/donut/semi-donut screen selector; semi uses `SUBMIT_SEMI_DONUT_CHART_DATA` + `drawSemiDonutChart`. */
+/** Pie/donut screen selector; semi-donut uses its own page. */
 export type PiePageChartKind = "pie" | "donut" | "semiDonut";
 export interface ChartData {
   chartTitle?: string;

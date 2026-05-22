@@ -1,0 +1,15 @@
+.root {
+  align-items: center;
+  box-sizing: border-box;
+  display: flex;
+  flex-shrink: 0;
+  height: 100%;
+  justify-content: center;
+  width: 100%;
+}
+
+.svg {
+  display: block;
+  height: 36px;
+  width: 36px;
+}

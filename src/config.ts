@@ -331,7 +331,10 @@ function createSeededLineValues(
     state = (state * 1664525 + 1013904223) % 4294967296;
     const random = state / 4294967296 - 0.5;
     const wave = Math.sin(index / 6) * volatility * 0.35;
-    value = Math.max(min, Math.min(max, value + random * volatility + drift + wave));
+    value = Math.max(
+      min,
+      Math.min(max, value + random * volatility + drift + wave),
+    );
     values.push(Math.round(value));
   }
   return values;

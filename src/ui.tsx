@@ -6,6 +6,7 @@ import HorizontalBarPage from "./pages/HorizontalBarPage";
 import LineChartPage from "./pages/LineChartPage";
 import VerticalBarPage from "./pages/VerticalBarPage";
 import PieDonutChartPage from "./pages/PieDonutChartPage";
+import SemiDonutChartPage from "./pages/SemiDonutChartPage";
 import DesignSystemConfigPage from "./pages/DesignSystemConfigPage";
 import { ColorTokenSwatchProvider } from "./components/ColorChips/colorTokenSwatchContext";
 import { NumberTokenValueProvider } from "./components/NumChips/numberTokenValueContext";
@@ -15,6 +16,7 @@ export type Pages =
   | "home"
   | "horizontalBar"
   | "pieDonutChart"
+  | "semiDonutChart"
   | "verticalBar"
   | "lineChart"
   | "designSystemConfig";
@@ -39,6 +41,8 @@ function Plugin() {
         return <LineChartPage onBack={navigateToHome} />;
       case "pieDonutChart":
         return <PieDonutChartPage onBack={navigateToHome} />;
+      case "semiDonutChart":
+        return <SemiDonutChartPage onBack={navigateToHome} />;
       case "designSystemConfig":
         return <DesignSystemConfigPage onBack={navigateToHome} />;
       default:
