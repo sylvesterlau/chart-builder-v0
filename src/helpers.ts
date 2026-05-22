@@ -3,9 +3,13 @@ import { dataVisAt, dataVisColor } from "./config";
 import {
   ChartData,
   ColorToken,
+  CartesianAxisLineVisibility,
+  LineChartConfig,
+  LineChartMode,
+  LineChartRange,
+  NormalizedLineChartConfig,
   NormalizedVerticalBarChartConfig,
   TypographyToken,
-  VerticalBarAxisLineVisibility,
   VerticalBarChartConfig,
 } from "./types";
 // Convert token name dots to slashes
@@ -227,6 +231,20 @@ export function buildTicks(maxValue: number, steps: number): number[] {
   return ticks;
 }
 
+export function buildRangeTicks(
+  minValue: number,
+  maxValue: number,
+  steps: number,
+): number[] {
+  const ticks: number[] = [];
+  const range = maxValue - minValue;
+  for (let index = 0; index <= steps; index += 1) {
+    ticks.push(Math.round(maxValue - (range / steps) * index));
+  }
+  ticks[ticks.length - 1] = Math.round(minValue);
+  return ticks;
+}
+
 export function normalizeHexColor(value: unknown, fallback: string): string {
   const text = String(value || "").trim();
   return /^#[0-9a-f]{6}$/i.test(text) ? text : fallback;
@@ -253,8 +271,8 @@ export function mergeColorToken(
   return next;
 }
 
-/** CSS inline style fragment from vertical bar text tokens (preview). */
-export function verticalBarTextStyleToCss(
+/** CSS inline style fragment from cartesian chart text tokens (preview). */
+export function cartesianTextStyleToCss(
   style: TypographyToken,
 ): Record<string, string | number> {
   return {
@@ -265,7 +283,7 @@ export function verticalBarTextStyleToCss(
   };
 }
 
-export function mergeVerticalBarTextStyle(
+export function mergeCartesianTextStyle(
   input: Partial<TypographyToken> | undefined,
   fallback: TypographyToken,
 ): TypographyToken {
@@ -306,22 +324,30 @@ export function formatAxisNumber(value: number): string {
   return `${sign}${absoluteValue.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
 }
 
-export function normalizeVerticalBarAxisLineVisibility(
+export function normalizeCartesianAxisLineVisibility(
   value: unknown,
-): VerticalBarAxisLineVisibility {
+): CartesianAxisLineVisibility {
   return value === "x" || value === "y" || value === "none" ? value : "both";
 }
 
-export function isVerticalBarXAxisLineVisible(
-  value: VerticalBarAxisLineVisibility | undefined,
+export function isCartesianXAxisLineVisible(
+  value: CartesianAxisLineVisibility | undefined,
 ): boolean {
   return value === undefined || value === "both" || value === "x";
 }
 
-export function isVerticalBarYAxisLineVisible(
-  value: VerticalBarAxisLineVisibility | undefined,
+export function isCartesianYAxisLineVisible(
+  value: CartesianAxisLineVisibility | undefined,
 ): boolean {
   return value === undefined || value === "both" || value === "y";
+}
+
+function normalizeLineChartMode(value: unknown): LineChartMode {
+  return value === "multi" ? "multi" : "single";
+}
+
+function normalizeLineChartRange(value: unknown): LineChartRange {
+  return value === "full" ? "full" : "partial";
 }
 
 function maxSeriesValue(series: Array<{ values: number[] }>): number {
@@ -403,7 +429,7 @@ export function normalizeVerticalBarChartConfig(
     chartType: "verticalBar",
     barMode,
     yAxisPosition: input.yAxisPosition === "left" ? "left" : "right",
-    axisLineVisibility: normalizeVerticalBarAxisLineVisibility(
+    axisLineVisibility: normalizeCartesianAxisLineVisibility(
       input.axisLineVisibility,
     ),
     color: {
@@ -420,20 +446,20 @@ export function normalizeVerticalBarChartConfig(
         ),
       },
       typography: {
-        xAxisTitle: mergeVerticalBarTextStyle(
+        xAxisTitle: mergeCartesianTextStyle(
           inputColor?.typography?.xAxisTitle,
           fallbackColor.typography.xAxisTitle,
         ),
-        yAxisTitle: mergeVerticalBarTextStyle(
+        yAxisTitle: mergeCartesianTextStyle(
           inputColor?.typography?.yAxisTitle,
           fallbackColor.typography.yAxisTitle,
         ),
-        xAxisLabel: mergeVerticalBarTextStyle(
+        xAxisLabel: mergeCartesianTextStyle(
           inputColor?.typography?.xAxisLabel,
           fallbackColor.typography.xAxisLabel,
         ),
       },
-      yAxisLabel: mergeVerticalBarTextStyle(
+      yAxisLabel: mergeCartesianTextStyle(
         inputColor?.yAxisLabel,
         fallbackColor.yAxisLabel,
       ),
@@ -448,5 +474,140 @@ export function normalizeVerticalBarChartConfig(
     series,
     maxValue,
     yTicks: buildTicks(maxValue, 3),
+  };
+}
+
+export function normalizeLineChartConfig(
+  input: Partial<LineChartConfig>,
+  fallback: LineChartConfig,
+): NormalizedLineChartConfig {
+  const pointCount = Math.round(
+    clampNumber(input.pointCount, 2, 180, fallback.pointCount),
+  );
+  const lineMode = normalizeLineChartMode(input.lineMode);
+  const seriesCount = lineMode === "single" ? 1 : 3;
+  const pointLabels: string[] = [];
+  const inputPointLabels = Array.isArray(input.pointLabels)
+    ? input.pointLabels
+    : [];
+
+  for (let index = 0; index < pointCount; index += 1) {
+    pointLabels.push(
+      String(
+        inputPointLabels[index] || fallback.pointLabels[index] || `P${index + 1}`,
+      ).trim(),
+    );
+  }
+
+  const xAxisLabels = Array.isArray(input.xAxisLabels) && input.xAxisLabels.length > 0
+    ? input.xAxisLabels.map((label) => String(label ?? ""))
+    : [...fallback.xAxisLabels];
+
+  const series = [];
+  for (let index = 0; index < seriesCount; index += 1) {
+    const fallbackSeries = fallback.series[index] || fallback.series[0];
+    const inputSeries = Array.isArray(input.series) ? input.series[index] : null;
+    const inputValues =
+      inputSeries && Array.isArray(inputSeries.values)
+        ? inputSeries.values
+        : [];
+    const values: number[] = [];
+    for (let valueIndex = 0; valueIndex < pointCount; valueIndex += 1) {
+      const fallbackValue = fallbackSeries.values[valueIndex] || 0;
+      const nextValue =
+        inputValues[valueIndex] !== undefined
+          ? inputValues[valueIndex]
+          : fallbackValue;
+      values.push(Number(nextValue) || 0);
+    }
+    series.push({
+      name:
+        String((inputSeries && inputSeries.name) || "").trim() ||
+        fallbackSeries.name,
+      color: normalizeHexColor(
+        inputSeries && inputSeries.color,
+        fallbackSeries.color,
+      ),
+      values,
+    });
+  }
+
+  const rawMinValue = Number(input.minValue);
+  const rawMaxValue = Number(input.maxValue);
+  const fallbackMinValue = Number(fallback.minValue);
+  const fallbackMaxValue = Number(fallback.maxValue);
+  const minValue = Number.isFinite(rawMinValue)
+    ? rawMinValue
+    : Number.isFinite(fallbackMinValue)
+      ? fallbackMinValue
+      : 0;
+  const maxValue =
+    Number.isFinite(rawMaxValue) && rawMaxValue > minValue
+      ? rawMaxValue
+      : Number.isFinite(fallbackMaxValue) && fallbackMaxValue > minValue
+        ? fallbackMaxValue
+        : Math.max(minValue + 1, niceMax(maxSeriesValue(series)));
+  const selectedIndex = Math.round(
+    clampNumber(
+      input.selectedIndex,
+      -1,
+      pointCount - 1,
+      Math.min(fallback.selectedIndex, pointCount - 1),
+    ),
+  );
+  const fallbackColor = fallback.color;
+  const inputColor = input.color;
+
+  return {
+    chartType: "lineChart",
+    lineMode,
+    lineRange: normalizeLineChartRange(input.lineRange ?? fallback.lineRange),
+    yAxisPosition: input.yAxisPosition === "left" ? "left" : "right",
+    axisLineVisibility: normalizeCartesianAxisLineVisibility(
+      input.axisLineVisibility,
+    ),
+    color: {
+      axisLine: mergeColorToken(inputColor?.axisLine, fallbackColor.axisLine),
+      gridLine: mergeColorToken(inputColor?.gridLine, fallbackColor.gridLine),
+      selected: {
+        labelBg: mergeColorToken(
+          inputColor?.selected?.labelBg,
+          fallbackColor.selected.labelBg,
+        ),
+        highlightBg: mergeColorToken(
+          inputColor?.selected?.highlightBg,
+          fallbackColor.selected.highlightBg,
+        ),
+      },
+      typography: {
+        xAxisTitle: mergeCartesianTextStyle(
+          inputColor?.typography?.xAxisTitle,
+          fallbackColor.typography.xAxisTitle,
+        ),
+        yAxisTitle: mergeCartesianTextStyle(
+          inputColor?.typography?.yAxisTitle,
+          fallbackColor.typography.yAxisTitle,
+        ),
+        xAxisLabel: mergeCartesianTextStyle(
+          inputColor?.typography?.xAxisLabel,
+          fallbackColor.typography.xAxisLabel,
+        ),
+      },
+      yAxisLabel: mergeCartesianTextStyle(
+        inputColor?.yAxisLabel,
+        fallbackColor.yAxisLabel,
+      ),
+    },
+    pointCount,
+    selectedIndex,
+    width: Math.round(clampNumber(input.width, 260, 1200, fallback.width)),
+    height: Math.round(clampNumber(input.height, 260, 900, fallback.height)),
+    minValue,
+    maxValue,
+    yAxisTitle: String(input.yAxisTitle || "").trim() || fallback.yAxisTitle,
+    xAxisLabels,
+    pointLabels,
+    series,
+    yTicks: buildRangeTicks(minValue, maxValue, 3),
   };
 }

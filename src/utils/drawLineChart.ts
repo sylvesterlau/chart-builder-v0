@@ -1,9 +1,9 @@
-import { chartBackground, textColor, verticalBarChartConfig } from "../config";
-import { clamp, normalizeVerticalBarChartConfig } from "../helpers";
+import { chartBackground, lineChartConfig, textColor } from "../config";
+import { clamp, normalizeLineChartConfig } from "../helpers";
 import {
-  NormalizedVerticalBarChartConfig,
+  LineChartConfig,
+  NormalizedLineChartConfig,
   TypographyToken,
-  VerticalBarChartConfig,
 } from "../types";
 import {
   drawCartesianXAxis,
@@ -13,11 +13,11 @@ import {
 
 const TEXT_PRIMARY_COLOR = textColor.primary.value;
 const TEXT_ON_DARK_COLOR = textColor.onDark.value;
-const ROOT_NAME = "_demo/bar chart/1";
+const ROOT_NAME = "_demo/line chart/1";
 const FONT_REGULAR: FontName = { family: "Inter", style: "Regular" };
 const FONT_BOLD: FontName = { family: "Inter", style: "Bold" };
 
-async function loadVerticalBarFonts() {
+async function loadLineChartFonts() {
   try {
     await figma.loadFontAsync(FONT_REGULAR);
     await figma.loadFontAsync(FONT_BOLD);
@@ -69,6 +69,24 @@ function createRect(
   return rect;
 }
 
+function createLineVector(
+  parent: BaseNode & ChildrenMixin,
+  name: string,
+  path: string,
+  color: string,
+): VectorNode {
+  const vector = figma.createVector();
+  vector.name = name;
+  vector.vectorPaths = [{ windingRule: "NONZERO", data: path }];
+  vector.fills = [];
+  vector.strokes = [{ type: "SOLID", color: figma.util.rgb(color) }];
+  vector.strokeWeight = 1.5;
+  vector.strokeCap = "ROUND";
+  vector.strokeJoin = "ROUND";
+  parent.appendChild(vector);
+  return vector;
+}
+
 function createText(
   characters: string | number,
   style: TypographyToken,
@@ -99,11 +117,29 @@ function positionChart(chart: FrameNode) {
   chart.y = figma.viewport.center.y - chart.height / 2;
 }
 
+function createPathFromValues(
+  values: number[],
+  minValue: number,
+  maxValue: number,
+  width: number,
+  height: number,
+): string {
+  const range = Math.max(1, maxValue - minValue);
+  return values
+    .map((rawValue, index) => {
+      const x = values.length <= 1 ? 0 : (index / (values.length - 1)) * width;
+      const value = clamp(Number(rawValue) || 0, minValue, maxValue);
+      const y = clamp(1 - (value - minValue) / range, 0, 1) * height;
+      return `${index === 0 ? "M" : "L"} ${x.toFixed(2)} ${y.toFixed(2)}`;
+    })
+    .join(" ");
+}
+
 function drawSelectedLabel(
   parent: FrameNode,
   labelText: string,
-  groupWidth: number,
-  height: number,
+  x: number,
+  y: number,
   labelBgColor: string,
   labelTextStyle: TypographyToken,
 ) {
@@ -112,8 +148,8 @@ function drawSelectedLabel(
   const labelFrame = createFrameNode(
     parent,
     "Label selected",
-    groupWidth / 2 - labelWidth / 2,
-    height + 4,
+    x - labelWidth / 2,
+    y,
     labelWidth,
     labelFrameHeight,
     labelBgColor,
@@ -124,6 +160,7 @@ function drawSelectedLabel(
     counterAxisSizingMode: "AUTO",
     paddingLeft: 8,
     paddingRight: 8,
+    paddingBottom: 2,
     counterAxisAlignItems: "CENTER",
   });
   const label = createText(labelText, labelTextStyle, TEXT_ON_DARK_COLOR);
@@ -154,119 +191,127 @@ function drawDashedIndicator(
   }
 }
 
-function drawBarMark(
+function drawMarker(
   parent: FrameNode,
-  name: string,
-  color: string,
   x: number,
-  width: number,
-  height: number,
-  barHeight: number,
+  y: number,
+  color: string,
+  seriesIndex: number,
 ) {
-  const markFrame = createFrameNode(parent, name, x, 0, width, height);
-  createRect(
-    markFrame,
-    "bar-mark",
-    0,
-    height - barHeight - 1,
-    width,
-    barHeight,
-    color,
-  );
+  const marker = createFrameNode(parent, ".Marker", x - 7, y - 7, 14, 14);
+  Object.assign(marker, {
+    layoutMode: "HORIZONTAL",
+    primaryAxisAlignItems: "CENTER",
+    counterAxisAlignItems: "CENTER",
+  });
+  if (seriesIndex === 1) {
+    const shape = createRect(marker, "Shape", 2.25, 2.25, 9.5, 9.5, color);
+    shape.strokes = [{ type: "SOLID", color: figma.util.rgb(chartBackground.value) }];
+    shape.strokeWeight = 1.5;
+    shape.strokeAlign = "OUTSIDE";
+    shape.cornerRadius = 1;
+    return;
+  }
+  if (seriesIndex === 2) {
+    const shape = figma.createPolygon();
+    shape.name = "Shape";
+    shape.pointCount = 3;
+    shape.resize(11.5, 10.5);
+    shape.x = 1.25;
+    shape.y = 1.75;
+    shape.fills = [{ type: "SOLID", color: figma.util.rgb(color) }];
+    shape.strokes = [{ type: "SOLID", color: figma.util.rgb(chartBackground.value) }];
+    shape.strokeWeight = 1.5;
+    shape.strokeAlign = "OUTSIDE";
+    marker.appendChild(shape);
+    return;
+  }
+  const shape = figma.createEllipse();
+  shape.name = "Shape";
+  shape.resize(11, 11);
+  shape.x = 1.5;
+  shape.y = 1.5;
+  shape.fills = [{ type: "SOLID", color: figma.util.rgb(color) }];
+  shape.strokes = [{ type: "SOLID", color: figma.util.rgb(chartBackground.value) }];
+  shape.strokeWeight = 1.5;
+  shape.strokeAlign = "OUTSIDE";
+  marker.appendChild(shape);
 }
 
-function drawBars(
+function drawLines(
   parent: FrameNode,
-  config: NormalizedVerticalBarChartConfig,
+  config: NormalizedLineChartConfig,
   x: number,
   y: number,
   width: number,
   height: number,
 ) {
-  const barsFrame = createFrameNode(parent, "Frame 1", x, y, width, height);
-  Object.assign(barsFrame, {
-    layoutMode: "HORIZONTAL",
-    primaryAxisSizingMode: "FIXED",
-    counterAxisSizingMode: "FIXED",
-  });
-  const groupWidth = width / config.labels.length;
+  const outerName = config.lineMode === "single" ? "Line" : "Frame 1";
+  const outerHeight = config.lineMode === "single" ? height : height + 22;
+  const outer = createFrameNode(parent, outerName, x, y, width, outerHeight);
+  const lineFrame =
+    config.lineMode === "single"
+      ? outer
+      : createFrameNode(outer, "Line", 0, 0, width, height);
   const visibleSeries =
-    config.barMode === "single"
+    config.lineMode === "single"
       ? config.series.slice(0, 1)
-      : config.series.slice(0, 2);
-  const barWidth =
-    visibleSeries.length === 1
-      ? clamp(groupWidth * 0.16, 5, 12)
-      : clamp(groupWidth * 0.14, 5, 9);
-  const gap = visibleSeries.length === 1 ? 0 : Math.max(3, barWidth * 0.75);
-  const totalBarWidth =
-    visibleSeries.length * barWidth + (visibleSeries.length - 1) * gap;
+      : config.series.slice(0, 3);
 
-  config.labels.forEach((label, labelIndex) => {
-    const barGroup = createFrameNode(
-      barsFrame,
-      "Bar",
-      groupWidth * labelIndex,
-      0,
-      groupWidth,
-      height,
+  visibleSeries.forEach((series, index) => {
+    createLineVector(
+      lineFrame,
+      `_Line-${index + 1}`,
+      createPathFromValues(
+        series.values,
+        config.minValue,
+        config.maxValue,
+        width,
+        height,
+      ),
+      series.color,
     );
+  });
 
-    const centerX = groupWidth / 2;
-    if (labelIndex === config.selectedIndex) {
-      const { labelBg, highlightBg } = config.color.selected;
-      drawSelectedLabel(
-        barGroup,
-        label,
-        groupWidth,
-        height,
-        labelBg.value,
-        config.color.typography.xAxisLabel,
-      );
-      drawDashedIndicator(
-        barGroup,
-        centerX,
-        0,
-        -40,
-        config.color.axisLine.value,
-      );
-      createRect(
-        barGroup,
-        "Highlighted BG",
-        0,
-        0,
-        groupWidth,
-        height,
-        highlightBg.value,
-        highlightBg.opacity ?? 0.08,
-      );
-    }
+  if (config.selectedIndex < 0) return;
 
-    visibleSeries.forEach((series, seriesIndex) => {
-      const rawValue = Number(series.values[labelIndex]) || 0;
-      const value = clamp(rawValue, 0, config.maxValue);
-      const barHeight = Math.max(1, (value / config.maxValue) * height);
-      const barX = centerX - totalBarWidth / 2 + seriesIndex * (barWidth + gap);
-      drawBarMark(
-        barGroup,
-        seriesIndex === 0 ? "Bar-mark-1" : "Bar-mark-2",
-        series.color,
-        barX,
-        barWidth,
-        height,
-        barHeight,
-      );
-    });
+  const selectedRatio =
+    config.pointCount <= 1 ? 0 : config.selectedIndex / (config.pointCount - 1);
+  const selectedX = selectedRatio * width;
+  const labelText =
+    config.pointLabels[config.selectedIndex] || `P${config.selectedIndex + 1}`;
+  drawDashedIndicator(
+    lineFrame,
+    selectedX,
+    -40,
+    height,
+    config.color.axisLine.value,
+  );
+  drawSelectedLabel(
+    lineFrame,
+    labelText,
+    selectedX,
+    height + 4,
+    config.color.selected.labelBg.value,
+    config.color.typography.xAxisLabel,
+  );
+
+  visibleSeries.forEach((series, index) => {
+    const value = clamp(
+      Number(series.values[config.selectedIndex]) || 0,
+      config.minValue,
+      config.maxValue,
+    );
+    const valueRange = Math.max(1, config.maxValue - config.minValue);
+    const selectedY =
+      clamp(1 - (value - config.minValue) / valueRange, 0, 1) * height;
+    drawMarker(lineFrame, selectedX, selectedY, series.color, index);
   });
 }
 
-function drawBarChart(
-  parent: FrameNode,
-  config: NormalizedVerticalBarChartConfig,
-) {
+function drawChart(parent: FrameNode, config: NormalizedLineChartConfig) {
   const yTitleRowHeight = config.color.typography.yAxisTitle.lineHeight;
   const contentStackOffset = 40 + yTitleRowHeight;
-
   const chart = createFrameNode(
     parent,
     "Chart",
@@ -328,10 +373,13 @@ function drawBarChart(
   const labelGutter = 46;
   const plotX = yAxisPosition === "right" ? 0 : labelGutter;
   const plotY = 9;
-  const plotWidth = contentFrame.width - labelGutter;
-  const plotHeight = contentFrame.height - 54;
+  const yAxisWidth = contentFrame.width - labelGutter;
+  const xAxisWidth = yAxisWidth - 1;
+  const plotHeight = contentFrame.height - 30;
+  const lineWidth =
+    config.lineRange === "full" ? xAxisWidth : Math.round(yAxisWidth * 0.788);
 
-  if (plotWidth < 180 || plotHeight < 120) {
+  if (yAxisWidth < 180 || plotHeight < 160) {
     throw new Error("Chart size is too small for the selected data.");
   }
 
@@ -346,7 +394,7 @@ function drawBarChart(
     },
     plotX,
     plotY,
-    plotWidth,
+    yAxisWidth,
     plotHeight,
   );
   drawCartesianXAxis(
@@ -354,30 +402,29 @@ function drawBarChart(
     {
       axisLineVisibility: config.axisLineVisibility,
       color: config.color,
-      labels: config.labels,
-      labelYOffset: 4,
+      labels: config.xAxisLabels,
+      labelYOffset: 6,
       rulerY: plotHeight - 1,
       textColor: TEXT_PRIMARY_COLOR,
-      titleText: config.xAxisTitle,
       titleYOffset: 28,
     },
     plotX,
     plotY,
-    plotWidth,
+    xAxisWidth,
     plotHeight,
   );
-  drawBars(contentFrame, config, plotX, plotY, plotWidth, plotHeight);
+  drawLines(contentFrame, config, plotX, plotY, lineWidth, plotHeight);
 }
 
-export async function drawVerticalBarChart(
-  chartData: Partial<VerticalBarChartConfig>,
+export async function drawLineChart(
+  chartData: Partial<LineChartConfig>,
 ) {
-  const config = normalizeVerticalBarChartConfig(
+  const config = normalizeLineChartConfig(
     chartData,
-    verticalBarChartConfig as unknown as VerticalBarChartConfig,
+    lineChartConfig as unknown as LineChartConfig,
   );
   await figma.currentPage.loadAsync();
-  await loadVerticalBarFonts();
+  await loadLineChartFonts();
 
   const chart = figma.createFrame();
   chart.name = ROOT_NAME;
@@ -392,7 +439,7 @@ export async function drawVerticalBarChart(
 
   positionChart(chart);
   figma.currentPage.appendChild(chart);
-  drawBarChart(chart, config);
+  drawChart(chart, config);
 
   figma.currentPage.selection = [chart];
   figma.viewport.scrollAndZoomIntoView([chart]);

@@ -188,9 +188,7 @@ export const ds = {
   },
 } as const;
 
-export const verticalBarChartConfig = {
-  chartType: "verticalBar" as const,
-  barMode: "dual" as const,
+export const cartesianChartConfig = {
   yAxisPosition: "right" as const,
   axisLineVisibility: "y" as const,
   color: {
@@ -238,6 +236,14 @@ export const verticalBarChartConfig = {
       lineHeight: 20,
     } satisfies Readonly<TypographyToken>,
   },
+} as const;
+
+export const verticalBarChartConfig = {
+  chartType: "verticalBar" as const,
+  barMode: "dual" as const,
+  yAxisPosition: cartesianChartConfig.yAxisPosition,
+  axisLineVisibility: cartesianChartConfig.axisLineVisibility,
+  color: cartesianChartConfig.color,
   periodCount: 6,
   selectedIndex: 3,
   width: 390,
@@ -255,6 +261,76 @@ export const verticalBarChartConfig = {
       name: "Product B",
       color: ds.colors.dataVis.general[1].value,
       values: [6320, 20300, 15320, 6320, 3000, 26880],
+    },
+  ],
+} as const;
+
+function createSeededLineValues(
+  count: number,
+  seed: number,
+  start: number,
+  volatility: number,
+  drift: number,
+  min: number,
+  max: number,
+): number[] {
+  let state = seed;
+  let value = start;
+  const values: number[] = [];
+  for (let index = 0; index < count; index += 1) {
+    state = (state * 1664525 + 1013904223) % 4294967296;
+    const random = state / 4294967296 - 0.5;
+    const wave = Math.sin(index / 6) * volatility * 0.35;
+    value = Math.max(min, Math.min(max, value + random * volatility + drift + wave));
+    values.push(Math.round(value));
+  }
+  return values;
+}
+
+function createLinePointLabels(count: number): string[] {
+  const start = new Date(Date.UTC(2026, 0, 1));
+  return Array.from({ length: count }, (_, index) => {
+    const date = new Date(start);
+    date.setUTCDate(start.getUTCDate() + index);
+    return date.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      timeZone: "UTC",
+    });
+  });
+}
+
+export const lineChartConfig = {
+  chartType: "lineChart" as const,
+  lineMode: "single" as const,
+  lineRange: "partial" as const,
+  yAxisPosition: cartesianChartConfig.yAxisPosition,
+  axisLineVisibility: cartesianChartConfig.axisLineVisibility,
+  color: cartesianChartConfig.color,
+  pointCount: 100,
+  selectedIndex: 64,
+  width: 390,
+  height: 320,
+  minValue: 100,
+  maxValue: 250,
+  yAxisTitle: "HKD",
+  xAxisLabels: ["Jan 2026", "", "", "Feb 2026", "", "", "Mar 2026"],
+  pointLabels: createLinePointLabels(100),
+  series: [
+    {
+      name: "Line 1",
+      color: ds.colors.dataVis.general[0].value,
+      values: createSeededLineValues(100, 8, 132, 14, 0.7, 110, 238),
+    },
+    {
+      name: "Line 2",
+      color: ds.colors.dataVis.general[1].value,
+      values: createSeededLineValues(100, 13, 168, 7, -0.08, 116, 230),
+    },
+    {
+      name: "Line 3",
+      color: ds.colors.dataVis.general[2].value,
+      values: createSeededLineValues(100, 21, 205, 5, -0.12, 124, 236),
     },
   ],
 } as const;

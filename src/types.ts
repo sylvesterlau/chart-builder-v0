@@ -41,8 +41,10 @@ export interface ChartData {
 }
 
 export type VerticalBarMode = "single" | "dual";
-export type VerticalBarYAxisPosition = "left" | "right";
-export type VerticalBarAxisLineVisibility = "both" | "x" | "y" | "none";
+export type CartesianYAxisPosition = "left" | "right";
+export type CartesianAxisLineVisibility = "both" | "x" | "y" | "none";
+export type LineChartMode = "single" | "multi";
+export type LineChartRange = "partial" | "full";
 
 export interface VerticalBarChartSeries {
   name: string;
@@ -50,25 +52,33 @@ export interface VerticalBarChartSeries {
   values: number[];
 }
 
+export interface LineChartSeries {
+  name: string;
+  color: string;
+  values: number[];
+}
+
+export interface CartesianChartColorConfig {
+  axisLine: ColorToken;
+  gridLine: ColorToken;
+  selected: {
+    labelBg: ColorToken;
+    highlightBg: ColorToken;
+  };
+  typography: {
+    xAxisTitle: TypographyToken;
+    yAxisTitle: TypographyToken;
+    xAxisLabel: TypographyToken;
+  };
+  yAxisLabel: TypographyToken;
+}
+
 export interface VerticalBarChartConfig {
   chartType: "verticalBar";
   barMode: VerticalBarMode;
-  yAxisPosition?: VerticalBarYAxisPosition;
-  axisLineVisibility?: VerticalBarAxisLineVisibility;
-  color: {
-    axisLine: ColorToken;
-    gridLine: ColorToken;
-    selected: {
-      labelBg: ColorToken;
-      highlightBg: ColorToken;
-    };
-    typography: {
-      xAxisTitle: TypographyToken;
-      yAxisTitle: TypographyToken;
-      xAxisLabel: TypographyToken;
-    };
-    yAxisLabel: TypographyToken;
-  };
+  yAxisPosition?: CartesianYAxisPosition;
+  axisLineVisibility?: CartesianAxisLineVisibility;
+  color: CartesianChartColorConfig;
   periodCount: number;
   selectedIndex: number;
   width: number;
@@ -81,5 +91,28 @@ export interface VerticalBarChartConfig {
 
 export interface NormalizedVerticalBarChartConfig extends VerticalBarChartConfig {
   maxValue: number;
+  yTicks: number[];
+}
+
+export interface LineChartConfig {
+  chartType: "lineChart";
+  lineMode: LineChartMode;
+  lineRange: LineChartRange;
+  yAxisPosition?: CartesianYAxisPosition;
+  axisLineVisibility?: CartesianAxisLineVisibility;
+  color: CartesianChartColorConfig;
+  pointCount: number;
+  selectedIndex: number;
+  width: number;
+  height: number;
+  minValue: number;
+  maxValue: number;
+  yAxisTitle: string;
+  xAxisLabels: string[];
+  pointLabels: string[];
+  series: LineChartSeries[];
+}
+
+export interface NormalizedLineChartConfig extends LineChartConfig {
   yTicks: number[];
 }
