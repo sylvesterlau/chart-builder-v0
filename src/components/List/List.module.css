@@ -1,22 +1,119 @@
-.listContainer {
-  display: flex;
+.listContainer,
+.listContainerSettings,
+.listContainerDisable {
   align-items: center;
-  padding: 10px 8px;
-  border-bottom: 1px solid;
-  border-color: var(--figma-color-border);
+  background-color: var(--figma-color-bg);
+  border: 1px solid var(--figma-color-border);
+  border-radius: 8px;
+  box-sizing: border-box;
+  cursor: pointer;
+  display: flex;
+  gap: 12px;
+  min-height: 64px;
+  overflow: hidden;
+  padding: 10px 12px;
+  transition: background-color 0.15s ease;
+  width: 100%;
+}
+
+.listContainer,
+.listContainerSettings {
   cursor: pointer;
 }
-.listContainer:hover {
-  background-color: var(--figma-color-bg-hover);
+
+.listContainer *,
+.listContainerSettings * {
+  cursor: pointer;
 }
-.listTitle {
-  flex: 1 0 0;
-}
-.listContainerDisable {
-  display: flex;
+
+.listContainerWithPreview {
   align-items: center;
-  padding: 10px 8px;
-  border-bottom: 1px solid;
-  border-color: var(--figma-color-border);
+  display: flex;
+  gap: 0;
+  min-height: 64px;
+  padding: 0 12px 0 0;
+}
+
+.leadingPreview {
+  align-items: center;
+  background-color: transparent;
+  box-sizing: border-box;
+  display: flex;
+  flex: 0 0 64px;
+  height: 64px;
+  justify-content: center;
+  transition: background-color 0.15s ease;
+  width: 64px;
+}
+
+.listContainerWithPreview:hover .leadingPreview,
+.listContainerWithPreview:focus-visible .leadingPreview {
+  background-color: var(--figma-color-bg-secondary);
+}
+
+.listContainerWithPreview .textColumn {
+  padding: 10px 0 10px 12px;
+}
+
+.listContainer:hover,
+.listContainerSettings:hover {
+  border-color: var(--figma-color-border-selected);
+}
+
+.listContainer:focus-visible,
+.listContainerSettings:focus-visible {
+  outline: 2px solid var(--figma-color-border-selected);
+  outline-offset: 1px;
+}
+
+.listContainerDisable {
+  color: var(--figma-color-text-disabled);
+  cursor: default;
+}
+
+.listContainerDisable * {
+  cursor: default;
+}
+
+.leading {
+  align-items: center;
+  display: flex;
+  flex-shrink: 0;
+  justify-content: center;
+}
+
+.textColumn {
+  display: flex;
+  flex: 1 0 0;
+  flex-direction: column;
+  gap: 3px;
+  justify-content: center;
+  min-width: 0;
+}
+
+.trailing {
+  align-items: center;
+  align-self: stretch;
+  display: flex;
+  flex-shrink: 0;
+  justify-content: center;
+}
+
+.listTitle {
+  color: var(--figma-color-text);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+}
+
+.listSubtitle {
+  color: var(--figma-color-text-secondary);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+}
+
+.listContainerDisable .listTitle,
+.listContainerDisable .listSubtitle {
   color: var(--figma-color-text-disabled);
 }

@@ -4,6 +4,8 @@ import { LegendStyle } from "../types";
 import { ChartItem } from "./ChartItemInput";
 import ChartTitlePreview from "./ChartTitlePreview";
 import LegendPreview from "./LegendPreview";
+import { useColorTokenResolved } from "./ColorChips/colorTokenSwatchContext";
+import { colorTokenPreviewBackground, colorTokenSwatchHex } from "../utils/colorTokenDisplay";
 
 interface HorizontalBarChartPreviewProps {
   chartTitle: string;
@@ -26,6 +28,8 @@ function HorizontalBarChartPreview({
   valuePrefix,
   valueSuffix,
 }: HorizontalBarChartPreviewProps) {
+  const { values: resolvedColors } = useColorTokenResolved();
+
   const legendItems = items
     .map((item, index) => ({ ...item, index }))
     .filter((item) => item.label.trim() !== "" || item.value > 0);
@@ -40,14 +44,16 @@ function HorizontalBarChartPreview({
     <div
       style={{
         alignItems: "center",
-        backgroundColor: chartBackground.value,
+        backgroundColor: colorTokenPreviewBackground(
+          chartBackground,
+          resolvedColors,
+        ),
         boxSizing: "border-box",
         display: "flex",
         flexDirection: "column",
         gap: "16px",
         padding: "16px 0",
         width: "100%",
-        // css transform to 80% size of the parent
         transform: "scale(0.9)",
         transformOrigin: "top center",
       }}
@@ -65,7 +71,7 @@ function HorizontalBarChartPreview({
         }}
       >
         {chartItems.map((item, index) => {
-          const color = dataVisAt(item.index).value;
+          const color = colorTokenSwatchHex(dataVisAt(item.index), resolvedColors);
           return (
             <div
               key={`${item.label}-${index}`}

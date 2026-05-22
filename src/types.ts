@@ -1,8 +1,50 @@
+/** Figma FLOAT variable: numeric `value` with optional library import `key`. */
+export interface NumberToken {
+  value: number;
+  /** Library import key for `importVariableByKeyAsync`. */
+  key?: string;
+}
+
 /** Figma-style paint: hex `value`, optional variable `key`, optional `opacity` (0–1). */
 export interface ColorToken {
   value: string;
   opacity?: number;
+  /** Library import key for `importVariableByKeyAsync`. */
   key?: string;
+}
+
+/** One row from Util page batch variable-key lookup. */
+export interface TokenVarKeyLookupMatch {
+  key: string;
+  collectionName: string;
+  libraryName?: string;
+}
+
+export type TokenVarKeyLookupStatus = "found" | "multiple" | "not_found" | "error";
+
+export interface TokenVarKeyLookupResult {
+  /** User-entered path (trimmed line). */
+  path: string;
+  /** Normalized name used for library search (`dotToSlash`). */
+  tokenName: string;
+  status: TokenVarKeyLookupStatus;
+  key?: string;
+  matches?: TokenVarKeyLookupMatch[];
+  message?: string;
+}
+
+export type SelectedTextStyleKeyStatus = "found" | "not_found" | "error";
+
+/** Result of reading text style import key from the current selection. */
+export interface SelectedTextStyleKeyResult {
+  status: SelectedTextStyleKeyStatus;
+  /** Selected text layer name. */
+  layerName?: string;
+  /** Figma text style name (e.g. `heading/medium`). */
+  styleName?: string;
+  /** Import key for `figma.importStyleByKeyAsync`. */
+  key?: string;
+  message?: string;
 }
 
 /** Figma-aligned text style; optional variable `key` and Figma style name override. */
@@ -11,6 +53,7 @@ export interface TypographyToken {
   fontSize: number;
   fontWeight: number;
   lineHeight: number;
+  /** Library import key for `figma.importStyleByKeyAsync`. */
   key?: string;
   figmaFontStyle?: string;
 }
@@ -23,7 +66,7 @@ export interface ChartDataItem {
 }
 export type LegendStyle = "none" | "leftAndRight" | "topAndBottom";
 
-/** Unified pie/donut/semi-donut screen selector; semi uses `SUBMIT_SEMI_DONUT_CHART_DATA` + `drawSemiDonutChart`. */
+/** Pie/donut screen selector; semi-donut uses its own page. */
 export type PiePageChartKind = "pie" | "donut" | "semiDonut";
 export interface ChartData {
   chartTitle?: string;

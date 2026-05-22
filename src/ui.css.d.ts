@@ -1,4 +1,5 @@
 declare const styles: {
+  readonly "chartColorSwatchGrid": string;
   readonly "chartItemDeleteButton": string;
   readonly "chartItemDeleteButtonWrap": string;
   readonly "chartItemInput": string;
@@ -30,6 +31,22 @@ declare const styles: {
   readonly "navTitle": string;
   readonly "section-title": string;
   readonly "sectionTitle": string;
+  readonly "tokenLookupCopiedFeedback": string;
+  readonly "tokenLookupCopyActions": string;
+  readonly "tokenLookupCopyActionsVisible": string;
+  readonly "tokenLookupCopyBtn": string;
+  readonly "tokenLookupCopyBtnCopied": string;
+  readonly "tokenLookupHeader": string;
+  readonly "tokenLookupKey": string;
+  readonly "tokenLookupKeyRow": string;
+  readonly "tokenLookupKeyRowCopyVisible": string;
+  readonly "tokenLookupList": string;
+  readonly "tokenLookupMatchList": string;
+  readonly "tokenLookupMessage": string;
+  readonly "tokenLookupPath": string;
+  readonly "tokenLookupRow": string;
+  readonly "tokenLookupRowCopyVisible": string;
+  readonly "tokenLookupStatus": string;
   readonly "typographyTokenList": string;
   readonly "typographyTokenRow": string;
   readonly "variableKey": string;

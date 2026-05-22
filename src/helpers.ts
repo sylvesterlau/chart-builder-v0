@@ -1,5 +1,5 @@
 // helpers.ts for reused function
-import { dataVisAt, dataVisColor } from "./config";
+import { dataVisAt } from "./config";
 import {
   ChartData,
   ColorToken,
@@ -9,6 +9,9 @@ import {
   LineChartRange,
   NormalizedLineChartConfig,
   NormalizedVerticalBarChartConfig,
+  SelectedTextStyleKeyResult,
+  TokenVarKeyLookupMatch,
+  TokenVarKeyLookupResult,
   TypographyToken,
   VerticalBarChartConfig,
 } from "./types";
@@ -84,115 +87,195 @@ export function transformToPercents(
     return result;
   });
 }
-// Bind a team variable to a SolidPaint
-export async function bindVariableKeyToPaint(
-  variableKey: string | null,
-  basePaint: Paint,
-): Promise<Paint> {
-  // default base paint (first Data Vis swatch when binding fails / missing variable)
-  const defaultSolid: SolidPaint = {
-    type: "SOLID",
-    color: figma.util.rgb(dataVisColor.general[0].value),
-  };
-  const paintToUse: SolidPaint =
-    (basePaint as SolidPaint).type === "SOLID"
-      ? (basePaint as SolidPaint)
-      : defaultSolid;
-  if (!variableKey) return paintToUse;
-  let importedVar: Variable | null = null;
-  try {
-    importedVar = await figma.variables.importVariableByKeyAsync(variableKey);
-  } catch (err) {
-    // Missing team-library variables should not block creating the chart.
-    return paintToUse;
-  }
-  try {
-    // deep clone paint to avoid mutating shared fills
-    const clonedPaint: Paint =
-      typeof (globalThis as any).structuredClone === "function"
-        ? (globalThis as any).structuredClone(paintToUse)
-        : JSON.parse(JSON.stringify(paintToUse));
-    // @ts-ignore - setBoundVariableForPaint may not be in typings
-    const bound = figma.variables.setBoundVariableForPaint(
-      clonedPaint as any,
-      "color",
-      importedVar as any,
-    );
-    return bound as Paint;
-  } catch (err) {
-    console.error(
-      "bindVariableKeyToPaint: setBoundVariableForPaint failed",
-      err,
-    );
-    // try to read color from importedVar.valuesByMode
-    try {
-      if (importedVar && (importedVar as any).valuesByMode) {
-        const modeId = Object.keys((importedVar as any).valuesByMode)[0];
-        const val = (importedVar as any).valuesByMode[modeId];
-        if (val && typeof val === "object" && "r" in val) {
-          return {
-            type: "SOLID",
-            color: { r: val.r, g: val.g, b: val.b },
-          } as SolidPaint;
-        }
-      }
-    } catch (e) {
-      console.error("bindVariableKeyToPaint: fallback read failed", e);
+/** Split multiline util input into unique non-empty token paths. */
+export function parseTokenPathLines(input: string): string[] {
+  const seen = new Set<string>();
+  const paths: string[] = [];
+  for (const line of input.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || seen.has(trimmed)) {
+      continue;
     }
-    return paintToUse;
+    seen.add(trimmed);
+    paths.push(trimmed);
+  }
+  return paths;
+}
+
+type LibraryVariableIndexEntry = TokenVarKeyLookupMatch & { name: string };
+
+async function buildLibraryVariableIndex(): Promise<LibraryVariableIndexEntry[]> {
+  const collections =
+    await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync();
+  const index: LibraryVariableIndexEntry[] = [];
+
+  for (let i = 0; i < collections.length; i++) {
+    const collection = collections[i];
+    const varsInCollection =
+      await figma.teamLibrary.getVariablesInLibraryCollectionAsync(
+        collection.key,
+      );
+    const collectionName =
+      (collection as { name?: string }).name || "Unknown Collection";
+    const libraryName = (collection as { libraryName?: string }).libraryName;
+
+    for (let j = 0; j < varsInCollection.length; j++) {
+      const variable = varsInCollection[j];
+      if (!variable.key) {
+        continue;
+      }
+      index.push({
+        name: variable.name || "",
+        key: variable.key,
+        collectionName,
+        libraryName,
+      });
+    }
+  }
+
+  return index;
+}
+
+/** Batch lookup import keys for token paths in enabled team libraries. */
+export async function lookupTokenVarKeys(
+  paths: string[],
+): Promise<TokenVarKeyLookupResult[]> {
+  try {
+    const index = await buildLibraryVariableIndex();
+
+    return paths.map(function (path): TokenVarKeyLookupResult {
+      const tokenName = dotToSlash(path);
+      const matches = index.filter(function (entry) {
+        return entry.name === tokenName;
+      });
+
+      if (matches.length === 1) {
+        return {
+          path,
+          tokenName,
+          status: "found",
+          key: matches[0].key,
+          matches,
+        };
+      }
+
+      if (matches.length > 1) {
+        return {
+          path,
+          tokenName,
+          status: "multiple",
+          matches,
+          message: `${matches.length} matches — see keys below`,
+        };
+      }
+
+      return {
+        path,
+        tokenName,
+        status: "not_found",
+        message: "Not found in any enabled library collection",
+      };
+    });
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "Token lookup failed";
+    return paths.map(function (path): TokenVarKeyLookupResult {
+      return {
+        path,
+        tokenName: dotToSlash(path),
+        status: "error",
+        message,
+      };
+    });
   }
 }
-// token lookup handler (search all available library collections)
-export async function getTokenVarKey(tokenPath: string) {
+
+/**
+ * Read text style import key from the single selected text layer.
+ * Works on consumer files when the layer uses a published library text style.
+ */
+export async function readSelectedTextLayerStyleKey(): Promise<SelectedTextStyleKeyResult> {
+  const selection = figma.currentPage.selection;
+
+  if (selection.length === 0) {
+    return {
+      status: "error",
+      message: "Select one text layer on the canvas",
+    };
+  }
+
+  if (selection.length > 1) {
+    return {
+      status: "error",
+      message: "Select only one text layer",
+    };
+  }
+
+  const node = selection[0];
+  if (node.type !== "TEXT") {
+    return {
+      status: "error",
+      message: "Selection is not a text layer",
+    };
+  }
+
+  const layerName = node.name;
+  const styleId = node.textStyleId;
+
+  if (styleId === figma.mixed) {
+    return {
+      status: "not_found",
+      layerName,
+      message:
+        "This layer uses different text styles per character — select a layer with one style",
+    };
+  }
+
+  if (!styleId) {
+    return {
+      status: "not_found",
+      layerName,
+      message: "No text style on this layer",
+    };
+  }
+
   try {
-    const tokenName = dotToSlash(tokenPath);
-    const collections =
-      await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync();
-    const matches: Array<{
-      key: string;
-      name: string;
-      collectionName: string;
-      libraryName?: string;
-    }> = [];
-    for (let i = 0; i < collections.length; i++) {
-      const collection = collections[i];
-      const varsInCollection =
-        await figma.teamLibrary.getVariablesInLibraryCollectionAsync(
-          collection.key,
-        );
-      for (let j = 0; j < varsInCollection.length; j++) {
-        const v = varsInCollection[j];
-        if ((v.name || "") === tokenName && v.key) {
-          matches.push({
-            key: v.key,
-            name: v.name || tokenName,
-            collectionName: (collection as any).name || "Unknown Collection",
-            libraryName: (collection as any).libraryName,
-          });
-        }
-      }
+    const style = await figma.getStyleByIdAsync(styleId);
+    if (!style || style.type !== "TEXT") {
+      return {
+        status: "not_found",
+        layerName,
+        message: "Could not resolve text style on this layer",
+      };
     }
-    if (matches.length === 1) {
-      const match = matches[0];
-      figma.notify(`Token found: ${match.key}`);
-      console.log(
-        `Token "${tokenPath}" -> Key: ${match.key} (Collection: ${match.collectionName})`,
-      );
-    } else if (matches.length > 1) {
-      figma.notify(`Found ${matches.length} matches. Check console.`);
-      console.log(`Multiple matches found for "${tokenPath}":`);
-      matches.forEach((m, idx) => {
-        console.log(
-          `${idx + 1}. key=${m.key}, collection=${m.collectionName}, library=${m.libraryName || "Unknown Library"}`,
-        );
-      });
-    } else {
-      figma.notify(`Token "${tokenPath}" not found in any collection`);
-      console.log(`Token "${tokenPath}" not found in any available collection`);
+
+    const textStyle = style as TextStyle;
+    const styleName = textStyle.name?.trim() || "";
+    const key = textStyle.key?.trim() || "";
+
+    if (!key) {
+      return {
+        status: "not_found",
+        layerName,
+        styleName: styleName || undefined,
+        message: "Style has no import key",
+      };
     }
+
+    return {
+      status: "found",
+      layerName,
+      styleName: styleName || undefined,
+      key,
+    };
   } catch (err) {
-    console.error("Token lookup failed:", err);
-    figma.notify("Token lookup failed. Check console for details.");
+    const message =
+      err instanceof Error ? err.message : "Failed to read text style";
+    return {
+      status: "error",
+      layerName,
+      message,
+    };
   }
 }
 

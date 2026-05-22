@@ -1,19 +1,20 @@
 import {
   semiDonutChartConfig,
   dataVisAt,
-  dataVisColor,
   textColor,
   typography,
 } from "../config";
 import { getSum, transformToPercents, TransformedChartItem } from "../helpers";
 import { ChartData } from "../types";
-import { applyFigmaTypographyToken } from "./applyFigmaTypography";
-import { resolveFigmaFontStyle } from "./chartTypography";
+import type { ColorToken } from "../types";
+import { applyColorTokenToFills } from "./applyColorToken";
+import {
+  applyTypographyTokenToText,
+  loadTypographyTokenFontsBatch,
+} from "./applyTypographyToken";
 import { createChartTitle, loadChartTitleFont } from "./drawChartTitle";
 import { createFinalFrame } from "./figmaOperations";
 import { createLegend, createLegendList, loadLegendFonts } from "./drawLegend";
-
-const chartTextPrimaryHex = textColor.primary.value;
 
 function formatValueText(value: number, prefix: string, suffix: string) {
   const formattedValue = value.toFixed(2);
@@ -25,8 +26,8 @@ function formatValueText(value: number, prefix: string, suffix: string) {
 async function createSemiDonutSlice(
   startPercent: number,
   endPercent: number,
-  layerName: string = "slice",
-  hexColor: string = dataVisColor.general[0].value,
+  layerName: string,
+  fillToken: ColorToken,
   isFirst: Boolean = false,
 ): Promise<EllipseNode | null> {
   if (endPercent - startPercent <= 0) {
@@ -41,7 +42,7 @@ async function createSemiDonutSlice(
     endingAngle: -Math.PI * (1 - endPercent / 100),
     innerRadius: semiDonutChartConfig.ratio,
   };
-  slice.fills = [{ type: "SOLID", color: figma.util.rgb(hexColor) }];
+  await applyColorTokenToFills(slice, fillToken);
   return slice;
 }
 
@@ -53,38 +54,19 @@ async function createTotalValueFrame(
 ): Promise<FrameNode> {
   const titleTok = typography.totalValue.title;
   const valueTok = typography.totalValue.value;
-  await figma.loadFontAsync({
-    family: titleTok.fontFamily,
-    style: resolveFigmaFontStyle(titleTok),
-  });
-  await figma.loadFontAsync({
-    family: valueTok.fontFamily,
-    style: resolveFigmaFontStyle(valueTok),
-  });
+  await loadTypographyTokenFontsBatch([titleTok, valueTok]);
 
   const titleNode = figma.createText();
-  applyFigmaTypographyToken(titleNode, titleTok);
+  await applyTypographyTokenToText(titleNode, titleTok);
   titleNode.characters = title;
-  titleNode.fills = [
-    {
-      type: "SOLID",
-      color: figma.util.rgb(chartTextPrimaryHex),
-    },
-  ];
 
   const totalValueNode = figma.createText();
-  applyFigmaTypographyToken(totalValueNode, valueTok);
+  await applyTypographyTokenToText(totalValueNode, valueTok);
   totalValueNode.characters = formatValueText(
     sumValue,
     valuePrefix,
     valueSuffix,
   );
-  totalValueNode.fills = [
-    {
-      type: "SOLID",
-      color: figma.util.rgb(chartTextPrimaryHex),
-    },
-  ];
 
   const totalValFrame = figma.createFrame();
   totalValFrame.fills = [];
@@ -98,6 +80,10 @@ async function createTotalValueFrame(
     counterAxisAlignItems: "CENTER",
     itemSpacing: 2,
   });
+
+  await applyColorTokenToFills(titleNode, textColor.primary);
+  await applyColorTokenToFills(totalValueNode, textColor.primary);
+
   return totalValFrame;
 }
 
@@ -146,13 +132,13 @@ export async function drawSemiDonutChart(chartData: ChartData) {
     const item = transformedData[i];
     const layerName = `${item.label} (${item.value})`;
     const isFirstSlice = i === 0;
-    const fallbackColor = dataVisAt(i).value;
+    const sliceColor = dataVisAt(i);
     if (item.value > 0) {
       const slice = await createSemiDonutSlice(
         item.startPercent,
         item.endPercent,
         layerName,
-        fallbackColor,
+        sliceColor,
         isFirstSlice,
       );
       if (slice) {
@@ -161,12 +147,11 @@ export async function drawSemiDonutChart(chartData: ChartData) {
         chartFrame.appendChild(slice);
       }
       if (legendList) {
-        const legend = createLegend(
+        const legend = await createLegend(
           item.label,
           item.value,
           item.exactPercent,
-          item.colorToken ?? null,
-          fallbackColor,
+          sliceColor,
           showPercentage,
           valuePrefix,
           valueSuffix,
@@ -205,8 +190,8 @@ export async function drawSemiDonutChart(chartData: ChartData) {
     totalValFrame.y = 90;
   }
 
-  const finalFrame = createFinalFrame();
-  const titleFrame = createChartTitle(chartTitle);
+  const finalFrame = await createFinalFrame();
+  const titleFrame = await createChartTitle(chartTitle);
   if (titleFrame) {
     finalFrame.appendChild(titleFrame);
   }

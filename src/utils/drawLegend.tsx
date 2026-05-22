@@ -1,16 +1,23 @@
 import {
-  dataVisColor,
   dividerColor,
   legendSpacingConfig,
   textColor,
   typography,
 } from "../config";
 import { formatLegendPercentageDisplay } from "../helpers";
-import { applyFigmaTypographyToken } from "./applyFigmaTypography";
-import { resolveFigmaFontStyle } from "./chartTypography";
+import type { ColorToken } from "../types";
+import { applyLegendSpacing } from "./applyNumberToken";
+import {
+  applyColorTokenToFills,
+  applyColorTokenToStrokes,
+} from "./applyColorToken";
+import {
+  applyTypographyTokenToText,
+  loadTypographyTokenFontsBatch,
+} from "./applyTypographyToken";
 
-const chartTextPrimaryHex = textColor.primary.value;
-const legendDividerHex = dividerColor.value;
+const legendTextColor = textColor.primary;
+const legendDividerColor = dividerColor;
 
 function formatLegendValue(value: number, prefix: string, suffix: string) {
   const formattedValue = value.toFixed(2);
@@ -21,41 +28,23 @@ function formatLegendValue(value: number, prefix: string, suffix: string) {
 
 export async function loadLegendFonts() {
   const { label, value, percentage } = typography.legend;
-  await figma.loadFontAsync({
-    family: label.fontFamily,
-    style: resolveFigmaFontStyle(label),
-  });
-  await figma.loadFontAsync({
-    family: value.fontFamily,
-    style: resolveFigmaFontStyle(value),
-  });
-  await figma.loadFontAsync({
-    family: percentage.fontFamily,
-    style: resolveFigmaFontStyle(percentage),
-  });
+  await loadTypographyTokenFontsBatch([label, value, percentage]);
 }
 
-export function createLegend(
+export async function createLegend(
   label: string,
   value: number,
-  percentage?: number | null,
-  _variableKey?: string | null,
-  hexColor: string = dataVisColor.general[0].value,
+  percentage: number | null | undefined,
+  shapeColor: ColorToken,
   showPercentage: boolean = true,
   valuePrefix: string = "",
   valueSuffix: string = "HKD",
   tileLayout: "leftAndRight" | "topAndBottom" = "leftAndRight",
-): FrameNode | null {
+): Promise<FrameNode | null> {
   const legend = figma.createFrame();
   const shapeNode = figma.createRectangle();
   shapeNode.name = "Shape";
   shapeNode.resize(14, 14);
-  shapeNode.fills = [
-    {
-      type: "SOLID",
-      color: figma.util.rgb(hexColor),
-    },
-  ];
 
   let inlineLabelText = label;
   if (
@@ -83,20 +72,11 @@ export function createLegend(
     primaryAxisSizingMode: "FIXED",
     counterAxisSizingMode: "AUTO",
     counterAxisAlignItems: isStacked ? "MIN" : "CENTER",
-    itemSpacing: legendSpacingConfig.gap,
-    paddingLeft: legendSpacingConfig.horizontalPadding,
-    paddingRight: legendSpacingConfig.horizontalPadding,
-    paddingTop: legendSpacingConfig.verticalPadding,
-    paddingBottom: legendSpacingConfig.verticalPadding,
     layoutAlign: "STRETCH",
   });
 
-  legend.strokes = [
-    {
-      type: "SOLID",
-      color: figma.util.rgb(legendDividerHex),
-    },
-  ];
+  await applyLegendSpacing(legend, legendSpacingConfig);
+
   legend.strokeAlign = "INSIDE";
   legend.strokeWeight = 1;
   legend.strokeTopWeight = 0;
@@ -104,32 +84,24 @@ export function createLegend(
   legend.strokeBottomWeight = 1;
   legend.strokeLeftWeight = 0;
 
+  const textNodes: TextNode[] = [];
+
   if (isStacked) {
     Object.assign(shapeNode, { layoutAlign: "MIN" });
 
     const labelNode = figma.createText();
     labelNode.name = label;
-    applyFigmaTypographyToken(labelNode, typography.legend.label);
+    await applyTypographyTokenToText(labelNode, typography.legend.label);
     labelNode.characters = label;
-    labelNode.fills = [
-      {
-        type: "SOLID",
-        color: figma.util.rgb(chartTextPrimaryHex),
-      },
-    ];
     Object.assign(labelNode, { layoutAlign: "STRETCH" });
+    textNodes.push(labelNode);
 
     const valueNode = figma.createText();
     valueNode.name = "Legend value";
-    applyFigmaTypographyToken(valueNode, typography.legend.value);
+    await applyTypographyTokenToText(valueNode, typography.legend.value);
     valueNode.characters = valueTextInline;
-    valueNode.fills = [
-      {
-        type: "SOLID",
-        color: figma.util.rgb(chartTextPrimaryHex),
-      },
-    ];
     Object.assign(valueNode, { layoutAlign: "MIN" });
+    textNodes.push(valueNode);
 
     const valueRow = figma.createFrame();
     valueRow.fills = [];
@@ -146,15 +118,10 @@ export function createLegend(
     if (percentText !== null) {
       const percentNode = figma.createText();
       percentNode.name = "Legend percent";
-      applyFigmaTypographyToken(percentNode, typography.legend.percentage);
+      await applyTypographyTokenToText(percentNode, typography.legend.percentage);
       percentNode.characters = percentText;
-      percentNode.fills = [
-        {
-          type: "SOLID",
-          color: figma.util.rgb(chartTextPrimaryHex),
-        },
-      ];
       Object.assign(percentNode, { layoutAlign: "MIN" });
+      textNodes.push(percentNode);
       valueRow.appendChild(percentNode);
     }
 
@@ -178,30 +145,26 @@ export function createLegend(
   } else {
     const labelNode = figma.createText();
     labelNode.name = inlineLabelText;
-    applyFigmaTypographyToken(labelNode, typography.legend.label);
+    await applyTypographyTokenToText(labelNode, typography.legend.label);
     labelNode.characters = inlineLabelText;
     labelNode.layoutGrow = 1;
-    labelNode.fills = [
-      {
-        type: "SOLID",
-        color: figma.util.rgb(chartTextPrimaryHex),
-      },
-    ];
+    textNodes.push(labelNode);
 
     const valueNode = figma.createText();
     valueNode.name = "Legend value";
-    applyFigmaTypographyToken(valueNode, typography.legend.value);
+    await applyTypographyTokenToText(valueNode, typography.legend.value);
     valueNode.characters = valueTextInline;
-    valueNode.fills = [
-      {
-        type: "SOLID",
-        color: figma.util.rgb(chartTextPrimaryHex),
-      },
-    ];
+    textNodes.push(valueNode);
 
     legend.appendChild(shapeNode);
     legend.appendChild(labelNode);
     legend.appendChild(valueNode);
+  }
+
+  await applyColorTokenToFills(shapeNode, shapeColor);
+  await applyColorTokenToStrokes(legend, legendDividerColor);
+  for (const textNode of textNodes) {
+    await applyColorTokenToFills(textNode, legendTextColor);
   }
 
   return legend;

@@ -1,6 +1,8 @@
 import { IconMinusSmall24, Textbox } from "@create-figma-plugin/ui";
 import { h } from "preact";
 import { dataVisAt } from "../config";
+import { colorTokenSwatchHex } from "../utils/colorTokenDisplay";
+import { useColorTokenResolved } from "./ColorChips/colorTokenSwatchContext";
 import styles from "../ui.css";
 
 export interface ChartItem {
@@ -26,7 +28,8 @@ function ChartItemInput({
   onLabelInput,
   onValueInput,
 }: ChartItemInputProps) {
-  const color = dataVisAt(index).value;
+  const { values: resolvedColors } = useColorTokenResolved();
+  const color = colorTokenSwatchHex(dataVisAt(index), resolvedColors);
   return (
     <div className={styles.chartItemInput}>
       <div

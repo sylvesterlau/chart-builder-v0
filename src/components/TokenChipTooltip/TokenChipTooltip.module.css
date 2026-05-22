@@ -1,0 +1,60 @@
+.wrap {
+  display: inline-flex;
+  flex-shrink: 1;
+  max-width: 140px;
+  min-width: 0;
+  position: relative;
+  width: fit-content;
+}
+
+.tooltip {
+  max-width: 150px; /* chip max-width (140px) + 10px */
+  pointer-events: none;
+  position: fixed;
+  transform: translateX(-50%);
+  width: max-content;
+  z-index: 10000;
+}
+
+.panel {
+  background-color: #2c2c2c;
+  border-radius: 4px;
+  box-sizing: border-box;
+  color: #ffffff;
+  display: inline-block;
+  max-width: 150px;
+  padding: 4px 8px;
+  position: relative;
+  vertical-align: top;
+  width: auto;
+}
+
+.panel::before {
+  border-color: transparent transparent #2c2c2c transparent;
+  border-style: solid;
+  border-width: 0 5px 5px;
+  bottom: 100%;
+  content: "";
+  height: 0;
+  left: 50%;
+  margin-left: -5px;
+  position: absolute;
+  width: 0;
+}
+
+.tokenName {
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 16px;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+.meta {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 16px;
+  overflow-wrap: break-word;
+  word-break: normal;
+}

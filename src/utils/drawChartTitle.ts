@@ -1,18 +1,16 @@
 import { chartTitleConfig, textColor } from "../config";
-import { applyFigmaTypographyToken } from "./applyFigmaTypography";
-import { resolveFigmaFontStyle } from "./chartTypography";
-
-const chartTextPrimaryHex = textColor.primary.value;
+import { applyChartTitlePadding } from "./applyNumberToken";
+import { applyColorTokenToFills } from "./applyColorToken";
+import {
+  applyTypographyTokenToText,
+  loadTypographyTokenFonts,
+} from "./applyTypographyToken";
 
 export async function loadChartTitleFont() {
-  const token = chartTitleConfig.typography;
-  await figma.loadFontAsync({
-    family: token.fontFamily,
-    style: resolveFigmaFontStyle(token),
-  });
+  await loadTypographyTokenFonts(chartTitleConfig.typography);
 }
 
-export function createChartTitle(title: string): FrameNode | null {
+export async function createChartTitle(title: string): Promise<FrameNode | null> {
   const trimmedTitle = title.trim();
   if (!trimmedTitle) {
     return null;
@@ -29,23 +27,17 @@ export function createChartTitle(title: string): FrameNode | null {
     primaryAxisSizingMode: "FIXED",
     counterAxisSizingMode: "AUTO",
     counterAxisAlignItems: "CENTER",
-    paddingLeft: chartTitleConfig.padding.horizontal,
-    paddingRight: chartTitleConfig.padding.horizontal,
-    paddingTop: chartTitleConfig.padding.vertical,
-    paddingBottom: chartTitleConfig.padding.vertical,
     layoutAlign: "STRETCH",
   });
 
+  await applyChartTitlePadding(titleFrame, chartTitleConfig.padding);
+
   titleNode.name = trimmedTitle;
-  applyFigmaTypographyToken(titleNode, chartTitleConfig.typography);
+  await applyTypographyTokenToText(titleNode, chartTitleConfig.typography);
   titleNode.characters = trimmedTitle;
   titleNode.layoutGrow = 1;
-  titleNode.fills = [
-    {
-      type: "SOLID",
-      color: figma.util.rgb(chartTextPrimaryHex),
-    },
-  ];
+
+  await applyColorTokenToFills(titleNode, textColor.primary);
 
   titleFrame.appendChild(titleNode);
   return titleFrame;

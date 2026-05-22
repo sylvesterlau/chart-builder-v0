@@ -3,13 +3,30 @@ import { emit } from "@create-figma-plugin/utilities";
 import { h } from "preact";
 import { useEffect, useState } from "preact/hooks";
 import NavTab from "../components/navTab/NavTab";
+import { TokenKeyLookupPanel } from "../components/TokenKeyLookupPanel";
 import { ColorTokenChip } from "../components/ColorChips/ColorTokenChip";
 import { NumChip } from "../components/NumChips/NumChip";
+import { NumberTokenChip } from "../components/NumChips/NumberTokenChip";
 import { TypographyTokenChip } from "../components/TypographyChips/TypographyTokenChip";
-import { chartTitleConfig, ds, pluginUISize, verticalBarChartConfig } from "../config";
-import type { ColorToken } from "../types";
+import {
+  cartesianChartConfig,
+  chartTitleConfig,
+  ds,
+  lineChartConfig,
+  pluginUISize,
+  verticalBarChartConfig,
+} from "../config";
+import type { ColorToken, NumberToken } from "../types";
 import uiStyles from "../ui.css";
 import { collectTypographyTokenPaths } from "../utils/chartTypography";
+import { isNumberToken } from "../utils/numberTokenDisplay";
+
+function ConfigMetricChip(props: { value: unknown }) {
+  if (isNumberToken(props.value)) {
+    return <NumberTokenChip token={props.value} />;
+  }
+  return <NumChip value={props.value as number} />;
+}
 
 interface DesignSystemConfigPageProps {
   onBack: () => void;
@@ -20,7 +37,9 @@ type DesignSystemTabId =
   | "legend"
   | "semiDonut"
   | "pieDonut"
-  | "verticalBar";
+  | "verticalBar"
+  | "lineChart"
+  | "util";
 
 /** Plugin UI dimensions while Design system page is open. */
 const DESIGN_SYSTEM_WINDOW = { width: 490, height: 490 } as const;
@@ -34,6 +53,8 @@ const DESIGN_SYSTEM_TABS: ReadonlyArray<{
   { id: "semiDonut", label: "Semi-donut" },
   { id: "pieDonut", label: "Pie & donut" },
   { id: "verticalBar", label: "Vertical bar" },
+  { id: "lineChart", label: "Line chart" },
+  { id: "util", label: "Util" },
 ];
 
 /** Strip section prefix from typography row paths for shorter labels. */
@@ -57,12 +78,79 @@ function pieLayoutEntries(): Array<[string, string | number]> {
   return Object.entries(layout);
 }
 
-function pieIndicatorMetricEntries(): Array<[string, string | number]> {
+function pieIndicatorMetricEntries(): Array<[string, unknown]> {
   const { typography: _, ...metrics } = ds.chart.pie.indicator;
   return Object.entries(metrics);
 }
 
 const vbColor = verticalBarChartConfig.color;
+const lineColor = lineChartConfig.color;
+const cartesianColor = cartesianChartConfig.color;
+
+function CartesianChartTokenPanel(props: {
+  pathPrefix: string;
+  color: typeof cartesianColor;
+}) {
+  const { pathPrefix, color } = props;
+  return (
+    <div>
+      <Text className={uiStyles.sectionTitle}>Axis & grid</Text>
+      <VerticalSpace space="small" />
+      <Stack space="small">
+        {(
+          [
+            ["axisLine", color.axisLine],
+            ["gridLine", color.gridLine],
+          ] as const
+        ).map(function ([role, token]) {
+          return (
+            <div key={role} className={uiStyles.colorColumn}>
+              <div className={uiStyles.variableKey}>{role}</div>
+              <ColorTokenChip token={token as ColorToken} />
+            </div>
+          );
+        })}
+      </Stack>
+      <VerticalSpace space="small" />
+      <Divider />
+      <VerticalSpace space="medium" />
+
+      <Text className={uiStyles.sectionTitle}>Selected state</Text>
+      <VerticalSpace space="small" />
+      <Stack space="small">
+        <div className={uiStyles.colorColumn}>
+          <div className={uiStyles.variableKey}>labelBg</div>
+          <ColorTokenChip token={color.selected.labelBg} />
+        </div>
+        <div className={uiStyles.colorColumn}>
+          <div className={uiStyles.variableKey}>highlightBg</div>
+          <ColorTokenChip
+            token={color.selected.highlightBg}
+            fallbackOpacity={0.08}
+          />
+        </div>
+      </Stack>
+      <VerticalSpace space="small" />
+      <Divider />
+      <VerticalSpace space="medium" />
+
+      <Text className={uiStyles.sectionTitle}>
+        Axis titles & labels · typography
+      </Text>
+      <VerticalSpace space="small" />
+      <TypographyBlock pathPrefix={`${pathPrefix}.typography`} root={color.typography} />
+      <VerticalSpace space="small" />
+      <Divider />
+      <VerticalSpace space="medium" />
+
+      <Text className={uiStyles.sectionTitle}>
+        Y-axis tick labels · typography
+      </Text>
+      <VerticalSpace space="small" />
+      <TypographyBlock pathPrefix={`${pathPrefix}.yAxisLabel`} root={color.yAxisLabel} />
+    </div>
+  );
+}
 
 function TypographyBlock(props: { pathPrefix: string; root: unknown }) {
   const { pathPrefix, root } = props;
@@ -188,13 +276,14 @@ function DesignSystemConfigPage({ onBack }: DesignSystemConfigPageProps) {
           <div>
             <Text className={uiStyles.sectionTitle}>Chart colors</Text>
             <VerticalSpace space="medium" />
-            <div className={uiStyles.colorGrid}>
+            <div className={uiStyles.chartColorSwatchGrid}>
               {ds.colors.dataVis.general.map(function (token, index) {
                 return (
-                  <div key={index} className={uiStyles.colorColumn}>
-                    <div className={uiStyles.variableKey}>{`${index + 1}`}</div>
-                    <ColorTokenChip token={token as ColorToken} />
-                  </div>
+                  <ColorTokenChip
+                    key={index}
+                    token={token as ColorToken}
+                    variant="circular"
+                  />
                 );
               })}
             </div>
@@ -228,16 +317,16 @@ function DesignSystemConfigPage({ onBack }: DesignSystemConfigPageProps) {
             <VerticalSpace space="small" />
             <div className={uiStyles.configValueList}>
               <div className={uiStyles.configValueRow}>
-                <span className={uiStyles.fieldLabel}>
-                  chartTitle.padding.horizontal
-                </span>
-                <NumChip value={chartTitleConfig.padding.horizontal} />
+                <span className={uiStyles.fieldLabel}>padding.horizontal</span>
+                <NumberTokenChip
+                  token={chartTitleConfig.padding.horizontal as NumberToken}
+                />
               </div>
               <div className={uiStyles.configValueRow}>
-                <span className={uiStyles.fieldLabel}>
-                  chartTitle.padding.vertical
-                </span>
-                <NumChip value={chartTitleConfig.padding.vertical} />
+                <span className={uiStyles.fieldLabel}>padding.vertical</span>
+                <NumberTokenChip
+                  token={chartTitleConfig.padding.vertical as NumberToken}
+                />
               </div>
             </div>
             <VerticalSpace space="small" />
@@ -245,6 +334,7 @@ function DesignSystemConfigPage({ onBack }: DesignSystemConfigPageProps) {
               pathPrefix="chartTitle.typography"
               root={chartTitleConfig.typography}
             />
+            <VerticalSpace space="extraLarge" />
           </div>
         ) : null}
 
@@ -255,11 +345,11 @@ function DesignSystemConfigPage({ onBack }: DesignSystemConfigPageProps) {
             <Text className={uiStyles.sectionTitle}>Spacing</Text>
             <VerticalSpace space="small" />
             <div className={uiStyles.configValueList}>
-              {Object.entries(ds.legend.spacing).map(function ([key, value]) {
+              {Object.entries(ds.legend.spacing).map(function ([key, token]) {
                 return (
                   <div key={key} className={uiStyles.configValueRow}>
                     <span className={uiStyles.fieldLabel}>{key}</span>
-                    <NumChip value={value} />
+                    <NumberTokenChip token={token as NumberToken} />
                   </div>
                 );
               })}
@@ -345,7 +435,7 @@ function DesignSystemConfigPage({ onBack }: DesignSystemConfigPageProps) {
                 return (
                   <div key={key} className={uiStyles.configValueRow}>
                     <span className={uiStyles.fieldLabel}>{key}</span>
-                    <NumChip value={value} />
+                    <ConfigMetricChip value={value} />
                   </div>
                 );
               })}
@@ -365,83 +455,20 @@ function DesignSystemConfigPage({ onBack }: DesignSystemConfigPageProps) {
         ) : null}
 
         {activeTab === "verticalBar" ? (
-          <div>
-            <Text className={uiStyles.sectionTitle}>Axis & grid</Text>
-            <VerticalSpace space="small" />
-            <Stack space="small">
-              {(
-                [
-                  ["axisLine", vbColor.axisLine],
-                  ["gridLine", vbColor.gridLine],
-                ] as const
-              ).map(function ([role, token]) {
-                return (
-                  <div key={role} className={uiStyles.colorColumn}>
-                    <div className={uiStyles.variableKey}>{role}</div>
-                    <ColorTokenChip token={token as ColorToken} />
-                    {token.key ? (
-                      <div
-                        className={uiStyles.fieldLabel}
-                        style={{
-                          fontSize: 10,
-                          marginTop: 4,
-                          opacity: 0.7,
-                          wordBreak: "break-all",
-                        }}
-                        title={token.key}
-                      >
-                        key: {token.key}
-                      </div>
-                    ) : null}
-                  </div>
-                );
-              })}
-            </Stack>
-            <VerticalSpace space="small" />
-            <Divider />
-            <VerticalSpace space="medium" />
-
-            <Text className={uiStyles.sectionTitle}>Selected state</Text>
-            <VerticalSpace space="small" />
-            <Stack space="small">
-              <div className={uiStyles.colorColumn}>
-                <div className={uiStyles.variableKey}>labelBg</div>
-                <ColorTokenChip token={vbColor.selected.labelBg} />
-              </div>
-              <div className={uiStyles.colorColumn}>
-                <div className={uiStyles.variableKey}>highlightBg</div>
-                <ColorTokenChip
-                  token={vbColor.selected.highlightBg}
-                  fallbackOpacity={0.08}
-                />
-              </div>
-            </Stack>
-            <VerticalSpace space="small" />
-            <Divider />
-            <VerticalSpace space="medium" />
-
-            <Text className={uiStyles.sectionTitle}>
-              Axis titles & labels · typography
-            </Text>
-            <VerticalSpace space="small" />
-            <TypographyBlock
-              pathPrefix="verticalBar.color.typography"
-              root={vbColor.typography}
-            />
-            <VerticalSpace space="small" />
-            <Divider />
-            <VerticalSpace space="medium" />
-
-            <Text className={uiStyles.sectionTitle}>
-              Y-axis tick labels · typography
-            </Text>
-            <VerticalSpace space="small" />
-            <TypographyBlock
-              pathPrefix="verticalBar.color.yAxisLabel"
-              root={vbColor.yAxisLabel}
-            />
-          </div>
+          <CartesianChartTokenPanel
+            pathPrefix="verticalBar.color"
+            color={vbColor}
+          />
         ) : null}
+
+        {activeTab === "lineChart" ? (
+          <CartesianChartTokenPanel
+            pathPrefix="lineChart.color"
+            color={lineColor}
+          />
+        ) : null}
+
+        {activeTab === "util" ? <TokenKeyLookupPanel /> : null}
       </main>
     </div>
   );

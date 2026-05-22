@@ -1,4 +1,4 @@
-import type { ColorToken, TypographyToken } from "./types";
+import type { ColorToken, NumberToken, TypographyToken } from "./types";
 
 // chart sample data — demo inputs, not visual tokens
 export const sampleData = {
@@ -38,35 +38,50 @@ export const ds = {
     dataVis: {
       general: [
         {
-          key: "875460d9abc2d89a5bb76a9a7a2e9e43d4516efa",
+          key: "75273ac5284f2c3622e5cacb3a8014b150697d6b",
           value: "#347893",
         },
         {
-          key: "ade3677d0cf6c19280ba43cc438d6112af0657c6",
+          key: "7dfef965515036fbd93e05d731cf720cb4f397da",
           value: "#e76e84",
         },
         {
-          key: "2a18acdfd9be77b1f87f24a271bac3674196e6c7",
+          key: "8f12f52426efb5a180e33ac41503a514dc49e405",
           value: "#518827",
         },
         {
-          key: "af459e2d6f04e6f778fdadfa0392569f5404a6d6",
+          key: "9bc08fe61adf50bdb025ae4732ae6d58e83b751f",
           value: "#ec7046",
         },
         {
-          key: "61f03e307c88fd771dba5d5be8bb1062455e1f2a",
+          key: "953b3f5abb2484207fa8ae3c5377461279d60176",
           value: "#509ebc",
         },
-        { key: "", value: "#c03954" },
-        { key: "", value: "#74a157" },
-        { key: "", value: "#c64d24" },
-        { key: "", value: "#266076" },
-        { key: "", value: "#f14e73" },
+        {
+          key: "a00bd776c66435449e1ebc42c451e65d382e5b5b",
+          value: "#c03954",
+        },
+        {
+          key: "e3363f488b0d37766669d8df8afdce8a101d722d",
+          value: "#74a157",
+        },
+        {
+          key: "d96e9733dcdbbdc81bec4394c8130187ee2fc38c",
+          value: "#c64d24",
+        },
+        {
+          key: "17a6df3c58f488b3ec195ab009d544d6dcc5f9c5",
+          value: "#266076",
+        },
+        {
+          key: "eec2b693c8fbe3904f72337dcb8a9c4f5c0ca0ab",
+          value: "#f14e73",
+        },
       ] satisfies ReadonlyArray<ColorToken>,
     },
     text: {
       primary: {
-        key: "",
+        key: "7ef8e5402ea8909015c25b7375e9fdb2da279880",
         value: "#333333",
       },
       secondary: {
@@ -74,13 +89,13 @@ export const ds = {
         value: "#545454",
       },
       onDark: {
-        key: "",
-        value: "#ffffff",
+        key: "de745792eaecea4d6268c8a23ae8c511351bea7d",
+        value: "#f3f3f3",
       } satisfies Readonly<ColorToken>,
     },
     background: {
       value: "#ffffff",
-      key: "",
+      key: "707ed5f9ab4b5788817328c6002d8026dcdf8ae2",
     } satisfies Readonly<ColorToken>,
   },
 
@@ -90,10 +105,17 @@ export const ds = {
       fontSize: 19,
       fontWeight: 500,
       lineHeight: 23,
-    },
+      key: "8823d3e6d7f127e6bf95013924394e2915e402d1",
+    } satisfies Readonly<TypographyToken>,
     padding: {
-      horizontal: 16,
-      vertical: 8,
+      horizontal: {
+        value: 16,
+        key: "b53449f649ed6c7b19d70d515454342346f4e064",
+      } satisfies NumberToken,
+      vertical: {
+        value: 8,
+        key: "958a0d4a08f694b42b1c052cead41a901e796118",
+      } satisfies NumberToken,
     },
   },
 
@@ -104,28 +126,40 @@ export const ds = {
         fontSize: 14,
         fontWeight: 400,
         lineHeight: 20,
+        key: "6c0bedfa63b7860e94170b3aa921c56e1e3636a7",
       } satisfies Readonly<TypographyToken>,
       value: {
         fontFamily: "Inter",
         fontSize: 14,
         fontWeight: 600,
         lineHeight: 20,
+        key: "b9b2c385b0bee1d96f002c8b9315aba5e246802b",
       } satisfies Readonly<TypographyToken>,
       percentage: {
         fontFamily: "Inter",
         fontSize: 14,
         fontWeight: 400,
         lineHeight: 20,
+        key: "6c0bedfa63b7860e94170b3aa921c56e1e3636a7",
       } satisfies Readonly<TypographyToken>,
     },
     spacing: {
-      horizontalPadding: 16,
-      verticalPadding: 12,
-      gap: 8,
+      horizontalPadding: {
+        value: 16,
+        key: "f70676fabdbeee4adc99373eb788957ad7e2d71d",
+      } satisfies NumberToken,
+      verticalPadding: {
+        value: 12,
+        key: "deb8773dea736196da7559874f5b7a6c7ab50472",
+      } satisfies NumberToken,
+      gap: {
+        value: 8,
+        key: "cb58133bee7f18a9cce49cbc9c63c806e4f816b1",
+      } satisfies NumberToken,
     },
     color: {
       divider: {
-        key: "",
+        key: "8d6515c52d71ded4d4487081d1f62ff9a47e8ff2",
         value: "#EDEDED",
       } satisfies Readonly<ColorToken>,
     },
@@ -142,12 +176,14 @@ export const ds = {
             fontSize: 14,
             fontWeight: 400,
             lineHeight: 20,
+            key: "6c0bedfa63b7860e94170b3aa921c56e1e3636a7",
           } satisfies Readonly<TypographyToken>,
           value: {
             fontFamily: "Inter",
             fontSize: 19,
             fontWeight: 600,
             lineHeight: 27,
+            key: "8823d3e6d7f127e6bf95013924394e2915e402d1",
           } satisfies Readonly<TypographyToken>,
         },
       },
@@ -166,21 +202,29 @@ export const ds = {
         /** Offset from line end to label anchor (px). */
         labelCenterOffset: 30,
         /** Separator stroke between pie/donut slices (SVG path stroke + Figma ellipse). */
-        sliceStrokeWeight: 1.5,
+        sliceStrokeWeight: {
+          value: 1.5,
+          key: "e7a7a7e1c7572287d371c5fb928b4cac8879bda6",
+        } satisfies NumberToken,
         /** Indicator leader line stroke (SVG line + Figma vector). */
-        leaderLineStrokeWeight: 1.5,
+        leaderLineStrokeWeight: {
+          value: 1.5,
+          key: "02a12e48d546e86ffbc3cbe52bf3027d21b40815",
+        } satisfies NumberToken,
         typography: {
           label: {
             fontFamily: "Inter",
             fontSize: 12,
             fontWeight: 400,
             lineHeight: 20,
+            key: "8efff2a3611b231864f23fcff8139b81a85e5884",
           } satisfies Readonly<TypographyToken>,
           percentage: {
             fontFamily: "Inter",
             fontSize: 12,
             fontWeight: 600,
             lineHeight: 20,
+            key: "211a069c48b16cf4e88c22f7bb158d15461cf4b5",
           } satisfies Readonly<TypographyToken>,
         },
       },
@@ -194,17 +238,19 @@ export const cartesianChartConfig = {
   color: {
     axisLine: {
       value: "#333333",
-      key: "",
+      key: "da0e838017502cd291f8c93681bf1b02d32f4dc2",
     } satisfies Readonly<ColorToken>,
     gridLine: {
       value: "#F1F1F1",
-      key: "",
+      key: "0fff85933d821adeeec27a700a8abffd45dad669",
     } satisfies Readonly<ColorToken>,
     selected: {
       labelBg: {
+        key: "0b7fca77c493eec1e8cbd9a1c95672e80af34dbe",
         value: "#000000",
       } satisfies Readonly<ColorToken>,
       highlightBg: {
+        key: "407fad596e932ec9df76f4c73d211d8ff58f6ccf",
         value: "#000000",
         opacity: 0.08,
       } satisfies Readonly<ColorToken>,
@@ -215,18 +261,21 @@ export const cartesianChartConfig = {
         fontSize: 12,
         fontWeight: 600,
         lineHeight: 20,
+        key: "211a069c48b16cf4e88c22f7bb158d15461cf4b5",
       } satisfies Readonly<TypographyToken>,
       yAxisTitle: {
         fontFamily: "Inter",
         fontSize: 12,
         fontWeight: 600,
         lineHeight: 20,
+        key: "211a069c48b16cf4e88c22f7bb158d15461cf4b5",
       } satisfies Readonly<TypographyToken>,
       xAxisLabel: {
         fontFamily: "Inter",
         fontSize: 12,
         fontWeight: 400,
         lineHeight: 20,
+        key: "8efff2a3611b231864f23fcff8139b81a85e5884",
       } satisfies Readonly<TypographyToken>,
     },
     yAxisLabel: {
@@ -234,6 +283,7 @@ export const cartesianChartConfig = {
       fontSize: 12,
       fontWeight: 400,
       lineHeight: 20,
+      key: "8efff2a3611b231864f23fcff8139b81a85e5884",
     } satisfies Readonly<TypographyToken>,
   },
 } as const;
@@ -281,7 +331,10 @@ function createSeededLineValues(
     state = (state * 1664525 + 1013904223) % 4294967296;
     const random = state / 4294967296 - 0.5;
     const wave = Math.sin(index / 6) * volatility * 0.35;
-    value = Math.max(min, Math.min(max, value + random * volatility + drift + wave));
+    value = Math.max(
+      min,
+      Math.min(max, value + random * volatility + drift + wave),
+    );
     values.push(Math.round(value));
   }
   return values;
@@ -335,7 +388,7 @@ export const lineChartConfig = {
   ],
 } as const;
 /** Cycle through `ds.colors.dataVis.general` by row index. */
-export function dataVisAt(index: number): { key: string; value: string } {
+export function dataVisAt(index: number): ColorToken {
   const palette = ds.colors.dataVis.general;
   return palette[index % palette.length];
 }

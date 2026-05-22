@@ -1,7 +1,13 @@
 import { IconText16 } from "@create-figma-plugin/ui";
 import { h } from "preact";
 import type { TypographyToken } from "../../types";
-import { formatTypographyTokenAsCssFontShorthand } from "../../utils/chartTypography";
+import {
+  getTypographyTokenStyleName,
+  typographyTokenChipSummary,
+  typographyTokenHasStyleBinding,
+} from "../../utils/typographyTokenDisplay";
+import { TokenChipTooltip } from "../TokenChipTooltip/TokenChipTooltip";
+import { useTypographyTokenResolved } from "./typographyTokenValueContext";
 import styles from "./TypographyTokenChip.module.css";
 
 export interface TypographyTokenChipProps {
@@ -9,13 +15,33 @@ export interface TypographyTokenChipProps {
 }
 
 export function TypographyTokenChip(props: TypographyTokenChipProps) {
-  const line = formatTypographyTokenAsCssFontShorthand(props.token);
-  return (
-    <div className={styles.chip} title={line}>
+  const { token } = props;
+  const { values, names } = useTypographyTokenResolved();
+  const boundStyle = typographyTokenHasStyleBinding(token);
+  const styleName = getTypographyTokenStyleName(token, names);
+  const summary = typographyTokenChipSummary(token, values);
+  const chipClass = boundStyle ? `${styles.chip} ${styles.chipBound}` : styles.chip;
+  const showStyleNameOnly = boundStyle && Boolean(styleName);
+  const displayLabel = showStyleNameOnly ? styleName! : summary;
+
+  const chipContent = (
+    <div className={chipClass} title={showStyleNameOnly ? undefined : displayLabel}>
       <span className={styles.icon}>
         <IconText16 />
       </span>
-      <span className={styles.summary}>{line}</span>
+      <span className={showStyleNameOnly ? styles.styleName : styles.summary}>
+        {displayLabel}
+      </span>
     </div>
+  );
+
+  if (!showStyleNameOnly) {
+    return chipContent;
+  }
+
+  return (
+    <TokenChipTooltip tokenName={styleName!} meta={summary}>
+      {chipContent}
+    </TokenChipTooltip>
   );
 }

@@ -317,6 +317,14 @@
   width: 100%;
 }
 
+.chartColorSwatchGrid {
+  box-sizing: border-box;
+  display: grid;
+  gap: 12px 20px;
+  grid-template-columns: repeat(5, 24px);
+  width: fit-content;
+}
+
 .colorColumn {
   box-sizing: border-box;
   display: flex;
@@ -376,6 +384,129 @@
 .configValueRow .fieldLabel {
   flex: 1;
   min-width: 0;
+}
+
+/* Util — batch token key lookup */
+.tokenLookupList {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.tokenLookupRow {
+  border: 1px solid var(--figma-color-border);
+  border-radius: 6px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  width: 100%;
+}
+
+.tokenLookupHeader {
+  align-items: center;
+  box-sizing: border-box;
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.tokenLookupKeyRow {
+  align-items: center;
+  box-sizing: border-box;
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.tokenLookupCopyActions {
+  align-items: center;
+  box-sizing: border-box;
+  display: flex;
+  flex-shrink: 0;
+  gap: 4px;
+}
+
+.tokenLookupCopiedFeedback {
+  color: var(--figma-color-text-success);
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 16px;
+}
+
+.tokenLookupCopyBtn {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease;
+}
+
+.tokenLookupRow:hover .tokenLookupCopyBtn,
+.tokenLookupRow:focus-within .tokenLookupCopyBtn,
+.tokenLookupRowCopyVisible .tokenLookupCopyBtn,
+.tokenLookupCopyActionsVisible .tokenLookupCopyBtn {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.tokenLookupKeyRow:hover .tokenLookupCopyBtn,
+.tokenLookupKeyRow:focus-within .tokenLookupCopyBtn,
+.tokenLookupKeyRowCopyVisible .tokenLookupCopyBtn,
+.tokenLookupKeyRow .tokenLookupCopyActionsVisible .tokenLookupCopyBtn {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.tokenLookupCopyBtnCopied {
+  background-color: var(--figma-color-bg-success-tertiary);
+  color: var(--figma-color-icon-success);
+}
+
+.tokenLookupPath {
+  color: var(--figma-color-text);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  word-break: break-all;
+}
+
+.tokenLookupStatus {
+  color: var(--figma-color-text-secondary);
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 16px;
+}
+
+.tokenLookupKey {
+  box-sizing: border-box;
+  color: var(--figma-color-text-secondary);
+  flex: 1;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+  font-size: 11px;
+  line-height: 16px;
+  min-width: 0;
+  word-break: break-all;
+}
+
+.tokenLookupMatchList {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.tokenLookupMessage {
+  color: var(--figma-color-text-secondary);
+  font-size: 11px;
+  line-height: 16px;
 }
 
 /* Typography rows — design system (label + chip) */

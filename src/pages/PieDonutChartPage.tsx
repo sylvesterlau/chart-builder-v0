@@ -14,17 +14,18 @@ import { h } from "preact";
 import { useCallback, useEffect, useState } from "preact/hooks";
 import ChartItemInput, { ChartItem } from "../components/ChartItemInput";
 import PieDonutPreview from "../components/PieDonutPreview";
-import SemiDonutChartPreview from "../components/SemiDonutChartPreview";
 import { pluginUISize, sampleData } from "../config";
-import { LegendStyle, PiePageChartKind } from "../types";
+import { LegendStyle } from "../types";
+import { useRefreshDesignTokensOnMount } from "../utils/useRefreshDesignTokens";
 import styles from "../ui.css";
 
 interface PieDonutChartPageProps {
   onBack: () => void;
 }
 
+type PieDonutChartKind = "pie" | "donut";
+
 const MIN_ITEMS = 2;
-/** Semi-donut supports up to 10 items; unify cap so switching type does not break rows. */
 const MAX_ITEMS = 10;
 const DEFAULT_ITEM_COUNT = 4;
 const LEGEND_STYLE_OPTIONS: Array<DropdownOption> = [
@@ -35,7 +36,6 @@ const LEGEND_STYLE_OPTIONS: Array<DropdownOption> = [
 const CHART_KIND_OPTIONS: Array<DropdownOption> = [
   { text: "Pie", value: "pie" },
   { text: "Donut", value: "donut" },
-  { text: "Semi-donut", value: "semiDonut" },
 ];
 
 function createEmptyItem(index: number): ChartItem {
@@ -73,7 +73,8 @@ function sanitizeDecimalInput(value: string) {
 }
 
 function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
-  const [chartKind, setChartKind] = useState<PiePageChartKind>("pie");
+  useRefreshDesignTokensOnMount();
+  const [chartKind, setChartKind] = useState<PieDonutChartKind>("pie");
   const [chartTitle, setChartTitle] = useState<string>("Chart title");
   const [items, setItems] = useState<ChartItem[]>(createSampleItems);
   const [legendStyle, setLegendStyle] = useState<LegendStyle>("leftAndRight");
@@ -81,13 +82,8 @@ function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
   const [showIndicator, setShowIndicator] = useState<boolean>(true);
   const [showIndicatorPercentage, setShowIndicatorPercentage] =
     useState<boolean>(true);
-  const [showTotalValue, setShowTotalValue] = useState<boolean>(true);
-  const [totalValueTitle, setTotalValueTitle] =
-    useState<string>("Total Asset Value");
   const [valuePrefix, setValuePrefix] = useState<string>("");
   const [valueSuffix, setValueSuffix] = useState<string>("HKD");
-
-  const isSemiDonut = chartKind === "semiDonut";
 
   useEffect(() => {
     emit("RESIZE_PLUGIN_UI_WINDOW", {
@@ -144,27 +140,11 @@ function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
 
   const handleGenerateButtonClick = useCallback(
     function () {
-      const dataPayload = items.map((item) => ({
-        label: item.label,
-        value: item.value,
-      }));
-
-      if (isSemiDonut) {
-        emit("SUBMIT_SEMI_DONUT_CHART_DATA", {
-          data: dataPayload,
-          chartTitle,
-          legendStyle,
-          showPercentage,
-          valuePrefix,
-          valueSuffix,
-          showTotalValue,
-          totalValueTitle,
-        });
-        return;
-      }
-
       emit("SUBMIT_PIE_CHART_DATA", {
-        data: dataPayload,
+        data: items.map((item) => ({
+          label: item.label,
+          value: item.value,
+        })),
         chartTitle,
         pieChartKind: chartKind,
         legendStyle,
@@ -176,7 +156,6 @@ function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
       });
     },
     [
-      isSemiDonut,
       chartKind,
       items,
       chartTitle,
@@ -184,19 +163,12 @@ function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
       showPercentage,
       showIndicator,
       showIndicatorPercentage,
-      showTotalValue,
-      totalValueTitle,
       valuePrefix,
       valueSuffix,
     ],
   );
 
-  const pageTitle =
-    chartKind === "semiDonut"
-      ? "Semi-donut chart"
-      : chartKind === "donut"
-        ? "Donut chart"
-        : "Pie chart";
+  const pageTitle = chartKind === "donut" ? "Donut chart" : "Pie chart";
 
   return (
     <div className={styles.horizontalBarPage}>
@@ -213,30 +185,17 @@ function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
           <Text className={styles.horizontalBarTypeTitle}>{pageTitle}</Text>
         </div>
         <div className={styles.horizontalBarPreviewPanel}>
-          {isSemiDonut ? (
-            <SemiDonutChartPreview
-              chartTitle={chartTitle}
-              items={items}
-              legendStyle={legendStyle}
-              showPercentage={showPercentage}
-              valuePrefix={valuePrefix}
-              valueSuffix={valueSuffix}
-              showTotalValue={showTotalValue}
-              totalValueTitle={totalValueTitle}
-            />
-          ) : (
-            <PieDonutPreview
-              chartKind={chartKind}
-              chartTitle={chartTitle}
-              items={items}
-              legendStyle={legendStyle}
-              showIndicator={showIndicator}
-              showIndicatorPercentage={showIndicatorPercentage}
-              showPercentage={showPercentage}
-              valuePrefix={valuePrefix}
-              valueSuffix={valueSuffix}
-            />
-          )}
+          <PieDonutPreview
+            chartKind={chartKind}
+            chartTitle={chartTitle}
+            items={items}
+            legendStyle={legendStyle}
+            showIndicator={showIndicator}
+            showIndicatorPercentage={showIndicatorPercentage}
+            showPercentage={showPercentage}
+            valuePrefix={valuePrefix}
+            valueSuffix={valueSuffix}
+          />
         </div>
       </div>
       <div className={styles.horizontalBarRightPanel}>
@@ -247,7 +206,7 @@ function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
               <Text className={styles.fieldLabel}>Chart</Text>
               <Dropdown
                 onValueChange={(value) =>
-                  setChartKind(value as PiePageChartKind)
+                  setChartKind(value as PieDonutChartKind)
                 }
                 options={CHART_KIND_OPTIONS}
                 value={chartKind}
@@ -315,51 +274,26 @@ function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
           <VerticalSpace space="medium" />
           <div className={styles.divider} />
           <VerticalSpace space="medium" />
-          {!isSemiDonut ? (
-            <Stack space="small">
-              <Text className={styles.sectionTitle}>Indicator</Text>
-              <div className={styles.fieldRow}>
-                <Text className={styles.fieldLabel}>Show</Text>
-                <Toggle onValueChange={setShowIndicator} value={showIndicator}>
-                  {" "}
-                </Toggle>
-              </div>
-              <div className={styles.fieldRow}>
-                <Text className={styles.fieldLabel}>Percentage</Text>
-                <Toggle
-                  onValueChange={setShowIndicatorPercentage}
-                  value={showIndicatorPercentage}
-                >
-                  {" "}
-                </Toggle>
-              </div>
-              <div className={styles.divider} />
-              <VerticalSpace space="medium" />
-            </Stack>
-          ) : (
-            <Stack space="small">
-              <Text className={styles.sectionTitle}>Total value</Text>
-              <div className={styles.fieldRow}>
-                <Text className={styles.fieldLabel}>Show</Text>
-                <Toggle
-                  onValueChange={setShowTotalValue}
-                  value={showTotalValue}
-                >
-                  {" "}
-                </Toggle>
-              </div>
-              <div className={styles.fieldRow}>
-                <Text className={styles.fieldLabel}>Tile</Text>
-                <Textbox
-                  onValueInput={setTotalValueTitle}
-                  value={totalValueTitle}
-                  placeholder="Total value title"
-                />
-              </div>
-              <div className={styles.divider} />
-              <VerticalSpace space="medium" />
-            </Stack>
-          )}
+          <Stack space="small">
+            <Text className={styles.sectionTitle}>Indicator</Text>
+            <div className={styles.fieldRow}>
+              <Text className={styles.fieldLabel}>Show</Text>
+              <Toggle onValueChange={setShowIndicator} value={showIndicator}>
+                {" "}
+              </Toggle>
+            </div>
+            <div className={styles.fieldRow}>
+              <Text className={styles.fieldLabel}>Percentage</Text>
+              <Toggle
+                onValueChange={setShowIndicatorPercentage}
+                value={showIndicatorPercentage}
+              >
+                {" "}
+              </Toggle>
+            </div>
+            <div className={styles.divider} />
+            <VerticalSpace space="medium" />
+          </Stack>
           <Stack space="small">
             <Text className={styles.sectionTitle}>Legend</Text>
             <div className={styles.fieldRow}>

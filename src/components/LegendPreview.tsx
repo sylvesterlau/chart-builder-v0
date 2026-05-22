@@ -6,12 +6,17 @@ import {
   textColor,
   typography,
 } from "../config";
-import { typographyTokenToCss } from "../utils/chartTypography";
+import { useColorTokenResolved } from "./ColorChips/colorTokenSwatchContext";
+import { useNumberTokenResolved } from "./NumChips/numberTokenValueContext";
+import { useTypographyTokenResolved } from "./TypographyChips/typographyTokenValueContext";
 import { formatLegendPercentageDisplay } from "../helpers";
+import {
+  colorTokenPreviewBackground,
+  colorTokenSwatchHex,
+} from "../utils/colorTokenDisplay";
+import { numberTokenResolvedValue } from "../utils/numberTokenDisplay";
+import { typographyTokenToPreviewCss } from "../utils/typographyTokenDisplay";
 import { LegendStyle } from "../types";
-
-const chartTextPrimaryHex = textColor.primary.value;
-const legendDividerHex = dividerColor.value;
 
 export interface PreviewLegendItem {
   index: number;
@@ -49,17 +54,46 @@ function LegendPreview({
     return null;
   }
 
-  const rowPadding = `${legendSpacingConfig.verticalPadding}px ${legendSpacingConfig.horizontalPadding}px`;
-  const rowGap = `${legendSpacingConfig.gap}px`;
+  const { values: resolvedNumbers } = useNumberTokenResolved();
+  const { values: resolvedColors } = useColorTokenResolved();
+  const { values: resolvedTypography } = useTypographyTokenResolved();
+
+  const chartTextPrimary = colorTokenPreviewBackground(
+    textColor.primary,
+    resolvedColors,
+  );
+  const legendDivider = colorTokenPreviewBackground(
+    dividerColor,
+    resolvedColors,
+  );
+  const verticalPadding = numberTokenResolvedValue(
+    legendSpacingConfig.verticalPadding,
+    resolvedNumbers,
+  );
+  const horizontalPadding = numberTokenResolvedValue(
+    legendSpacingConfig.horizontalPadding,
+    resolvedNumbers,
+  );
+  const gap = numberTokenResolvedValue(legendSpacingConfig.gap, resolvedNumbers);
+  const rowPadding = `${verticalPadding}px ${horizontalPadding}px`;
+  const rowGap = `${gap}px`;
+  const labelCss = typographyTokenToPreviewCss(
+    typography.legend.label,
+    resolvedTypography,
+  );
+  const valueCss = typographyTokenToPreviewCss(
+    typography.legend.value,
+    resolvedTypography,
+  );
 
   return (
     <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
       {items.map((item, index) => {
-        const color = dataVisAt(item.index).value;
+        const color = colorTokenSwatchHex(dataVisAt(item.index), resolvedColors);
         const percent = total > 0 ? (item.value / total) * 100 : 0;
         const label = item.label || `Item ${item.index + 1}`;
         const rowBase = {
-          borderBottom: `1px solid ${legendDividerHex}`,
+          borderBottom: `1px solid ${legendDivider}`,
           boxSizing: "border-box" as const,
           padding: rowPadding,
           width: "100%",
@@ -95,9 +129,9 @@ function LegendPreview({
               >
                 <div
                   style={{
-                    color: chartTextPrimaryHex,
+                    color: chartTextPrimary,
                     width: "100%",
-                    ...typographyTokenToCss(typography.legend.label),
+                    ...labelCss,
                   }}
                 >
                   {label}
@@ -105,18 +139,18 @@ function LegendPreview({
                 <div
                   style={{
                     alignItems: "center",
-                    color: chartTextPrimaryHex,
+                    color: chartTextPrimary,
                     display: "flex",
                     flexWrap: "wrap",
                     gap: "4px",
                     width: "100%",
-                    ...typographyTokenToCss(typography.legend.label),
+                    ...labelCss,
                   }}
                 >
                   <span
                     style={{
                       flexShrink: 0,
-                      fontWeight: typography.legend.value.fontWeight,
+                      fontWeight: valueCss.fontWeight,
                       whiteSpace: "nowrap",
                     }}
                   >
@@ -159,10 +193,10 @@ function LegendPreview({
             />
             <div
               style={{
-                color: chartTextPrimaryHex,
+                color: chartTextPrimary,
                 flex: 1,
                 minWidth: 0,
-                ...typographyTokenToCss(typography.legend.label),
+                ...labelCss,
               }}
             >
               {showPercentage
@@ -171,10 +205,10 @@ function LegendPreview({
             </div>
             <div
               style={{
-                color: chartTextPrimaryHex,
+                color: chartTextPrimary,
                 flexShrink: 0,
                 whiteSpace: "nowrap",
-                ...typographyTokenToCss(typography.legend.value),
+                ...valueCss,
               }}
             >
               {formatLegendValue(item.value, valuePrefix, valueSuffix)}

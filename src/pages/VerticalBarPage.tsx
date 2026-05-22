@@ -22,6 +22,7 @@ import {
   VerticalBarMode,
   CartesianYAxisPosition,
 } from "../types";
+import { useRefreshDesignTokensOnMount } from "../utils/useRefreshDesignTokens";
 import styles from "../ui.css";
 
 interface VerticalBarPageProps {
@@ -121,6 +122,7 @@ function createRandomValue(): number {
 }
 
 function VerticalBarPage({ onBack }: VerticalBarPageProps) {
+  useRefreshDesignTokensOnMount();
   const sample = verticalBarChartConfig;
   const [barMode, setBarMode] = useState<VerticalBarMode>(sample.barMode);
   const [yAxisPosition, setYAxisPosition] =

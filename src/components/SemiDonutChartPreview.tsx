@@ -6,13 +6,17 @@ import {
   textColor,
   typography,
 } from "../config";
-import { typographyTokenToCss } from "../utils/chartTypography";
 import { LegendStyle } from "../types";
 import { ChartItem } from "./ChartItemInput";
 import ChartTitlePreview from "./ChartTitlePreview";
 import LegendPreview from "./LegendPreview";
-
-const chartTextPrimaryHex = textColor.primary.value;
+import { useColorTokenResolved } from "./ColorChips/colorTokenSwatchContext";
+import { useTypographyTokenResolved } from "./TypographyChips/typographyTokenValueContext";
+import {
+  colorTokenPreviewBackground,
+  colorTokenSwatchHex,
+} from "../utils/colorTokenDisplay";
+import { typographyTokenToPreviewCss } from "../utils/typographyTokenDisplay";
 
 interface SemiDonutChartPreviewProps {
   chartTitle: string;
@@ -68,6 +72,13 @@ function SemiDonutChartPreview({
   showTotalValue,
   totalValueTitle,
 }: SemiDonutChartPreviewProps) {
+  const { values: resolvedColors } = useColorTokenResolved();
+  const { values: resolvedTypography } = useTypographyTokenResolved();
+  const chartTextPrimary = colorTokenPreviewBackground(
+    textColor.primary,
+    resolvedColors,
+  );
+
   const legendItems = items
     .map((item, index) => ({ ...item, index }))
     .filter((item) => item.label.trim() !== "" || item.value > 0);
@@ -94,7 +105,10 @@ function SemiDonutChartPreview({
     <div
       style={{
         alignItems: "center",
-        backgroundColor: chartBackground.value,
+        backgroundColor: colorTokenPreviewBackground(
+          chartBackground,
+          resolvedColors,
+        ),
         boxSizing: "border-box",
         display: "flex",
         flexDirection: "column",
@@ -113,7 +127,7 @@ function SemiDonutChartPreview({
           style={{ display: "block", maxWidth: "390px" }}
         >
           {chartItems.map((item, arcIndex) => {
-            const color = dataVisAt(item.index).value;
+            const color = colorTokenSwatchHex(dataVisAt(item.index), resolvedColors);
             const exactPercent = (item.value / total) * 100;
             const adjustedStartPercent =
               arcIndex === 0 ? startPercent : startPercent + 0.5;
@@ -151,21 +165,27 @@ function SemiDonutChartPreview({
           >
             <div
               style={{
-                color: chartTextPrimaryHex,
+                color: chartTextPrimary,
                 textAlign: "center",
-                ...typographyTokenToCss(typography.totalValue.title),
+                ...typographyTokenToPreviewCss(
+                  typography.totalValue.title,
+                  resolvedTypography,
+                ),
               }}
             >
               {totalValueTitle}
             </div>
             <div
               style={{
-                color: chartTextPrimaryHex,
+                color: chartTextPrimary,
                 letterSpacing: "0px",
                 marginTop: "2px",
                 textAlign: "center",
                 whiteSpace: "nowrap",
-                ...typographyTokenToCss(typography.totalValue.value),
+                ...typographyTokenToPreviewCss(
+                  typography.totalValue.value,
+                  resolvedTypography,
+                ),
               }}
             >
               {totalValueText}

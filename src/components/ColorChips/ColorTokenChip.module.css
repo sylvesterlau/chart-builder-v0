@@ -1,15 +1,25 @@
 .chip {
   align-items: center;
   background-color: var(--figma-color-bg-secondary);
+  border: 1px solid transparent;
   border-radius: 6px;
   box-sizing: border-box;
   display: inline-flex;
   flex-direction: row;
-  flex-shrink: 0;
-  max-width: 100%;
+  flex-shrink: 1;
+  max-width: 140px;
   min-height: 28px;
-  padding: 3px 3px 3px 5px;
+  min-width: 0;
+  overflow: hidden;
   width: fit-content;
+  padding: 0 4px;
+}
+
+/* Bound Figma variable — matches Dev Mode variable chip */
+.chipBound {
+  background-color: var(--figma-color-bg);
+  border-color: var(--figma-color-border);
+  padding: 0 4px;
 }
 
 .segment {
@@ -17,9 +27,11 @@
   box-sizing: border-box;
   display: inline-flex;
   flex-direction: row;
+  flex: 1;
   gap: 6px;
   min-height: 22px;
-  padding: 0 6px 0 3px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .divider {
@@ -64,9 +76,73 @@
   width: 14px;
 }
 
+.swatchSplit {
+  border: 1px solid var(--figma-color-border);
+  border-radius: 3px;
+  box-sizing: border-box;
+  display: flex;
+  flex-shrink: 0;
+  height: 14px;
+  overflow: hidden;
+  width: 14px;
+}
+
+.swatchLeft {
+  box-sizing: border-box;
+  flex: 0 0 50%;
+  height: 100%;
+  min-width: 0;
+}
+
+.swatchRight {
+  box-sizing: border-box;
+  flex: 0 0 50%;
+  height: 100%;
+  min-width: 0;
+  position: relative;
+}
+
+.swatchChecker {
+  display: block;
+  height: 100%;
+  width: 100%;
+}
+
+.swatchAlphaOverlay {
+  inset: 0;
+  position: absolute;
+}
+
 .hex {
   color: var(--figma-color-text);
   font-size: 11px;
   font-weight: 400;
   line-height: 16px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chipCircular {
+  border: 1px solid var(--figma-color-border);
+  border-radius: 50%;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  height: 20px;
+  overflow: hidden;
+  position: relative;
+  width: 20px;
+}
+
+.swatchCircularOverlay {
+  border-radius: 50%;
+  inset: 0;
+  position: absolute;
+}
+
+.chipCircular .swatchChecker {
+  border-radius: 50%;
+  height: 100%;
+  width: 100%;
 }
