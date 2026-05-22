@@ -36,13 +36,19 @@
 
 .leadingPreview {
   align-items: center;
-  background-color: var(--figma-color-bg-secondary);
+  background-color: transparent;
   box-sizing: border-box;
   display: flex;
   flex: 0 0 64px;
   height: 64px;
   justify-content: center;
+  transition: background-color 0.15s ease;
   width: 64px;
+}
+
+.listContainerWithPreview:hover .leadingPreview,
+.listContainerWithPreview:focus-visible .leadingPreview {
+  background-color: var(--figma-color-bg-secondary);
 }
 
 .listContainerWithPreview .textColumn {
