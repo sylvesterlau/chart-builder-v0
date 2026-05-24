@@ -510,6 +510,7 @@ export function normalizeVerticalBarChartConfig(
 
   return {
     chartType: "verticalBar",
+    chartTitle: String(input.chartTitle || "").trim() || fallback.chartTitle,
     barMode,
     yAxisPosition: input.yAxisPosition === "left" ? "left" : "right",
     axisLineVisibility: normalizeCartesianAxisLineVisibility(
@@ -643,6 +644,7 @@ export function normalizeLineChartConfig(
 
   return {
     chartType: "lineChart",
+    chartTitle: String(input.chartTitle || "").trim() || fallback.chartTitle,
     lineMode,
     lineRange: normalizeLineChartRange(input.lineRange ?? fallback.lineRange),
     yAxisPosition: input.yAxisPosition === "left" ? "left" : "right",

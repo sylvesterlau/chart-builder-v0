@@ -1,4 +1,7 @@
 {
+  "engines": {
+    "node": ">=22 <26"
+  },
   "dependencies": {
     "@create-figma-plugin/ui": "^4.0.3",
     "@create-figma-plugin/utilities": "^4.0.3",

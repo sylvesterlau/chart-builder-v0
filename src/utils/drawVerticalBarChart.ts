@@ -6,9 +6,6 @@ import {
 } from "../config";
 import {
   clamp,
-  formatAxisNumber,
-  isCartesianXAxisLineVisible,
-  isCartesianYAxisLineVisible,
   normalizeVerticalBarChartConfig,
 } from "../helpers";
 import {
@@ -22,6 +19,17 @@ import {
   applyTypographyTokenToText,
   loadTypographyTokenFontsBatch,
 } from "./applyTypographyToken";
+import { buildBarKeyInfo } from "./cartesianKeyInfo";
+import {
+  createCartesianKeyInfo,
+  loadCartesianKeyInfoFonts,
+} from "./drawCartesianKeyInfo";
+import {
+  drawCartesianXAxis,
+  drawCartesianYAxis,
+  drawCartesianYAxisTitle,
+} from "./drawCartesianAxis";
+import { createChartTitle, loadChartTitleFont } from "./drawChartTitle";
 
 const ROOT_NAME = "_demo/bar chart/1";
 
@@ -130,191 +138,6 @@ function positionChart(chart: FrameNode) {
   }
   chart.x = figma.viewport.center.x - chart.width / 2;
   chart.y = figma.viewport.center.y - chart.height / 2;
-}
-
-async function drawYAxisTitle(
-  parent: FrameNode,
-  config: NormalizedVerticalBarChartConfig,
-) {
-  const yAxisPosition = config.yAxisPosition ?? "right";
-  const yTitle = config.color.typography.yAxisTitle;
-  const leftTitle = await createText("", yTitle, textColor.primary);
-  leftTitle.name = "Left axis title";
-  leftTitle.characters = yAxisPosition === "left" ? config.yAxisTitle : "";
-  leftTitle.textAlignHorizontal = "LEFT";
-  leftTitle.textAutoResize = "NONE";
-  leftTitle.resize(parent.width / 2 - 4, yTitle.lineHeight);
-  parent.appendChild(leftTitle);
-
-  const title = await createText(
-    yAxisPosition === "right" ? config.yAxisTitle : "",
-    yTitle,
-    textColor.primary,
-  );
-  title.name = "Right axis title";
-  title.textAlignHorizontal = "RIGHT";
-  title.textAutoResize = "NONE";
-  title.resize(parent.width / 2 - 4, yTitle.lineHeight);
-  parent.appendChild(title);
-  title.layoutGrow = 1;
-}
-
-async function drawYAxis(
-  parent: FrameNode,
-  config: NormalizedVerticalBarChartConfig,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-) {
-  const axis = await createFrameNode(parent, "Y-axis", x, y, width, height);
-  const yAxisPosition = config.yAxisPosition ?? "right";
-  const yLabelStyle = config.color.yAxisLabel;
-  Object.assign(axis, {
-    layoutMode: "VERTICAL",
-    primaryAxisSizingMode: "FIXED",
-    counterAxisSizingMode: "FIXED",
-    primaryAxisAlignItems: "SPACE_BETWEEN",
-    counterAxisAlignItems: "MIN",
-    itemSpacing: 0,
-  });
-
-  for (const tick of config.yTicks) {
-    const lineFrame = await createFrameNode(axis, "Y-axis line", 0, 0, width, 1);
-    Object.assign(lineFrame, {
-      layoutMode: "HORIZONTAL",
-      primaryAxisSizingMode: "FIXED",
-      counterAxisSizingMode: "AUTO",
-      primaryAxisAlignItems: "CENTER",
-      counterAxisAlignItems: "CENTER",
-      itemSpacing: 0,
-    });
-
-    const axisLine = await createLine(
-      lineFrame,
-      "Axis line",
-      0,
-      0,
-      width,
-      config.color.gridLine,
-      1,
-    );
-    axisLine.opacity = isCartesianYAxisLineVisible(config.axisLineVisibility)
-      ? 1
-      : 0;
-
-    const labelText = formatAxisNumber(tick);
-    const label = await createText(labelText, yLabelStyle, textColor.primary);
-    label.name = yAxisPosition === "right" ? "Right label" : "Left label";
-    label.textAlignHorizontal = yAxisPosition === "right" ? "LEFT" : "RIGHT";
-    lineFrame.appendChild(label);
-    label.layoutPositioning = "ABSOLUTE";
-    label.x = yAxisPosition === "right" ? width + 8 : -label.width - 8;
-    label.y = -8;
-  }
-
-  const rulerX = yAxisPosition === "right" ? width - 1 : 0;
-  const ruler = await createRect(
-    axis,
-    "Ruler",
-    rulerX,
-    -1,
-    1,
-    height + 1,
-    config.color.axisLine,
-  );
-  ruler.layoutPositioning = "ABSOLUTE";
-  ruler.x = rulerX;
-  ruler.y = -1;
-}
-
-async function drawXAxis(
-  parent: FrameNode,
-  config: NormalizedVerticalBarChartConfig,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-) {
-  const axis = await createFrameNode(parent, "X-axis", x, y, width, height);
-  Object.assign(axis, {
-    layoutMode: "HORIZONTAL",
-    primaryAxisSizingMode: "FIXED",
-    counterAxisSizingMode: "FIXED",
-    primaryAxisAlignItems: "MIN",
-    counterAxisAlignItems: "MAX",
-    itemSpacing: 0,
-  });
-  const groupWidth = width / config.labels.length;
-  const xLabelStyle = config.color.typography.xAxisLabel;
-  const xTitleStyle = config.color.typography.xAxisTitle;
-
-  for (let index = 0; index < config.labels.length; index++) {
-    const labelText = config.labels[index];
-    const lineFrame = await createFrameNode(
-      axis,
-      "X-axis line",
-      groupWidth * index,
-      0,
-      groupWidth,
-      height,
-    );
-    Object.assign(lineFrame, {
-      layoutMode: "VERTICAL",
-      primaryAxisSizingMode: "FIXED",
-      counterAxisSizingMode: "FIXED",
-      primaryAxisAlignItems: "MIN",
-      counterAxisAlignItems: "CENTER",
-      itemSpacing: 0,
-    });
-
-    await createRect(
-      lineFrame,
-      "Axis line",
-      groupWidth / 2,
-      0,
-      1,
-      height,
-      config.color.gridLine,
-      isCartesianXAxisLineVisible(config.axisLineVisibility) ? 1 : 0,
-    );
-    const label = await createText(labelText, xLabelStyle, textColor.primary);
-    label.name = "Axis label";
-    label.textAlignHorizontal = "CENTER";
-    label.textAutoResize = "NONE";
-    label.resize(groupWidth, xLabelStyle.lineHeight);
-    lineFrame.appendChild(label);
-    label.layoutPositioning = "ABSOLUTE";
-    label.x = 0;
-    label.y = height + 4;
-  }
-
-  const title = await createText(
-    config.xAxisTitle,
-    xTitleStyle,
-    textColor.primary,
-  );
-  title.name = "Axis title";
-  title.textAlignHorizontal = "CENTER";
-  title.textAutoResize = "NONE";
-  title.resize(width, xTitleStyle.lineHeight);
-  axis.appendChild(title);
-  title.layoutPositioning = "ABSOLUTE";
-  title.x = 0;
-  title.y = height + 28;
-
-  const ruler = await createRect(
-    axis,
-    "Ruler",
-    0,
-    height - 1,
-    width,
-    1,
-    config.color.axisLine,
-  );
-  ruler.layoutPositioning = "ABSOLUTE";
-  ruler.x = 0;
-  ruler.y = height - 1;
 }
 
 async function drawSelectedLabel(
@@ -486,7 +309,7 @@ async function drawBarChart(
   config: NormalizedVerticalBarChartConfig,
 ) {
   const yTitleRowHeight = config.color.typography.yAxisTitle.lineHeight;
-  const contentStackOffset = 40 + yTitleRowHeight;
+  const contentStackOffset = 24 + yTitleRowHeight;
 
   const chart = await createFrameNode(
     parent,
@@ -494,7 +317,7 @@ async function drawBarChart(
     0,
     0,
     parent.width,
-    parent.height,
+    config.height,
     chartBackground,
   );
   Object.assign(chart, {
@@ -504,7 +327,7 @@ async function drawBarChart(
     itemSpacing: 8,
     paddingLeft: 16,
     paddingRight: 16,
-    paddingTop: 16,
+    paddingTop: 0,
     paddingBottom: 16,
     clipsContent: true,
   });
@@ -523,11 +346,16 @@ async function drawBarChart(
   Object.assign(titleFrame, {
     layoutMode: "HORIZONTAL",
     primaryAxisSizingMode: "FIXED",
-    counterAxisSizingMode: "FIXED",
+    counterAxisSizingMode: "AUTO",
     itemSpacing: 8,
   });
   titleFrame.layoutSizingHorizontal = "FILL";
-  await drawYAxisTitle(titleFrame, config);
+  await drawCartesianYAxisTitle(titleFrame, {
+    color: config.color,
+    textColor: textColor.primary,
+    yAxisPosition: config.yAxisPosition,
+    yAxisTitle: config.yAxisTitle,
+  });
 
   const contentFrame = await createFrameNode(
     chart,
@@ -535,7 +363,7 @@ async function drawBarChart(
     0,
     0,
     parent.width - 32,
-    parent.height - contentStackOffset,
+    config.height - contentStackOffset,
   );
   contentFrame.layoutSizingHorizontal = "FILL";
   contentFrame.layoutSizingVertical = "FILL";
@@ -551,8 +379,37 @@ async function drawBarChart(
     throw new Error("Chart size is too small for the selected data.");
   }
 
-  await drawYAxis(contentFrame, config, plotX, plotY, plotWidth, plotHeight);
-  await drawXAxis(contentFrame, config, plotX, plotY, plotWidth, plotHeight);
+  await drawCartesianYAxis(
+    contentFrame,
+    {
+      axisLineVisibility: config.axisLineVisibility,
+      color: config.color,
+      textColor: textColor.primary,
+      ticks: config.yTicks,
+      yAxisPosition: config.yAxisPosition,
+    },
+    plotX,
+    plotY,
+    plotWidth,
+    plotHeight,
+  );
+  await drawCartesianXAxis(
+    contentFrame,
+    {
+      axisLineVisibility: config.axisLineVisibility,
+      color: config.color,
+      labelYOffset: 4,
+      labels: config.labels,
+      rulerY: plotHeight - 1,
+      textColor: textColor.primary,
+      titleText: config.xAxisTitle,
+      titleYOffset: 28,
+    },
+    plotX,
+    plotY,
+    plotWidth,
+    plotHeight,
+  );
   await drawBars(contentFrame, config, plotX, plotY, plotWidth, plotHeight);
 }
 
@@ -565,20 +422,30 @@ export async function drawVerticalBarChart(
   );
   await figma.currentPage.loadAsync();
   await loadVerticalBarFonts(config);
+  await loadChartTitleFont();
+  await loadCartesianKeyInfoFonts();
 
   const chart = figma.createFrame();
   chart.name = ROOT_NAME;
-  chart.resize(config.width, config.height);
-  chart.clipsContent = true;
+  chart.resize(config.width, 1);
+  chart.clipsContent = false;
   Object.assign(chart, {
     layoutMode: "VERTICAL",
-    primaryAxisSizingMode: "FIXED",
+    primaryAxisSizingMode: "AUTO",
     counterAxisSizingMode: "FIXED",
   });
   await applyColorTokenToFills(chart, chartBackground);
 
   positionChart(chart);
   figma.currentPage.appendChild(chart);
+  const title = await createChartTitle(config.chartTitle);
+  if (title) {
+    chart.appendChild(title);
+  }
+  const keyInfo = await createCartesianKeyInfo(buildBarKeyInfo(config));
+  if (keyInfo) {
+    chart.appendChild(keyInfo);
+  }
   await drawBarChart(chart, config);
 
   figma.currentPage.selection = [chart];

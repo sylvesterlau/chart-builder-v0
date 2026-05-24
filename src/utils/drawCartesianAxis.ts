@@ -3,111 +3,139 @@ import {
   isCartesianXAxisLineVisible,
   isCartesianYAxisLineVisible,
 } from "../helpers";
-import {
+import type {
   CartesianAxisLineVisibility,
   CartesianChartColorConfig,
   CartesianYAxisPosition,
+  ColorToken,
   TypographyToken,
 } from "../types";
+import { applyColorTokenToFills, applyColorTokenToStrokes } from "./applyColorToken";
+import { applyTypographyTokenToText } from "./applyTypographyToken";
 
-export const CARTESIAN_FONT_REGULAR: FontName = {
-  family: "Inter",
-  style: "Regular",
-};
-export const CARTESIAN_FONT_BOLD: FontName = {
-  family: "Inter",
-  style: "Bold",
-};
+type ParentNode = BaseNode & ChildrenMixin;
 
-export function createCartesianFrameNode(
-  parent: BaseNode & ChildrenMixin,
+async function createCartesianFrameNode(
+  parent: ParentNode,
   name: string,
   x: number,
   y: number,
   width: number,
   height: number,
-  fillColor?: string,
-): FrameNode {
+  fillToken?: ColorToken,
+): Promise<FrameNode> {
   const frame = figma.createFrame();
   frame.name = name;
   frame.resize(Math.max(1, width), Math.max(1, height));
   frame.x = x;
   frame.y = y;
-  frame.fills = fillColor
-    ? [{ type: "SOLID", color: figma.util.rgb(fillColor) }]
-    : [];
+  frame.fills = [];
+  if (fillToken) {
+    await applyColorTokenToFills(frame, fillToken);
+  }
   frame.clipsContent = false;
   parent.appendChild(frame);
   return frame;
 }
 
-export function createCartesianRect(
-  parent: BaseNode & ChildrenMixin,
+async function createCartesianRect(
+  parent: ParentNode,
   name: string,
   x: number,
   y: number,
   width: number,
   height: number,
-  color: string,
-  opacity?: number,
-): RectangleNode {
+  token: ColorToken,
+  nodeOpacity?: number,
+): Promise<RectangleNode> {
   const rect = figma.createRectangle();
   rect.name = name;
   rect.resize(Math.max(1, width), Math.max(1, height));
   rect.x = x;
   rect.y = y;
-  rect.fills = [{ type: "SOLID", color: figma.util.rgb(color) }];
-  if (opacity !== undefined) rect.opacity = opacity;
+  await applyColorTokenToFills(rect, token);
+  if (nodeOpacity !== undefined) {
+    rect.opacity = nodeOpacity;
+  }
   parent.appendChild(rect);
   return rect;
 }
 
-export function createCartesianText(
+async function createCartesianLine(
+  parent: ParentNode,
+  name: string,
+  x: number,
+  y: number,
+  length: number,
+  token: ColorToken,
+  strokeWeight = 1,
+): Promise<LineNode> {
+  const line = figma.createLine();
+  line.name = name;
+  line.resize(Math.max(1, length), 0);
+  line.x = x;
+  line.y = y;
+  line.strokeWeight = strokeWeight;
+  await applyColorTokenToStrokes(line, token);
+  parent.appendChild(line);
+  return line;
+}
+
+async function createCartesianText(
   characters: string | number,
   style: TypographyToken,
-  color: string,
-): TextNode {
+  token: ColorToken,
+): Promise<TextNode> {
   const text = figma.createText();
-  text.fontName =
-    style.fontWeight >= 600 ? CARTESIAN_FONT_BOLD : CARTESIAN_FONT_REGULAR;
-  text.fontSize = style.fontSize;
-  text.lineHeight = { unit: "PIXELS", value: style.lineHeight };
-  text.fills = [{ type: "SOLID", color: figma.util.rgb(color) }];
+  await applyTypographyTokenToText(text, style);
   text.characters = String(characters);
   text.textAutoResize = "WIDTH_AND_HEIGHT";
+  await applyColorTokenToFills(text, token);
   return text;
+}
+
+function setFixedWidthAutoHeight(
+  node: TextNode,
+  width: number,
+  minHeight: number,
+) {
+  node.textAutoResize = "NONE";
+  node.resize(Math.max(1, width), Math.max(1, minHeight));
+  node.textAutoResize = "HEIGHT";
+}
+
+function measureAxisLabelWidth(value: string): number {
+  return Math.max(1, String(value || "").length * 7);
 }
 
 export interface CartesianAxisTitleOptions {
   color: CartesianChartColorConfig;
-  textColor: string;
+  textColor: ColorToken;
   yAxisPosition?: CartesianYAxisPosition;
   yAxisTitle: string;
 }
 
-export function drawCartesianYAxisTitle(
+export async function drawCartesianYAxisTitle(
   parent: FrameNode,
   options: CartesianAxisTitleOptions,
 ) {
   const yAxisPosition = options.yAxisPosition ?? "right";
   const yTitle = options.color.typography.yAxisTitle;
-  const leftTitle = createCartesianText("", yTitle, options.textColor);
+  const leftTitle = await createCartesianText("", yTitle, options.textColor);
   leftTitle.name = "Left axis title";
   leftTitle.characters = yAxisPosition === "left" ? options.yAxisTitle : "";
   leftTitle.textAlignHorizontal = "LEFT";
-  leftTitle.textAutoResize = "NONE";
-  leftTitle.resize(parent.width / 2 - 4, yTitle.lineHeight);
+  setFixedWidthAutoHeight(leftTitle, parent.width / 2 - 4, yTitle.lineHeight);
   parent.appendChild(leftTitle);
 
-  const title = createCartesianText(
+  const title = await createCartesianText(
     yAxisPosition === "right" ? options.yAxisTitle : "",
     yTitle,
     options.textColor,
   );
   title.name = "Right axis title";
   title.textAlignHorizontal = "RIGHT";
-  title.textAutoResize = "NONE";
-  title.resize(parent.width / 2 - 4, yTitle.lineHeight);
+  setFixedWidthAutoHeight(title, parent.width / 2 - 4, yTitle.lineHeight);
   parent.appendChild(title);
   title.layoutGrow = 1;
 }
@@ -115,12 +143,12 @@ export function drawCartesianYAxisTitle(
 export interface CartesianYAxisOptions {
   axisLineVisibility?: CartesianAxisLineVisibility;
   color: CartesianChartColorConfig;
-  textColor: string;
+  textColor: ColorToken;
   ticks: number[];
   yAxisPosition?: CartesianYAxisPosition;
 }
 
-export function drawCartesianYAxis(
+export async function drawCartesianYAxis(
   parent: FrameNode,
   options: CartesianYAxisOptions,
   x: number,
@@ -128,7 +156,7 @@ export function drawCartesianYAxis(
   width: number,
   height: number,
 ) {
-  const axis = createCartesianFrameNode(parent, "Y-axis", x, y, width, height);
+  const axis = await createCartesianFrameNode(parent, "Y-axis", x, y, width, height);
   const yAxisPosition = options.yAxisPosition ?? "right";
   const yLabelStyle = options.color.yAxisLabel;
   Object.assign(axis, {
@@ -140,15 +168,8 @@ export function drawCartesianYAxis(
     itemSpacing: 0,
   });
 
-  options.ticks.forEach((tick) => {
-    const lineFrame = createCartesianFrameNode(
-      axis,
-      "Y-axis line",
-      0,
-      0,
-      width,
-      1,
-    );
+  for (const tick of options.ticks) {
+    const lineFrame = await createCartesianFrameNode(axis, "Y-axis line", 0, 0, width, 1);
     Object.assign(lineFrame, {
       layoutMode: "HORIZONTAL",
       primaryAxisSizingMode: "FIXED",
@@ -158,19 +179,20 @@ export function drawCartesianYAxis(
       itemSpacing: 0,
     });
 
-    const axisLine = createCartesianRect(
+    const axisLine = await createCartesianLine(
       lineFrame,
       "Axis line",
       0,
       0,
       width,
+      options.color.gridLine,
       1,
-      options.color.gridLine.value,
-      isCartesianYAxisLineVisible(options.axisLineVisibility) ? 1 : 0,
     );
-    axisLine.layoutGrow = 1;
+    axisLine.opacity = isCartesianYAxisLineVisible(options.axisLineVisibility)
+      ? 1
+      : 0;
 
-    const label = createCartesianText(
+    const label = await createCartesianText(
       formatAxisNumber(tick),
       yLabelStyle,
       options.textColor,
@@ -181,17 +203,17 @@ export function drawCartesianYAxis(
     label.layoutPositioning = "ABSOLUTE";
     label.x = yAxisPosition === "right" ? width + 8 : -label.width - 8;
     label.y = -8;
-  });
+  }
 
   const rulerX = yAxisPosition === "right" ? width - 1 : 0;
-  const ruler = createCartesianRect(
+  const ruler = await createCartesianRect(
     axis,
     "Ruler",
     rulerX,
     -1,
     1,
     height + 1,
-    options.color.axisLine.value,
+    options.color.axisLine,
   );
   ruler.layoutPositioning = "ABSOLUTE";
   ruler.x = rulerX;
@@ -204,12 +226,12 @@ export interface CartesianXAxisOptions {
   labels: string[];
   labelYOffset: number;
   rulerY: number;
-  textColor: string;
+  textColor: ColorToken;
   titleText?: string;
   titleYOffset?: number;
 }
 
-export function drawCartesianXAxis(
+export async function drawCartesianXAxis(
   parent: FrameNode,
   options: CartesianXAxisOptions,
   x: number,
@@ -217,7 +239,7 @@ export function drawCartesianXAxis(
   width: number,
   height: number,
 ) {
-  const axis = createCartesianFrameNode(parent, "X-axis", x, y, width, height);
+  const axis = await createCartesianFrameNode(parent, "X-axis", x, y, width, height);
   Object.assign(axis, {
     layoutMode: "HORIZONTAL",
     primaryAxisSizingMode: "FIXED",
@@ -226,12 +248,13 @@ export function drawCartesianXAxis(
     counterAxisAlignItems: "MAX",
     itemSpacing: 0,
   });
+  const groupWidth = width / options.labels.length;
   const xLabelStyle = options.color.typography.xAxisLabel;
   const xTitleStyle = options.color.typography.xAxisTitle;
-  const groupWidth = width / options.labels.length;
 
-  options.labels.forEach((labelText, index) => {
-    const lineFrame = createCartesianFrameNode(
+  for (let index = 0; index < options.labels.length; index++) {
+    const labelText = options.labels[index];
+    const lineFrame = await createCartesianFrameNode(
       axis,
       "X-axis line",
       groupWidth * index,
@@ -248,49 +271,54 @@ export function drawCartesianXAxis(
       itemSpacing: 0,
     });
 
-    createCartesianRect(
+    await createCartesianRect(
       lineFrame,
       "Axis line",
       groupWidth / 2,
       0,
       1,
       height,
-      options.color.gridLine.value,
+      options.color.gridLine,
       isCartesianXAxisLineVisible(options.axisLineVisibility) ? 1 : 0,
     );
-    const label = createCartesianText(labelText, xLabelStyle, options.textColor);
-    label.name = "Axis label";
-    label.textAlignHorizontal = "CENTER";
-    label.textAutoResize = "WIDTH_AND_HEIGHT";
-    lineFrame.appendChild(label);
-    label.layoutPositioning = "ABSOLUTE";
-    label.x = groupWidth / 2 - label.width / 2;
-    label.y = height + options.labelYOffset;
-  });
 
-  const title = createCartesianText(
-    options.titleText ?? "",
-    xTitleStyle,
-    options.textColor,
-  );
-  title.name = "Axis title";
-  title.textAlignHorizontal = "CENTER";
-  title.textAutoResize = "NONE";
-  title.resize(width, xTitleStyle.lineHeight);
-  title.visible = Boolean(options.titleText);
-  axis.appendChild(title);
-  title.layoutPositioning = "ABSOLUTE";
-  title.x = 0;
-  title.y = height + (options.titleYOffset ?? 28);
+    if (labelText) {
+      const label = await createCartesianText(labelText, xLabelStyle, options.textColor);
+      const labelWidth = Math.max(groupWidth, measureAxisLabelWidth(labelText));
+      label.name = "Axis label";
+      label.textAlignHorizontal = "CENTER";
+      setFixedWidthAutoHeight(label, labelWidth, xLabelStyle.lineHeight);
+      lineFrame.appendChild(label);
+      label.layoutPositioning = "ABSOLUTE";
+      label.x = groupWidth / 2 - labelWidth / 2;
+      label.y = height + options.labelYOffset;
+    }
+  }
 
-  const ruler = createCartesianRect(
+  if (options.titleText !== undefined) {
+    const title = await createCartesianText(
+      options.titleText,
+      xTitleStyle,
+      options.textColor,
+    );
+    title.name = "Axis title";
+    title.textAlignHorizontal = "CENTER";
+    setFixedWidthAutoHeight(title, width, xTitleStyle.lineHeight);
+    title.visible = Boolean(options.titleText);
+    axis.appendChild(title);
+    title.layoutPositioning = "ABSOLUTE";
+    title.x = 0;
+    title.y = height + (options.titleYOffset ?? 28);
+  }
+
+  const ruler = await createCartesianRect(
     axis,
     "Ruler",
     0,
     options.rulerY,
     width,
     1,
-    options.color.axisLine.value,
+    options.color.axisLine,
   );
   ruler.layoutPositioning = "ABSOLUTE";
   ruler.x = 0;

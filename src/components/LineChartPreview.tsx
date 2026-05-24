@@ -17,6 +17,9 @@ import {
   typographyResolvedLineHeight,
   typographyTokenToPreviewCss,
 } from "../utils/typographyTokenDisplay";
+import { buildLineKeyInfo } from "../utils/cartesianKeyInfo";
+import CartesianKeyInfoPreview from "./CartesianKeyInfoPreview";
+import ChartTitlePreview from "./ChartTitlePreview";
 
 interface LineChartPreviewProps {
   config: LineChartConfig;
@@ -101,7 +104,7 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
     resolvedTypography,
   );
   const contentWidth = Math.max(1, config.width - 32);
-  const contentHeight = Math.max(1, config.height - 40 - yTitleRowHeight);
+  const contentHeight = Math.max(1, config.height - 24 - yTitleRowHeight);
   const plotHeight = Math.max(1, contentHeight - 30);
   const labelGutter = 46;
   const plotWidth = Math.max(1, contentWidth - labelGutter);
@@ -142,11 +145,12 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
     typographyTokenToPreviewCss(ty.xAxisLabel, resolvedTypography).fontFamily;
   const selectedIndex = config.selectedIndex;
   const hasSelection = selectedIndex >= 0;
-  const selectedRatio =
-    hasSelection && config.pointCount > 1
-      ? selectedIndex / (config.pointCount - 1)
+  const markerIndex = hasSelection ? selectedIndex : config.pointCount - 1;
+  const markerRatio =
+    config.pointCount > 1
+      ? markerIndex / (config.pointCount - 1)
       : 0;
-  const selectedX = selectedRatio * lineWidth;
+  const markerX = markerRatio * lineWidth;
   const selectedLabel = hasSelection
     ? config.pointLabels[selectedIndex] || `P${selectedIndex + 1}`
     : "";
@@ -155,17 +159,27 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
     <div
       style={{
         background: chartBgColor,
-        boxSizing: "border-box",
-        color: colorTokenPreviewBackground(textColor.primary, resolvedColors),
-        fontFamily: defaultFontFamily,
-        height: `${config.height}px`,
-        overflow: "hidden",
-        padding: "16px",
-        transform: "scale(0.9)",
-        transformOrigin: "top center",
+        display: "flex",
+        flexDirection: "column",
         width: `${config.width}px`,
       }}
     >
+      <ChartTitlePreview title={config.chartTitle} />
+      <CartesianKeyInfoPreview data={buildLineKeyInfo(config)} />
+      <div
+        style={{
+          background: chartBgColor,
+          boxSizing: "border-box",
+          color: colorTokenPreviewBackground(textColor.primary, resolvedColors),
+          fontFamily: defaultFontFamily,
+          height: `${config.height}px`,
+          overflow: "hidden",
+          padding: "0 16px 16px",
+          transform: "scale(0.9)",
+          transformOrigin: "top center",
+          width: `${config.width}px`,
+        }}
+      >
       <div
         style={{
           display: "flex",
@@ -349,7 +363,7 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
               style={{
                 borderLeft: `1px dashed ${axisLineColor}`,
                 bottom: 0,
-                left: `${selectedX}px`,
+                left: `${markerX}px`,
                 position: "absolute",
                 top: "-40px",
                 transform: "translateX(-0.5px)",
@@ -370,7 +384,7 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
                 display: "flex",
                 height: "18px",
                 justifyContent: "center",
-                left: `${selectedX}px`,
+                left: `${markerX}px`,
                 padding: "0 8px 2px",
                 position: "absolute",
                 transform: "translateX(-50%)",
@@ -381,10 +395,9 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
               {selectedLabel}
             </div>
           ) : null}
-          {hasSelection
-            ? visibleSeries.map((series, seriesIndex) => {
+          {visibleSeries.map((series, seriesIndex) => {
                 const value = clamp(
-                  Number(series.values[selectedIndex]) || 0,
+                  Number(series.values[markerIndex]) || 0,
                   minValue,
                   maxValue,
                 );
@@ -403,7 +416,7 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
                       display: "flex",
                       height: "12px",
                       justifyContent: "center",
-                      left: `${selectedX}px`,
+                      left: `${markerX}px`,
                       position: "absolute",
                       top: `${y}px`,
                       transform: "translate(-50%, -50%)",
@@ -415,9 +428,9 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
                     />
                   </div>
                 );
-              })
-            : null}
+              })}
         </div>
+      </div>
       </div>
     </div>
   );

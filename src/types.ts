@@ -118,6 +118,7 @@ export interface CartesianChartColorConfig {
 
 export interface VerticalBarChartConfig {
   chartType: "verticalBar";
+  chartTitle: string;
   barMode: VerticalBarMode;
   yAxisPosition?: CartesianYAxisPosition;
   axisLineVisibility?: CartesianAxisLineVisibility;
@@ -139,6 +140,7 @@ export interface NormalizedVerticalBarChartConfig extends VerticalBarChartConfig
 
 export interface LineChartConfig {
   chartType: "lineChart";
+  chartTitle: string;
   lineMode: LineChartMode;
   lineRange: LineChartRange;
   yAxisPosition?: CartesianYAxisPosition;
