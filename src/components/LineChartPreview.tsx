@@ -18,7 +18,9 @@ import {
   typographyTokenToPreviewCss,
 } from "../utils/typographyTokenDisplay";
 import { buildLineKeyInfo } from "../utils/cartesianKeyInfo";
+import { buildLineTooltip } from "../utils/cartesianTooltip";
 import CartesianKeyInfoPreview from "./CartesianKeyInfoPreview";
+import CartesianTooltipPreview from "./CartesianTooltipPreview";
 import ChartTitlePreview from "./ChartTitlePreview";
 
 interface LineChartPreviewProps {
@@ -154,6 +156,11 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
   const selectedLabel = hasSelection
     ? config.pointLabels[selectedIndex] || `P${selectedIndex + 1}`
     : "";
+  const rawSelectedAnchorX = 16 + plotX + markerX;
+  const previewScale = 0.9;
+  const selectedAnchorX =
+    config.width / 2 + (rawSelectedAnchorX - config.width / 2) * previewScale;
+  const chartTop = (config.chartTitle.trim() ? 46 : 0) + 100;
 
   return (
     <div
@@ -161,9 +168,15 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
         background: chartBgColor,
         display: "flex",
         flexDirection: "column",
+        position: "relative",
         width: `${config.width}px`,
       }}
     >
+      <CartesianTooltipPreview
+        anchorX={selectedAnchorX}
+        chartTop={chartTop}
+        data={buildLineTooltip(config)}
+      />
       <ChartTitlePreview title={config.chartTitle} />
       <CartesianKeyInfoPreview data={buildLineKeyInfo(config)} />
       <div

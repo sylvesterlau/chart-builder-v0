@@ -197,6 +197,63 @@ export const ds = {
     },
   },
 
+  cartesianTooltip: {
+    width: 358,
+    pointerWidth: 16,
+    pointerHeight: 8,
+    typography: {
+      title: {
+        fontFamily: "Inter",
+        fontSize: 14,
+        fontWeight: 600,
+        lineHeight: 20,
+        key: "b9b2c385b0bee1d96f002c8b9315aba5e246802b",
+      } satisfies Readonly<TypographyToken>,
+      label: {
+        fontFamily: "Inter",
+        fontSize: 14,
+        fontWeight: 400,
+        lineHeight: 20,
+        key: "6c0bedfa63b7860e94170b3aa921c56e1e3636a7",
+      } satisfies Readonly<TypographyToken>,
+      value: {
+        fontFamily: "Inter",
+        fontSize: 14,
+        fontWeight: 600,
+        lineHeight: 20,
+        key: "b9b2c385b0bee1d96f002c8b9315aba5e246802b",
+      } satisfies Readonly<TypographyToken>,
+    },
+    spacing: {
+      outerPadding: {
+        value: 16,
+      } satisfies NumberToken,
+      panelPadding: {
+        value: 12,
+      } satisfies NumberToken,
+      itemGap: {
+        value: 8,
+        key: "cb58133bee7f18a9cce49cbc9c63c806e4f816b1",
+      } satisfies NumberToken,
+      pointerInsetEnd: {
+        value: 16,
+      } satisfies NumberToken,
+      pointerBottomPadding: {
+        value: 2,
+      } satisfies NumberToken,
+    },
+    color: {
+      panel: {
+        value: "#ffffff",
+        key: "707ed5f9ab4b5788817328c6002d8026dcdf8ae2",
+      } satisfies Readonly<ColorToken>,
+      border: {
+        value: "#000000",
+        key: "0b7fca77c493eec1e8cbd9a1c95672e80af34dbe",
+      } satisfies Readonly<ColorToken>,
+    },
+  },
+
   legend: {
     typography: {
       label: {
@@ -492,6 +549,7 @@ export const chartTitleConfig = {
 } as const;
 
 export const cartesianKeyInfoConfig = ds.cartesianKeyInfo;
+export const cartesianTooltipConfig = ds.cartesianTooltip;
 
 /** Flat typography map for APIs that expect `typography.chartTitle` etc. */
 export const typography = {

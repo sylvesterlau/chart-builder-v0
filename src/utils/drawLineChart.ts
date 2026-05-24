@@ -20,10 +20,15 @@ import {
   loadTypographyTokenFontsBatch,
 } from "./applyTypographyToken";
 import { buildLineKeyInfo } from "./cartesianKeyInfo";
+import { buildLineTooltip } from "./cartesianTooltip";
 import {
   createCartesianKeyInfo,
   loadCartesianKeyInfoFonts,
 } from "./drawCartesianKeyInfo";
+import {
+  createCartesianTooltip,
+  loadCartesianTooltipFonts,
+} from "./drawCartesianTooltip";
 import {
   drawCartesianXAxis,
   drawCartesianYAxis,
@@ -433,6 +438,14 @@ async function drawChart(parent: FrameNode, config: NormalizedLineChartConfig) {
   const plotHeight = contentFrame.height - 30;
   const lineWidth =
     config.lineRange === "full" ? xAxisWidth : Math.round(yAxisWidth * 0.788);
+  const selectedIndicatorX =
+    config.selectedIndex >= 0
+      ? 16 +
+        plotX +
+        (config.pointCount <= 1
+          ? 0
+          : (config.selectedIndex / (config.pointCount - 1)) * lineWidth)
+      : null;
 
   if (yAxisWidth < 180 || plotHeight < 160) {
     throw new Error("Chart size is too small for the selected data.");
@@ -468,6 +481,7 @@ async function drawChart(parent: FrameNode, config: NormalizedLineChartConfig) {
     plotHeight,
   );
   await drawLines(contentFrame, config, plotX, plotY, lineWidth, plotHeight);
+  return { chart, indicatorX: selectedIndicatorX };
 }
 
 export async function drawLineChart(chartData: Partial<LineChartConfig>) {
@@ -479,6 +493,7 @@ export async function drawLineChart(chartData: Partial<LineChartConfig>) {
   await loadLineChartFonts(config);
   await loadChartTitleFont();
   await loadCartesianKeyInfoFonts();
+  await loadCartesianTooltipFonts();
 
   const chart = figma.createFrame();
   chart.name = ROOT_NAME;
@@ -501,7 +516,13 @@ export async function drawLineChart(chartData: Partial<LineChartConfig>) {
   if (keyInfo) {
     chart.appendChild(keyInfo);
   }
-  await drawChart(chart, config);
+  const drawnChart = await drawChart(chart, config);
+  await createCartesianTooltip(
+    chart,
+    buildLineTooltip(config),
+    drawnChart.indicatorX ?? 0,
+    drawnChart.chart.y,
+  );
 
   figma.currentPage.selection = [chart];
   figma.viewport.scrollAndZoomIntoView([chart]);

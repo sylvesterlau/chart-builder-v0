@@ -20,10 +20,15 @@ import {
   loadTypographyTokenFontsBatch,
 } from "./applyTypographyToken";
 import { buildBarKeyInfo } from "./cartesianKeyInfo";
+import { buildBarTooltip } from "./cartesianTooltip";
 import {
   createCartesianKeyInfo,
   loadCartesianKeyInfoFonts,
 } from "./drawCartesianKeyInfo";
+import {
+  createCartesianTooltip,
+  loadCartesianTooltipFonts,
+} from "./drawCartesianTooltip";
 import {
   drawCartesianXAxis,
   drawCartesianYAxis,
@@ -307,7 +312,7 @@ async function drawBars(
 async function drawBarChart(
   parent: FrameNode,
   config: NormalizedVerticalBarChartConfig,
-) {
+): Promise<{ chart: FrameNode; indicatorX: number | null }> {
   const yTitleRowHeight = config.color.typography.yAxisTitle.lineHeight;
   const contentStackOffset = 24 + yTitleRowHeight;
 
@@ -374,6 +379,11 @@ async function drawBarChart(
   const plotY = 9;
   const plotWidth = contentFrame.width - labelGutter;
   const plotHeight = contentFrame.height - 54;
+  const selectedIndicatorX =
+    config.selectedIndex >= 0 && config.selectedIndex < config.labels.length
+      ? 16 + plotX + (plotWidth / config.labels.length) * config.selectedIndex +
+        plotWidth / config.labels.length / 2
+      : null;
 
   if (plotWidth < 180 || plotHeight < 120) {
     throw new Error("Chart size is too small for the selected data.");
@@ -411,6 +421,7 @@ async function drawBarChart(
     plotHeight,
   );
   await drawBars(contentFrame, config, plotX, plotY, plotWidth, plotHeight);
+  return { chart, indicatorX: selectedIndicatorX };
 }
 
 export async function drawVerticalBarChart(
@@ -424,6 +435,7 @@ export async function drawVerticalBarChart(
   await loadVerticalBarFonts(config);
   await loadChartTitleFont();
   await loadCartesianKeyInfoFonts();
+  await loadCartesianTooltipFonts();
 
   const chart = figma.createFrame();
   chart.name = ROOT_NAME;
@@ -446,7 +458,13 @@ export async function drawVerticalBarChart(
   if (keyInfo) {
     chart.appendChild(keyInfo);
   }
-  await drawBarChart(chart, config);
+  const drawnChart = await drawBarChart(chart, config);
+  await createCartesianTooltip(
+    chart,
+    buildBarTooltip(config),
+    drawnChart.indicatorX ?? 0,
+    drawnChart.chart.y,
+  );
 
   figma.currentPage.selection = [chart];
   figma.viewport.scrollAndZoomIntoView([chart]);

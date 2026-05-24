@@ -18,7 +18,9 @@ import {
   typographyTokenToPreviewCss,
 } from "../utils/typographyTokenDisplay";
 import { buildBarKeyInfo } from "../utils/cartesianKeyInfo";
+import { buildBarTooltip } from "../utils/cartesianTooltip";
 import CartesianKeyInfoPreview from "./CartesianKeyInfoPreview";
+import CartesianTooltipPreview from "./CartesianTooltipPreview";
 import ChartTitlePreview from "./ChartTitlePreview";
 
 interface VerticalBarChartPreviewProps {
@@ -98,6 +100,14 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
   const defaultFontFamily =
     typographyTokenToPreviewCss(ty.xAxisLabel, resolvedTypography).fontFamily;
   const chartBgColor = colorTokenPreviewBackground(chartBackground, resolvedColors);
+  const rawSelectedAnchorX =
+    config.selectedIndex >= 0 && config.selectedIndex < labels.length
+      ? 16 + plotX + groupWidth * config.selectedIndex + groupWidth / 2
+      : 0;
+  const previewScale = 0.9;
+  const selectedAnchorX =
+    config.width / 2 + (rawSelectedAnchorX - config.width / 2) * previewScale;
+  const chartTop = (config.chartTitle.trim() ? 46 : 0) + 100;
 
   return (
     <div
@@ -105,9 +115,15 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
         background: chartBgColor,
         display: "flex",
         flexDirection: "column",
+        position: "relative",
         width: `${config.width}px`,
       }}
     >
+      <CartesianTooltipPreview
+        anchorX={selectedAnchorX}
+        chartTop={chartTop}
+        data={buildBarTooltip(config)}
+      />
       <ChartTitlePreview title={config.chartTitle} />
       <CartesianKeyInfoPreview data={buildBarKeyInfo(config)} />
       <div
