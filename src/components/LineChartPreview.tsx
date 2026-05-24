@@ -175,6 +175,7 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
       <CartesianTooltipPreview
         anchorX={selectedAnchorX}
         chartTop={chartTop}
+        chartWidth={config.width}
         data={buildLineTooltip(config)}
       />
       <ChartTitlePreview title={config.chartTitle} />

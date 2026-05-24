@@ -236,6 +236,7 @@ async function createRows(data: CartesianKeyInfoData): Promise<FrameNode> {
     row.appendChild(label);
     row.appendChild(await createValueRow(data, index));
     rows.appendChild(row);
+    row.layoutSizingHorizontal = "FILL";
   }
 
   return rows;
@@ -273,7 +274,9 @@ export async function createCartesianKeyInfo(
   }
 
   if (data.layout === "rows") {
-    keyInfo.appendChild(await createRows(data));
+    const rows = await createRows(data);
+    keyInfo.appendChild(rows);
+    rows.layoutSizingHorizontal = "FILL";
   } else {
     const items = await createFrame("Key info items");
     items.resize(358, 56);
@@ -285,9 +288,12 @@ export async function createCartesianKeyInfo(
       layoutAlign: "STRETCH",
     });
     for (let index = 0; index < data.items.length; index++) {
-      items.appendChild(await createInlineItem(data, index));
+      const item = await createInlineItem(data, index);
+      items.appendChild(item);
+      item.layoutSizingHorizontal = "FILL";
     }
     keyInfo.appendChild(items);
+    items.layoutSizingHorizontal = "FILL";
   }
 
   return keyInfo;

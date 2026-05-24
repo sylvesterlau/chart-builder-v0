@@ -122,6 +122,7 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
       <CartesianTooltipPreview
         anchorX={selectedAnchorX}
         chartTop={chartTop}
+        chartWidth={config.width}
         data={buildBarTooltip(config)}
       />
       <ChartTitlePreview title={config.chartTitle} />

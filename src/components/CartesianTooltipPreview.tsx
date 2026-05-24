@@ -11,6 +11,7 @@ import { useTypographyTokenResolved } from "./TypographyChips/typographyTokenVal
 interface CartesianTooltipPreviewProps {
   anchorX: number;
   chartTop: number;
+  chartWidth: number;
   data: CartesianTooltipData | null;
 }
 
@@ -35,6 +36,7 @@ function tooltipHeight(itemCount: number): number {
 function CartesianTooltipPreview({
   anchorX,
   chartTop,
+  chartWidth,
   data,
 }: CartesianTooltipPreviewProps) {
   const { values: resolvedColors } = useColorTokenResolved();
@@ -65,13 +67,12 @@ function CartesianTooltipPreview({
     cartesianTooltipConfig.spacing.pointerInsetEnd,
     resolvedNumbers,
   );
-  const panelWidth = cartesianTooltipConfig.width;
   const pointerWidth = cartesianTooltipConfig.pointerWidth;
   const tooltipTop = Math.max(0, chartTop - tooltipHeight(data.items.length) - 16);
   const pointerLeft = clamp(
     anchorX - outerPadding - pointerWidth / 2,
     0,
-    panelWidth - pointerInsetEnd - pointerWidth,
+    chartWidth - outerPadding * 2 - pointerInsetEnd - pointerWidth,
   );
   const primaryText = colorTokenPreviewBackground(textColor.primary, resolvedColors);
   const panelBg = colorTokenPreviewBackground(
@@ -99,7 +100,7 @@ function CartesianTooltipPreview({
       <div
         style={{
           filter: "drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2))",
-          width: `${panelWidth}px`,
+          width: "100%",
         }}
       >
         <div

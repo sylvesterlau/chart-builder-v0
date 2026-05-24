@@ -58,9 +58,10 @@ async function createSwatch(colorTokenIndex: number): Promise<FrameNode> {
 
 async function createTooltipRow(
   item: CartesianTooltipData["items"][number],
+  width: number,
 ): Promise<FrameNode> {
   const row = await createFrame("Text line");
-  row.resize(cartesianTooltipConfig.width - 24, 20);
+  row.resize(width, 20);
   Object.assign(row, {
     layoutMode: "HORIZONTAL",
     primaryAxisSizingMode: "FIXED",
@@ -99,10 +100,13 @@ async function createTooltipRow(
   return row;
 }
 
-async function createPointer(pointerLeft: number): Promise<FrameNode> {
+async function createPointerWithWidth(
+  pointerLeft: number,
+  width: number,
+): Promise<FrameNode> {
   const pointerFrame = await createFrame("Pointer");
   pointerFrame.resize(
-    cartesianTooltipConfig.width,
+    width,
     cartesianTooltipConfig.pointerHeight +
       cartesianTooltipConfig.spacing.pointerBottomPadding.value,
   );
@@ -137,10 +141,15 @@ export async function createCartesianTooltip(
   }
 
   const outerPadding = cartesianTooltipConfig.spacing.outerPadding.value;
+  const contentWidth = Math.max(1, parent.width - outerPadding * 2);
+  const panelContentWidth = Math.max(
+    1,
+    contentWidth - cartesianTooltipConfig.spacing.panelPadding.value * 2,
+  );
   const pointerLeft = clamp(
     anchorX - outerPadding - cartesianTooltipConfig.pointerWidth / 2,
     0,
-    cartesianTooltipConfig.width -
+    contentWidth -
       cartesianTooltipConfig.spacing.pointerInsetEnd.value -
       cartesianTooltipConfig.pointerWidth,
   );
@@ -156,7 +165,7 @@ export async function createCartesianTooltip(
   });
 
   const content = await createFrame("Data-vis tooltip");
-  content.resize(cartesianTooltipConfig.width, 1);
+  content.resize(contentWidth, 1);
   Object.assign(content, {
     layoutMode: "VERTICAL",
     primaryAxisSizingMode: "AUTO",
@@ -175,7 +184,7 @@ export async function createCartesianTooltip(
   ];
 
   const panel = await createFrame("Panel");
-  panel.resize(cartesianTooltipConfig.width, 1);
+  panel.resize(contentWidth, 1);
   Object.assign(panel, {
     layoutMode: "VERTICAL",
     primaryAxisSizingMode: "AUTO",
@@ -199,17 +208,23 @@ export async function createCartesianTooltip(
   );
   title.name = "Title";
   title.textAutoResize = "NONE";
-  title.resize(cartesianTooltipConfig.width - 24, cartesianTooltipConfig.typography.title.lineHeight);
+  title.resize(panelContentWidth, cartesianTooltipConfig.typography.title.lineHeight);
   title.textAutoResize = "HEIGHT";
   panel.appendChild(title);
 
   for (const item of data.items) {
-    panel.appendChild(await createTooltipRow(item));
+    const row = await createTooltipRow(item, panelContentWidth);
+    panel.appendChild(row);
+    row.layoutSizingHorizontal = "FILL";
   }
 
   content.appendChild(panel);
-  content.appendChild(await createPointer(pointerLeft));
+  panel.layoutSizingHorizontal = "FILL";
+  const pointer = await createPointerWithWidth(pointerLeft, contentWidth);
+  content.appendChild(pointer);
+  pointer.layoutSizingHorizontal = "FILL";
   tooltip.appendChild(content);
+  content.layoutSizingHorizontal = "FILL";
   parent.appendChild(tooltip);
 
   tooltip.layoutPositioning = "ABSOLUTE";
