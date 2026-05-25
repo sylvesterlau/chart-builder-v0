@@ -10,7 +10,10 @@ export async function loadChartTitleFont() {
   await loadTypographyTokenFonts(chartTitleConfig.typography);
 }
 
-export async function createChartTitle(title: string): Promise<FrameNode | null> {
+export async function createChartTitle(
+  title: string,
+  frameWidth: number = 390,
+): Promise<FrameNode | null> {
   const trimmedTitle = title.trim();
   if (!trimmedTitle) {
     return null;
@@ -20,7 +23,7 @@ export async function createChartTitle(title: string): Promise<FrameNode | null>
   const titleNode = figma.createText();
 
   titleFrame.fills = [];
-  titleFrame.resize(390, 46);
+  titleFrame.resize(frameWidth, 46);
   Object.assign(titleFrame, {
     name: "chart title",
     layoutMode: "HORIZONTAL",

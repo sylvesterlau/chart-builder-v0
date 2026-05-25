@@ -1,11 +1,11 @@
 import {
   Button,
-  Dropdown,
-  DropdownOption,
   IconPlus16,
+  SegmentedControl,
+  SegmentedControlOption,
   Stack,
   Text,
-  Textbox,
+  TextboxNumeric,
   Toggle,
   VerticalSpace,
 } from "@create-figma-plugin/ui";
@@ -13,8 +13,23 @@ import { emit } from "@create-figma-plugin/utilities";
 import { h } from "preact";
 import { useCallback, useEffect, useState } from "preact/hooks";
 import ChartItemInput, { ChartItem } from "../components/ChartItemInput";
+import ChartSizeControl, {
+  useChartSizeControl,
+} from "../components/editControl/ChartSizeControl";
+import ChartTitleControl, {
+  getEffectiveChartTitle,
+} from "../components/editControl/ChartTitleControl";
+import EditSectionHeader from "../components/editControl/EditSectionHeader";
+import LegendControl, {
+  getEffectiveLegendStyle,
+} from "../components/editControl/LegendControl";
 import PieDonutPreview from "../components/PieDonutPreview";
-import { pluginUISize, sampleData } from "../config";
+import {
+  getPieChartSizeBounds,
+  pieChartConfig,
+  pluginUISize,
+  sampleData,
+} from "../config";
 import { LegendStyle } from "../types";
 import { useRefreshDesignTokensOnMount } from "../utils/useRefreshDesignTokens";
 import styles from "../ui.css";
@@ -28,14 +43,9 @@ type PieDonutChartKind = "pie" | "donut";
 const MIN_ITEMS = 2;
 const MAX_ITEMS = 10;
 const DEFAULT_ITEM_COUNT = 4;
-const LEGEND_STYLE_OPTIONS: Array<DropdownOption> = [
-  { text: "None", value: "none" },
-  { text: "Left and right", value: "leftAndRight" },
-  { text: "Top and bottom", value: "topAndBottom" },
-];
-const CHART_KIND_OPTIONS: Array<DropdownOption> = [
-  { text: "Pie", value: "pie" },
-  { text: "Donut", value: "donut" },
+const CHART_KIND_OPTIONS: Array<SegmentedControlOption> = [
+  { children: "Pie", value: "pie" },
+  { children: "Donut", value: "donut" },
 ];
 
 function createEmptyItem(index: number): ChartItem {
@@ -72,16 +82,48 @@ function sanitizeDecimalInput(value: string) {
   return sanitizedValue;
 }
 
+function isValidIndicatorLineExtend(value: number) {
+  const { lineExtendMin, lineExtendMax } = pieChartConfig.indicator;
+  return (
+    Number.isFinite(value) && value >= lineExtendMin && value <= lineExtendMax
+  );
+}
+
 function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
   useRefreshDesignTokensOnMount();
   const [chartKind, setChartKind] = useState<PieDonutChartKind>("pie");
+  const sizeControl = useChartSizeControl({
+    chartSizeRangeLabel: "30%–60% of width",
+    clampChartSizeToMaxOnFrameWidthChange: true,
+    defaultChartSize: pieChartConfig.chartSize,
+    defaultFrameWidth: pieChartConfig.frameWidth,
+    frameWidthMax: pieChartConfig.frameWidthMax,
+    frameWidthMin: pieChartConfig.frameWidthMin,
+    getChartSizeBounds: getPieChartSizeBounds,
+  });
   const [chartTitle, setChartTitle] = useState<string>("Chart title");
+  const [showChartTitle, setShowChartTitle] = useState<boolean>(false);
+  const effectiveChartTitle = getEffectiveChartTitle(showChartTitle, chartTitle);
   const [items, setItems] = useState<ChartItem[]>(createSampleItems);
+  const [showLegend, setShowLegend] = useState<boolean>(true);
   const [legendStyle, setLegendStyle] = useState<LegendStyle>("leftAndRight");
+  const effectiveLegendStyle = getEffectiveLegendStyle(
+    showLegend,
+    legendStyle,
+    "none",
+  );
   const [showPercentage, setShowPercentage] = useState<boolean>(true);
   const [showIndicator, setShowIndicator] = useState<boolean>(true);
   const [showIndicatorPercentage, setShowIndicatorPercentage] =
     useState<boolean>(true);
+  const [indicatorLineExtend, setIndicatorLineExtend] = useState<number>(
+    pieChartConfig.indicator.lineExtend,
+  );
+  const [indicatorLineExtendInput, setIndicatorLineExtendInput] =
+    useState<string>(String(pieChartConfig.indicator.lineExtend));
+  const indicatorLineExtendInputValid = isValidIndicatorLineExtend(
+    Number(indicatorLineExtendInput),
+  );
   const [valuePrefix, setValuePrefix] = useState<string>("");
   const [valueSuffix, setValueSuffix] = useState<string>("HKD");
 
@@ -145,26 +187,32 @@ function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
           label: item.label,
           value: item.value,
         })),
-        chartTitle,
+        chartTitle: effectiveChartTitle,
         pieChartKind: chartKind,
-        legendStyle,
+        legendStyle: effectiveLegendStyle,
         showPercentage,
         showIndicator,
         showIndicatorPercentage,
+        indicatorLineExtend,
         valuePrefix,
         valueSuffix,
+        frameWidth: sizeControl.frameWidth,
+        semiDonutSize: sizeControl.chartSize,
       });
     },
     [
       chartKind,
       items,
-      chartTitle,
-      legendStyle,
+      effectiveChartTitle,
+      effectiveLegendStyle,
       showPercentage,
       showIndicator,
       showIndicatorPercentage,
+      indicatorLineExtend,
       valuePrefix,
       valueSuffix,
+      sizeControl.frameWidth,
+      sizeControl.chartSize,
     ],
   );
 
@@ -184,14 +232,19 @@ function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
           </button>
           <Text className={styles.horizontalBarTypeTitle}>{pageTitle}</Text>
         </div>
-        <div className={styles.horizontalBarPreviewPanel}>
+        <div
+          className={`${styles.horizontalBarPreviewPanel} ${styles.horizontalBarPreviewPanelVariableWidth}`}
+        >
           <PieDonutPreview
             chartKind={chartKind}
-            chartTitle={chartTitle}
+            frameWidth={sizeControl.frameWidth}
+            chartSize={sizeControl.chartSize}
+            chartTitle={effectiveChartTitle}
             items={items}
-            legendStyle={legendStyle}
+            legendStyle={effectiveLegendStyle}
             showIndicator={showIndicator}
             showIndicatorPercentage={showIndicatorPercentage}
+            indicatorLineExtend={indicatorLineExtend}
             showPercentage={showPercentage}
             valuePrefix={valuePrefix}
             valueSuffix={valueSuffix}
@@ -200,11 +253,10 @@ function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
       </div>
       <div className={styles.horizontalBarRightPanel}>
         <div className={styles.horizontalBarControls}>
-          <Stack space="small">
+          <div className={styles.fieldRow}>
             <Text className={styles.sectionTitle}>Type</Text>
-            <div className={styles.fieldRow}>
-              <Text className={styles.fieldLabel}>Chart</Text>
-              <Dropdown
+            <div className={styles.fieldRowSegmentControl}>
+              <SegmentedControl
                 onValueChange={(value) =>
                   setChartKind(value as PieDonutChartKind)
                 }
@@ -212,30 +264,38 @@ function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
                 value={chartKind}
               />
             </div>
-          </Stack>
+          </div>
+          <VerticalSpace space="medium" />
+          <div className={styles.divider} />
+          <VerticalSpace space="medium" />
+          <ChartTitleControl
+            onTitleChange={setChartTitle}
+            onVisibleChange={setShowChartTitle}
+            title={chartTitle}
+            visible={showChartTitle}
+          />
+          <VerticalSpace space="medium" />
+          <div className={styles.divider} />
+          <VerticalSpace space="medium" />
+          <ChartSizeControl
+            chartSizeBounds={sizeControl.chartSizeBounds}
+            chartSizeInput={sizeControl.chartSizeInput}
+            chartSizeRangeLabel={sizeControl.chartSizeRangeLabel}
+            chartSizeSliderValue={sizeControl.chartSizeSliderValue}
+            frameWidthInput={sizeControl.frameWidthInput}
+            frameWidthMax={sizeControl.frameWidthMax}
+            frameWidthMin={sizeControl.frameWidthMin}
+            isChartSizeValid={sizeControl.isChartSizeValid}
+            isFrameWidthValid={sizeControl.isFrameWidthValid}
+            onChartSizeNumericInput={sizeControl.handleChartSizeNumericInput}
+            onChartSizeSliderInput={sizeControl.handleChartSizeSliderInput}
+            onFrameWidthInput={sizeControl.handleFrameWidthInput}
+          />
           <VerticalSpace space="medium" />
           <div className={styles.divider} />
           <VerticalSpace space="medium" />
           <Stack space="small">
-            <Text className={styles.sectionTitle}>Chart title</Text>
-            <Textbox
-              onValueInput={(value) => setChartTitle(value)}
-              value={chartTitle}
-              placeholder="Chart title"
-            />
-          </Stack>
-          <VerticalSpace space="medium" />
-          <div className={styles.divider} />
-          <VerticalSpace space="medium" />
-          <Stack space="small">
-            <div
-              style={{
-                alignItems: "center",
-                display: "flex",
-                justifyContent: "space-between",
-                width: "100%",
-              }}
-            >
+            <div className={styles.editSectionHeader}>
               <Text className={styles.sectionTitle}>Data</Text>
               <Text className={styles.fieldLabel}>
                 {items.length}/{MAX_ITEMS} items
@@ -275,59 +335,66 @@ function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
           <div className={styles.divider} />
           <VerticalSpace space="medium" />
           <Stack space="small">
-            <Text className={styles.sectionTitle}>Indicator</Text>
-            <div className={styles.fieldRow}>
-              <Text className={styles.fieldLabel}>Show</Text>
-              <Toggle onValueChange={setShowIndicator} value={showIndicator}>
-                {" "}
-              </Toggle>
-            </div>
-            <div className={styles.fieldRow}>
-              <Text className={styles.fieldLabel}>Percentage</Text>
-              <Toggle
-                onValueChange={setShowIndicatorPercentage}
-                value={showIndicatorPercentage}
-              >
-                {" "}
-              </Toggle>
-            </div>
-            <div className={styles.divider} />
-            <VerticalSpace space="medium" />
+            <EditSectionHeader
+              hideTitle="Hide indicator"
+              onVisibilityToggle={() => setShowIndicator((current) => !current)}
+              showTitle="Show indicator"
+              title="Indicator"
+              visible={showIndicator}
+            />
+            {showIndicator ? (
+              <Stack space="small">
+                <div className={styles.fieldRow}>
+                  <Text className={styles.fieldLabel}>Line extend</Text>
+                  <TextboxNumeric
+                    onNumericValueInput={(value) => {
+                      if (value === null) {
+                        setIndicatorLineExtendInput("");
+                        return;
+                      }
+                      const nextInput = String(value);
+                      setIndicatorLineExtendInput(nextInput);
+                      if (isValidIndicatorLineExtend(value)) {
+                        setIndicatorLineExtend(Math.round(value));
+                      }
+                    }}
+                    value={indicatorLineExtendInput}
+                  />
+                </div>
+                {!indicatorLineExtendInputValid ? (
+                  <div className={styles.fieldHintError}>
+                    Line extend must be between{" "}
+                    {pieChartConfig.indicator.lineExtendMin} and{" "}
+                    {pieChartConfig.indicator.lineExtendMax}.
+                  </div>
+                ) : null}
+                <div className={styles.fieldRow}>
+                  <Text className={styles.fieldLabel}>Percentage</Text>
+                  <Toggle
+                    onValueChange={setShowIndicatorPercentage}
+                    value={showIndicatorPercentage}
+                  >
+                    {" "}
+                  </Toggle>
+                </div>
+              </Stack>
+            ) : null}
           </Stack>
-          <Stack space="small">
-            <Text className={styles.sectionTitle}>Legend</Text>
-            <div className={styles.fieldRow}>
-              <Text className={styles.fieldLabel}>Style</Text>
-              <Dropdown
-                onValueChange={(value) => setLegendStyle(value as LegendStyle)}
-                options={LEGEND_STYLE_OPTIONS}
-                value={legendStyle}
-              />
-            </div>
-            <div className={styles.fieldRow}>
-              <Text className={styles.fieldLabel}>Percentage</Text>
-              <Toggle onValueChange={setShowPercentage} value={showPercentage}>
-                {" "}
-              </Toggle>
-            </div>
-            <div className={styles.fieldRow}>
-              <Text className={styles.fieldLabel}>Value prefix</Text>
-              <Textbox
-                onValueInput={setValuePrefix}
-                value={valuePrefix}
-                placeholder="Value prefix"
-              />
-            </div>
-            <div className={styles.fieldRow}>
-              <Text className={styles.fieldLabel}>Value suffix</Text>
-              <Textbox
-                onValueInput={setValueSuffix}
-                value={valueSuffix}
-                placeholder="Value suffix"
-              />
-            </div>
-            <VerticalSpace space="medium" />
-          </Stack>
+          <VerticalSpace space="medium" />
+          <div className={styles.divider} />
+          <VerticalSpace space="medium" />
+          <LegendControl
+            legendStyle={legendStyle}
+            onLegendStyleChange={setLegendStyle}
+            onShowPercentageChange={setShowPercentage}
+            onValuePrefixChange={setValuePrefix}
+            onValueSuffixChange={setValueSuffix}
+            onVisibleChange={setShowLegend}
+            showPercentage={showPercentage}
+            valuePrefix={valuePrefix}
+            valueSuffix={valueSuffix}
+            visible={showLegend}
+          />
         </div>
         <div className={styles.horizontalBarActions}>
           <Button fullWidth onClick={handleGenerateButtonClick}>

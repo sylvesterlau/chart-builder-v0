@@ -302,7 +302,12 @@ export const ds = {
 
   chart: {
     semiDonut: {
+      frameWidth: 390,
+      frameWidthMin: 360,
+      frameWidthMax: 1000,
       size: 318,
+      sizeMinRatio: 0.5,
+      sizeMaxRatio: 1,
       ratio: 0.88,
       totalValue: {
         typography: {
@@ -326,7 +331,12 @@ export const ds = {
     /** Pie + donut preview/draw (donut uses `donutInnerRadiusRatio`). */
     pie: {
       frameWidth: 390,
+      frameWidthMin: 360,
+      frameWidthMax: 1000,
       frameHeight: 312,
+      chartSize: 200,
+      sizeMinRatio: 0.3,
+      sizeMaxRatio: 0.6,
       radius: 100,
       radiusLarge: 120,
       /** Full donut hole as a fraction of outer radius (preview + draw). */
@@ -334,6 +344,8 @@ export const ds = {
       indicator: {
         /** Leader line extend past slice outer edge (px). */
         lineExtend: 8,
+        lineExtendMin: 0,
+        lineExtendMax: 20,
         /** Offset from line end to label anchor (px). */
         labelCenterOffset: 30,
         /** Separator stroke between pie/donut slices (SVG path stroke + Figma ellipse). */
@@ -534,6 +546,70 @@ export function dataVisAt(index: number): ColorToken {
 
 export const semiDonutChartConfig = ds.chart.semiDonut;
 export const pieChartConfig = ds.chart.pie;
+
+export function getChartSizeBounds(
+  frameWidth: number,
+  sizeMinRatio: number,
+  sizeMaxRatio: number,
+) {
+  return {
+    min: Math.round(frameWidth * sizeMinRatio),
+    max: Math.round(frameWidth * sizeMaxRatio),
+  };
+}
+
+export function getSemiDonutSizeBounds(frameWidth: number) {
+  const { sizeMinRatio, sizeMaxRatio } = semiDonutChartConfig;
+  return getChartSizeBounds(frameWidth, sizeMinRatio, sizeMaxRatio);
+}
+
+export function getPieChartSizeBounds(frameWidth: number) {
+  const { sizeMinRatio, sizeMaxRatio } = pieChartConfig;
+  return getChartSizeBounds(frameWidth, sizeMinRatio, sizeMaxRatio);
+}
+
+export function resolveIndicatorLineExtend(lineExtend: number | undefined): number {
+  const {
+    lineExtend: defaultLineExtend,
+    lineExtendMin,
+    lineExtendMax,
+  } = pieChartConfig.indicator;
+  const value = lineExtend ?? defaultLineExtend;
+  return Math.round(
+    Math.min(lineExtendMax, Math.max(lineExtendMin, value)),
+  );
+}
+
+export function getPieChartAreaHeight(
+  frameWidth: number,
+  chartSize: number,
+  showIndicator: boolean,
+  showIndicatorPercentage: boolean = true,
+  indicatorLineExtend?: number,
+): number {
+  const ratioHeight = Math.round(
+    frameWidth * (pieChartConfig.frameHeight / pieChartConfig.frameWidth),
+  );
+  if (!showIndicator) {
+    return ratioHeight;
+  }
+
+  const pieRadius = chartSize / 2;
+  const indicatorScale = pieRadius / pieChartConfig.radius;
+  const { lineExtend, labelCenterOffset } = pieChartConfig.indicator;
+  const resolvedLineExtend = resolveIndicatorLineExtend(indicatorLineExtend);
+  const outerReach =
+    pieRadius +
+    resolvedLineExtend * indicatorScale +
+    labelCenterOffset * indicatorScale;
+  const { label, percentage } = pieChartConfig.indicator.typography;
+  const textHeight = showIndicatorPercentage
+    ? label.lineHeight + percentage.lineHeight
+    : label.lineHeight;
+  const indicatorHeight = Math.round(2 * outerReach + textHeight);
+  return Math.max(ratioHeight, indicatorHeight);
+}
+
 export const legendSpacingConfig = ds.legend.spacing;
 export const dataVisColor = ds.colors.dataVis;
 export const textColor = ds.colors.text;

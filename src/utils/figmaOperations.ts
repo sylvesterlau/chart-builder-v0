@@ -18,11 +18,14 @@ export async function checkThemeCol(colID: string) {
 }
 
 // Draw final frame
-export async function createFinalFrame(): Promise<FrameNode> {
+export async function createFinalFrame(
+  frameWidth: number = 390,
+  name: string = "Chart + legend",
+): Promise<FrameNode> {
   const finalFrame = figma.createFrame();
-  finalFrame.resize(390, 0);
+  finalFrame.resize(frameWidth, 0);
   Object.assign(finalFrame, {
-    name: "Chart + legend",
+    name,
     x: figma.viewport.center.x,
     y: figma.viewport.center.y,
     layoutMode: "VERTICAL",

@@ -1,6 +1,7 @@
 import {
   semiDonutChartConfig,
   dataVisAt,
+  getSemiDonutSizeBounds,
   textColor,
   typography,
 } from "../config";
@@ -16,6 +17,28 @@ import { createChartTitle, loadChartTitleFont } from "./drawChartTitle";
 import { createFinalFrame } from "./figmaOperations";
 import { createLegend, createLegendList, loadLegendFonts } from "./drawLegend";
 
+function resolveSemiDonutFrameWidth(frameWidth: number | undefined): number {
+  const {
+    frameWidth: defaultWidth,
+    frameWidthMin,
+    frameWidthMax,
+  } = semiDonutChartConfig;
+  const value = frameWidth ?? defaultWidth;
+  return Math.round(
+    Math.min(frameWidthMax, Math.max(frameWidthMin, value)),
+  );
+}
+
+function resolveSemiDonutSize(
+  semiDonutSize: number | undefined,
+  frameWidth: number,
+): number {
+  const { size: defaultSize } = semiDonutChartConfig;
+  const { min, max } = getSemiDonutSizeBounds(frameWidth);
+  const value = semiDonutSize ?? defaultSize;
+  return Math.round(Math.min(max, Math.max(min, value)));
+}
+
 function formatValueText(value: number, prefix: string, suffix: string) {
   const formattedValue = value.toFixed(2);
   const prefixText = prefix.trim();
@@ -28,6 +51,7 @@ async function createSemiDonutSlice(
   endPercent: number,
   layerName: string,
   fillToken: ColorToken,
+  chartSize: number,
   isFirst: Boolean = false,
 ): Promise<EllipseNode | null> {
   if (endPercent - startPercent <= 0) {
@@ -36,7 +60,7 @@ async function createSemiDonutSlice(
   const slice = figma.createEllipse();
   const gap = isFirst ? 0 : 0.5;
   slice.name = layerName;
-  slice.resize(semiDonutChartConfig.size, semiDonutChartConfig.size);
+  slice.resize(chartSize, chartSize);
   slice.arcData = {
     startingAngle: -Math.PI * (1 - (startPercent + gap) / 100),
     endingAngle: -Math.PI * (1 - endPercent / 100),
@@ -107,6 +131,9 @@ export async function drawSemiDonutChart(chartData: ChartData) {
   const totalValueTitle = (
     chartData.totalValueTitle ?? "Total Asset Value"
   ).trim();
+  const frameWidth = resolveSemiDonutFrameWidth(chartData.frameWidth);
+  const chartSize = resolveSemiDonutSize(chartData.semiDonutSize, frameWidth);
+  const totalValueY = Math.round(chartSize * (90 / 318));
 
   if (chartTitle.trim()) {
     await loadChartTitleFont();
@@ -115,17 +142,17 @@ export async function drawSemiDonutChart(chartData: ChartData) {
     await loadLegendFonts();
   }
 
-  const legendList = shouldShowLegend ? createLegendList() : null;
+  const legendList = shouldShowLegend ? createLegendList("Legend List") : null;
   const legendTileLayout =
     chartData.legendStyle === "topAndBottom" ? "topAndBottom" : "leftAndRight";
 
   const chartFrame = figma.createFrame();
   chartFrame.fills = [];
-  chartFrame.resize(semiDonutChartConfig.size, semiDonutChartConfig.size / 2);
+  chartFrame.resize(chartSize, chartSize / 2);
   Object.assign(chartFrame, {
     name: "Chart area",
-    x: figma.viewport.center.x - semiDonutChartConfig.size / 2,
-    y: figma.viewport.center.y - semiDonutChartConfig.size / 2,
+    x: figma.viewport.center.x - chartSize / 2,
+    y: figma.viewport.center.y - chartSize / 2,
   });
 
   for (let i = 0; i < transformedData.length; i++) {
@@ -139,6 +166,7 @@ export async function drawSemiDonutChart(chartData: ChartData) {
         item.endPercent,
         layerName,
         sliceColor,
+        chartSize,
         isFirstSlice,
       );
       if (slice) {
@@ -156,6 +184,7 @@ export async function drawSemiDonutChart(chartData: ChartData) {
           valuePrefix,
           valueSuffix,
           legendTileLayout,
+          frameWidth,
         );
         if (legend) {
           legendList.appendChild(legend);
@@ -187,11 +216,11 @@ export async function drawSemiDonutChart(chartData: ChartData) {
     chartValueFrame.appendChild(totalValFrame);
     totalValFrame.layoutPositioning = "ABSOLUTE";
     totalValFrame.x = (chartFrame.width - totalValFrame.width) / 2;
-    totalValFrame.y = 90;
+    totalValFrame.y = totalValueY;
   }
 
-  const finalFrame = await createFinalFrame();
-  const titleFrame = await createChartTitle(chartTitle);
+  const finalFrame = await createFinalFrame(frameWidth, "Semi-donut Chart");
+  const titleFrame = await createChartTitle(chartTitle, frameWidth);
   if (titleFrame) {
     finalFrame.appendChild(titleFrame);
   }

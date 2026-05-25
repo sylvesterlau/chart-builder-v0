@@ -81,6 +81,12 @@ export interface ChartData {
   valueSuffix?: string;
   showTotalValue?: boolean;
   totalValueTitle?: string;
+  /** Semi-donut outer frame width (px). */
+  frameWidth?: number;
+  /** Semi-donut ring diameter (px). */
+  semiDonutSize?: number;
+  /** Indicator leader line extend past slice edge (px). */
+  indicatorLineExtend?: number;
 }
 
 export type VerticalBarMode = "single" | "dual";

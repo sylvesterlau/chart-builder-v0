@@ -1,20 +1,32 @@
 import {
   Button,
-  Dropdown,
-  DropdownOption,
   IconPlus16,
   Stack,
   Text,
   Textbox,
-  Toggle,
   VerticalSpace,
 } from "@create-figma-plugin/ui";
 import { emit } from "@create-figma-plugin/utilities";
 import { h } from "preact";
 import { useCallback, useEffect, useState } from "preact/hooks";
 import ChartItemInput, { ChartItem } from "../components/ChartItemInput";
+import ChartSizeControl, {
+  useChartSizeControl,
+} from "../components/editControl/ChartSizeControl";
+import ChartTitleControl, {
+  getEffectiveChartTitle,
+} from "../components/editControl/ChartTitleControl";
+import EditSectionHeader from "../components/editControl/EditSectionHeader";
+import LegendControl, {
+  getEffectiveLegendStyle,
+} from "../components/editControl/LegendControl";
 import SemiDonutChartPreview from "../components/SemiDonutChartPreview";
-import { pluginUISize, sampleData } from "../config";
+import {
+  getSemiDonutSizeBounds,
+  pluginUISize,
+  sampleData,
+  semiDonutChartConfig,
+} from "../config";
 import { LegendStyle } from "../types";
 import { useRefreshDesignTokensOnMount } from "../utils/useRefreshDesignTokens";
 import styles from "../ui.css";
@@ -26,11 +38,6 @@ interface SemiDonutChartPageProps {
 const MIN_ITEMS = 2;
 const MAX_ITEMS = 10;
 const DEFAULT_ITEM_COUNT = 4;
-const LEGEND_STYLE_OPTIONS: Array<DropdownOption> = [
-  { text: "None", value: "none" },
-  { text: "Left and right", value: "leftAndRight" },
-  { text: "Top and bottom", value: "topAndBottom" },
-];
 
 function createEmptyItem(index: number): ChartItem {
   return { label: `Item ${index + 1}`, value: 0, valueInput: "0" };
@@ -68,15 +75,31 @@ function sanitizeDecimalInput(value: string) {
 
 function SemiDonutChartPage({ onBack }: SemiDonutChartPageProps) {
   useRefreshDesignTokensOnMount();
+  const sizeControl = useChartSizeControl({
+    chartSizeRangeLabel: "50%–100% of width",
+    defaultChartSize: semiDonutChartConfig.size,
+    defaultFrameWidth: semiDonutChartConfig.frameWidth,
+    frameWidthMax: semiDonutChartConfig.frameWidthMax,
+    frameWidthMin: semiDonutChartConfig.frameWidthMin,
+    getChartSizeBounds: getSemiDonutSizeBounds,
+  });
   const [chartTitle, setChartTitle] = useState<string>("Chart title");
+  const [showChartTitle, setShowChartTitle] = useState<boolean>(false);
+  const effectiveChartTitle = getEffectiveChartTitle(showChartTitle, chartTitle);
   const [items, setItems] = useState<ChartItem[]>(createSampleItems);
+  const [showTotalValueInput, setShowTotalValueInput] = useState<boolean>(true);
+  const effectiveShowTotalValue = showTotalValueInput;
+  const [totalValueTitle, setTotalValueTitle] = useState<string>("Total value");
+  const [showLegend, setShowLegend] = useState<boolean>(true);
   const [legendStyle, setLegendStyle] = useState<LegendStyle>("leftAndRight");
-  const [showPercentage, setShowPercentage] = useState<boolean>(true);
-  const [showTotalValue, setShowTotalValue] = useState<boolean>(true);
-  const [totalValueTitle, setTotalValueTitle] =
-    useState<string>("Total Asset Value");
+  const effectiveLegendStyle = getEffectiveLegendStyle(
+    showLegend,
+    legendStyle,
+    "none",
+  );
   const [valuePrefix, setValuePrefix] = useState<string>("");
   const [valueSuffix, setValueSuffix] = useState<string>("HKD");
+  const [showPercentage, setShowPercentage] = useState<boolean>(true);
 
   useEffect(() => {
     emit("RESIZE_PLUGIN_UI_WINDOW", {
@@ -138,23 +161,27 @@ function SemiDonutChartPage({ onBack }: SemiDonutChartPageProps) {
           label: item.label,
           value: item.value,
         })),
-        chartTitle,
-        legendStyle,
+        chartTitle: effectiveChartTitle,
+        legendStyle: effectiveLegendStyle,
         showPercentage,
         valuePrefix,
         valueSuffix,
-        showTotalValue,
+        showTotalValue: effectiveShowTotalValue,
         totalValueTitle,
+        frameWidth: sizeControl.frameWidth,
+        semiDonutSize: sizeControl.chartSize,
       });
     },
     [
       items,
-      chartTitle,
-      legendStyle,
+      sizeControl.frameWidth,
+      sizeControl.chartSize,
+      effectiveChartTitle,
+      effectiveLegendStyle,
       showPercentage,
       valuePrefix,
       valueSuffix,
-      showTotalValue,
+      effectiveShowTotalValue,
       totalValueTitle,
     ],
   );
@@ -171,43 +198,57 @@ function SemiDonutChartPage({ onBack }: SemiDonutChartPageProps) {
           >
             ←
           </button>
-          <Text className={styles.horizontalBarTypeTitle}>Semi-donut chart</Text>
+          <Text className={styles.horizontalBarTypeTitle}>
+            Semi-donut chart
+          </Text>
         </div>
-        <div className={styles.horizontalBarPreviewPanel}>
+        <div
+          className={`${styles.horizontalBarPreviewPanel} ${styles.horizontalBarPreviewPanelVariableWidth}`}
+        >
           <SemiDonutChartPreview
-            chartTitle={chartTitle}
+            frameWidth={sizeControl.frameWidth}
+            chartSize={sizeControl.chartSize}
+            chartTitle={effectiveChartTitle}
             items={items}
-            legendStyle={legendStyle}
+            legendStyle={effectiveLegendStyle}
             showPercentage={showPercentage}
             valuePrefix={valuePrefix}
             valueSuffix={valueSuffix}
-            showTotalValue={showTotalValue}
+            showTotalValue={effectiveShowTotalValue}
             totalValueTitle={totalValueTitle}
           />
         </div>
       </div>
       <div className={styles.horizontalBarRightPanel}>
         <div className={styles.horizontalBarControls}>
-          <Stack space="small">
-            <Text className={styles.sectionTitle}>Chart title</Text>
-            <Textbox
-              onValueInput={(value) => setChartTitle(value)}
-              value={chartTitle}
-              placeholder="Chart title"
-            />
-          </Stack>
+          <ChartTitleControl
+            onTitleChange={setChartTitle}
+            onVisibleChange={setShowChartTitle}
+            title={chartTitle}
+            visible={showChartTitle}
+          />
+          <VerticalSpace space="medium" />
+          <div className={styles.divider} />
+          <VerticalSpace space="medium" />
+          <ChartSizeControl
+            chartSizeBounds={sizeControl.chartSizeBounds}
+            chartSizeInput={sizeControl.chartSizeInput}
+            chartSizeRangeLabel={sizeControl.chartSizeRangeLabel}
+            chartSizeSliderValue={sizeControl.chartSizeSliderValue}
+            frameWidthInput={sizeControl.frameWidthInput}
+            frameWidthMax={sizeControl.frameWidthMax}
+            frameWidthMin={sizeControl.frameWidthMin}
+            isChartSizeValid={sizeControl.isChartSizeValid}
+            isFrameWidthValid={sizeControl.isFrameWidthValid}
+            onChartSizeNumericInput={sizeControl.handleChartSizeNumericInput}
+            onChartSizeSliderInput={sizeControl.handleChartSizeSliderInput}
+            onFrameWidthInput={sizeControl.handleFrameWidthInput}
+          />
           <VerticalSpace space="medium" />
           <div className={styles.divider} />
           <VerticalSpace space="medium" />
           <Stack space="small">
-            <div
-              style={{
-                alignItems: "center",
-                display: "flex",
-                justifyContent: "space-between",
-                width: "100%",
-              }}
-            >
+            <div className={styles.editSectionHeader}>
               <Text className={styles.sectionTitle}>Data</Text>
               <Text className={styles.fieldLabel}>
                 {items.length}/{MAX_ITEMS} items
@@ -247,58 +288,41 @@ function SemiDonutChartPage({ onBack }: SemiDonutChartPageProps) {
           <div className={styles.divider} />
           <VerticalSpace space="medium" />
           <Stack space="small">
-            <Text className={styles.sectionTitle}>Total value</Text>
-            <div className={styles.fieldRow}>
-              <Text className={styles.fieldLabel}>Show</Text>
-              <Toggle onValueChange={setShowTotalValue} value={showTotalValue}>
-                {" "}
-              </Toggle>
-            </div>
-            <div className={styles.fieldRow}>
-              <Text className={styles.fieldLabel}>Tile</Text>
-              <Textbox
-                onValueInput={setTotalValueTitle}
-                value={totalValueTitle}
-                placeholder="Total value title"
-              />
-            </div>
-            <div className={styles.divider} />
-            <VerticalSpace space="medium" />
+            <EditSectionHeader
+              hideTitle="Hide total value"
+              onVisibilityToggle={() =>
+                setShowTotalValueInput((current) => !current)
+              }
+              showTitle="Show total value"
+              title="Total value"
+              visible={showTotalValueInput}
+            />
+            {showTotalValueInput ? (
+              <div className={styles.fieldRow}>
+                <Text className={styles.fieldLabel}>Tile</Text>
+                <Textbox
+                  onValueInput={setTotalValueTitle}
+                  placeholder="Total value title"
+                  value={totalValueTitle}
+                />
+              </div>
+            ) : null}
           </Stack>
-          <Stack space="small">
-            <Text className={styles.sectionTitle}>Legend</Text>
-            <div className={styles.fieldRow}>
-              <Text className={styles.fieldLabel}>Style</Text>
-              <Dropdown
-                onValueChange={(value) => setLegendStyle(value as LegendStyle)}
-                options={LEGEND_STYLE_OPTIONS}
-                value={legendStyle}
-              />
-            </div>
-            <div className={styles.fieldRow}>
-              <Text className={styles.fieldLabel}>Percentage</Text>
-              <Toggle onValueChange={setShowPercentage} value={showPercentage}>
-                {" "}
-              </Toggle>
-            </div>
-            <div className={styles.fieldRow}>
-              <Text className={styles.fieldLabel}>Value prefix</Text>
-              <Textbox
-                onValueInput={setValuePrefix}
-                value={valuePrefix}
-                placeholder="Value prefix"
-              />
-            </div>
-            <div className={styles.fieldRow}>
-              <Text className={styles.fieldLabel}>Value suffix</Text>
-              <Textbox
-                onValueInput={setValueSuffix}
-                value={valueSuffix}
-                placeholder="Value suffix"
-              />
-            </div>
-            <VerticalSpace space="medium" />
-          </Stack>
+          <VerticalSpace space="medium" />
+          <div className={styles.divider} />
+          <VerticalSpace space="medium" />
+          <LegendControl
+            legendStyle={legendStyle}
+            onLegendStyleChange={setLegendStyle}
+            onShowPercentageChange={setShowPercentage}
+            onValuePrefixChange={setValuePrefix}
+            onValueSuffixChange={setValueSuffix}
+            onVisibleChange={setShowLegend}
+            showPercentage={showPercentage}
+            valuePrefix={valuePrefix}
+            valueSuffix={valueSuffix}
+            visible={showLegend}
+          />
         </div>
         <div className={styles.horizontalBarActions}>
           <Button fullWidth onClick={handleGenerateButtonClick}>

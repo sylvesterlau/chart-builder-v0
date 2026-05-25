@@ -26,6 +26,32 @@
   width: 100%;
 }
 
+.chartWidthControl {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.fieldRowAlignStart {
+  align-items: start;
+}
+
+.fieldRowAlignStart .fieldLabel {
+  padding-top: 6px;
+}
+
+.fieldRowSegmentControl {
+  justify-self: start;
+  width: fit-content;
+}
+
+.editSectionHeader {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
 .fieldHintError {
   color: var(--figma-color-text-danger, #d92d20);
   font-size: 11px;
@@ -121,6 +147,13 @@
   overflow-x: hidden;
   overflow-y: auto;
   padding: 40px 32px;
+}
+
+.horizontalBarPreviewPanelVariableWidth {
+  align-items: flex-start;
+  overflow-x: auto;
+  overflow-y: auto;
+  padding: 40px 16px;
 }
 
 .verticalBarLeftPanel {
