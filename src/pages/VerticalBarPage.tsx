@@ -136,6 +136,7 @@ function VerticalBarPage({ onBack }: VerticalBarPageProps) {
   );
   const [width, setWidth] = useState<number>(sample.width);
   const [height, setHeight] = useState<number>(sample.height);
+  const [chartTitle, setChartTitle] = useState<string>(sample.chartTitle);
   const [yAxisTitle, setYAxisTitle] = useState<string>(sample.yAxisTitle);
   const [xAxisTitle, setXAxisTitle] = useState<string>(sample.xAxisTitle);
   const [items, setItems] = useState<VerticalBarDataItem[]>(
@@ -166,18 +167,19 @@ function VerticalBarPage({ onBack }: VerticalBarPageProps) {
     const labels = items.map((item, index) => item.label.trim() || `Item ${index + 1}`);
     const series: VerticalBarChartSeries[] = [
       {
-        name: "Data set 1",
+        name: "Product A",
         color: dataVisColor.general[0].value,
         values: items.map((item) => item.valueA),
       },
       {
-        name: "Data set 2",
+        name: "Product B",
         color: dataVisColor.general[1].value,
         values: items.map((item) => item.valueB),
       },
     ];
     return {
       chartType: "verticalBar",
+      chartTitle,
       barMode,
       yAxisPosition,
       axisLineVisibility,
@@ -195,6 +197,7 @@ function VerticalBarPage({ onBack }: VerticalBarPageProps) {
   }, [
     barMode,
     axisLineVisibility,
+    chartTitle,
     height,
     items,
     selectedIndex,
@@ -305,6 +308,10 @@ function VerticalBarPage({ onBack }: VerticalBarPageProps) {
         <div className={styles.horizontalBarControls}>
           <Stack space="small">
             <Text className={styles.sectionTitle}>Chart</Text>
+            <div className={styles.fieldRow}>
+              <Text className={styles.fieldLabel}>Title</Text>
+              <Textbox onValueInput={setChartTitle} value={chartTitle} />
+            </div>
             <div className={styles.fieldRow}>
               <Text className={styles.fieldLabel}>Bars</Text>
               <Dropdown

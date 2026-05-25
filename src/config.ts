@@ -119,6 +119,141 @@ export const ds = {
     },
   },
 
+  cartesianKeyInfo: {
+    typography: {
+      range: {
+        fontFamily: "Inter",
+        fontSize: 14,
+        fontWeight: 300,
+        lineHeight: 20,
+      } satisfies Readonly<TypographyToken>,
+      label: {
+        fontFamily: "Inter",
+        fontSize: 14,
+        fontWeight: 400,
+        lineHeight: 20,
+        key: "6c0bedfa63b7860e94170b3aa921c56e1e3636a7",
+      } satisfies Readonly<TypographyToken>,
+      valueLarge: {
+        fontFamily: "Inter",
+        fontSize: 28,
+        fontWeight: 400,
+        lineHeight: 36,
+      } satisfies Readonly<TypographyToken>,
+      value: {
+        fontFamily: "Inter",
+        fontSize: 19,
+        fontWeight: 400,
+        lineHeight: 27,
+        key: "8823d3e6d7f127e6bf95013924394e2915e402d1",
+      } satisfies Readonly<TypographyToken>,
+      rowValue: {
+        fontFamily: "Inter",
+        fontSize: 14,
+        fontWeight: 600,
+        lineHeight: 20,
+        key: "b9b2c385b0bee1d96f002c8b9315aba5e246802b",
+      } satisfies Readonly<TypographyToken>,
+      unit: {
+        fontFamily: "Inter",
+        fontSize: 14,
+        fontWeight: 500,
+        lineHeight: 20,
+      } satisfies Readonly<TypographyToken>,
+      change: {
+        fontFamily: "Inter",
+        fontSize: 14,
+        fontWeight: 500,
+        lineHeight: 20,
+      } satisfies Readonly<TypographyToken>,
+    },
+    spacing: {
+      horizontalPadding: {
+        value: 16,
+        key: "f70676fabdbeee4adc99373eb788957ad7e2d71d",
+      } satisfies NumberToken,
+      topPadding: {
+        value: 8,
+      } satisfies NumberToken,
+      bottomPadding: {
+        value: 16,
+        key: "deb8773dea736196da7559874f5b7a6c7ab50472",
+      } satisfies NumberToken,
+      itemGap: {
+        value: 8,
+        key: "cb58133bee7f18a9cce49cbc9c63c806e4f816b1",
+      } satisfies NumberToken,
+      rowGap: {
+        value: 4,
+      } satisfies NumberToken,
+    },
+    color: {
+      gain: {
+        value: "#007873",
+      } satisfies Readonly<ColorToken>,
+      loss: {
+        value: "#a8000b",
+      } satisfies Readonly<ColorToken>,
+    },
+  },
+
+  cartesianTooltip: {
+    width: 358,
+    pointerWidth: 16,
+    pointerHeight: 8,
+    typography: {
+      title: {
+        fontFamily: "Inter",
+        fontSize: 14,
+        fontWeight: 600,
+        lineHeight: 20,
+        key: "b9b2c385b0bee1d96f002c8b9315aba5e246802b",
+      } satisfies Readonly<TypographyToken>,
+      label: {
+        fontFamily: "Inter",
+        fontSize: 14,
+        fontWeight: 400,
+        lineHeight: 20,
+        key: "6c0bedfa63b7860e94170b3aa921c56e1e3636a7",
+      } satisfies Readonly<TypographyToken>,
+      value: {
+        fontFamily: "Inter",
+        fontSize: 14,
+        fontWeight: 600,
+        lineHeight: 20,
+        key: "b9b2c385b0bee1d96f002c8b9315aba5e246802b",
+      } satisfies Readonly<TypographyToken>,
+    },
+    spacing: {
+      outerPadding: {
+        value: 16,
+      } satisfies NumberToken,
+      panelPadding: {
+        value: 12,
+      } satisfies NumberToken,
+      itemGap: {
+        value: 8,
+        key: "cb58133bee7f18a9cce49cbc9c63c806e4f816b1",
+      } satisfies NumberToken,
+      pointerInsetEnd: {
+        value: 16,
+      } satisfies NumberToken,
+      pointerBottomPadding: {
+        value: 2,
+      } satisfies NumberToken,
+    },
+    color: {
+      panel: {
+        value: "#ffffff",
+        key: "707ed5f9ab4b5788817328c6002d8026dcdf8ae2",
+      } satisfies Readonly<ColorToken>,
+      border: {
+        value: "#000000",
+        key: "0b7fca77c493eec1e8cbd9a1c95672e80af34dbe",
+      } satisfies Readonly<ColorToken>,
+    },
+  },
+
   legend: {
     typography: {
       label: {
@@ -290,6 +425,7 @@ export const cartesianChartConfig = {
 
 export const verticalBarChartConfig = {
   chartType: "verticalBar" as const,
+  chartTitle: "Chart title",
   barMode: "dual" as const,
   yAxisPosition: cartesianChartConfig.yAxisPosition,
   axisLineVisibility: cartesianChartConfig.axisLineVisibility,
@@ -299,7 +435,7 @@ export const verticalBarChartConfig = {
   width: 390,
   height: 280,
   yAxisTitle: "USD",
-  xAxisTitle: "Year 2023",
+  xAxisTitle: "Year 2026",
   labels: ["Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
   series: [
     {
@@ -355,6 +491,7 @@ function createLinePointLabels(count: number): string[] {
 
 export const lineChartConfig = {
   chartType: "lineChart" as const,
+  chartTitle: "Chart title",
   lineMode: "single" as const,
   lineRange: "partial" as const,
   yAxisPosition: cartesianChartConfig.yAxisPosition,
@@ -371,17 +508,17 @@ export const lineChartConfig = {
   pointLabels: createLinePointLabels(100),
   series: [
     {
-      name: "Line 1",
+      name: "Product A",
       color: ds.colors.dataVis.general[0].value,
       values: createSeededLineValues(100, 8, 132, 14, 0.7, 110, 238),
     },
     {
-      name: "Line 2",
+      name: "Product B",
       color: ds.colors.dataVis.general[1].value,
       values: createSeededLineValues(100, 13, 168, 7, -0.08, 116, 230),
     },
     {
-      name: "Line 3",
+      name: "Product C",
       color: ds.colors.dataVis.general[2].value,
       values: createSeededLineValues(100, 21, 205, 5, -0.12, 124, 236),
     },
@@ -410,6 +547,9 @@ export const chartTitleConfig = {
   padding: ds.chartTitle.padding,
   typography: ds.chartTitle.typography,
 } as const;
+
+export const cartesianKeyInfoConfig = ds.cartesianKeyInfo;
+export const cartesianTooltipConfig = ds.cartesianTooltip;
 
 /** Flat typography map for APIs that expect `typography.chartTitle` etc. */
 export const typography = {

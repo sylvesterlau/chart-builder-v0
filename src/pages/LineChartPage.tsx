@@ -337,7 +337,7 @@ function createSeriesInRange(
   const innerRange = Math.max(1, innerMax - innerMin);
   const series: LineChartSeries[] = [
     {
-      name: "Line 1",
+      name: "Product A",
       color: dataVisColor.general[0].value,
       values: createLineValues(
         pointCount,
@@ -350,7 +350,7 @@ function createSeriesInRange(
       ),
     },
     {
-      name: "Line 2",
+      name: "Product B",
       color: dataVisColor.general[1].value,
       values: createLineValues(
         pointCount,
@@ -363,7 +363,7 @@ function createSeriesInRange(
       ),
     },
     {
-      name: "Line 3",
+      name: "Product C",
       color: dataVisColor.general[2].value,
       values: createLineValues(
         pointCount,
@@ -425,6 +425,7 @@ function LineChartPage({ onBack }: LineChartPageProps) {
     useState<string>(DEFAULT_END_DATE);
   const [width, setWidth] = useState<number>(sample.width);
   const [height, setHeight] = useState<number>(sample.height);
+  const [chartTitle, setChartTitle] = useState<string>(sample.chartTitle);
   const [yAxisTitle, setYAxisTitle] = useState<string>(sample.yAxisTitle);
   const [series, setSeries] = useState<LineChartSeries[]>(
     sample.series.map((item) => ({
@@ -527,6 +528,7 @@ function LineChartPage({ onBack }: LineChartPageProps) {
           ];
     return {
       chartType: "lineChart",
+      chartTitle,
       lineMode,
       lineRange,
       yAxisPosition,
@@ -571,6 +573,7 @@ function LineChartPage({ onBack }: LineChartPageProps) {
     };
   }, [
     axisLineVisibility,
+    chartTitle,
     effectiveMaxValue,
     effectiveMinValue,
     effectivePointCount,
@@ -666,6 +669,10 @@ function LineChartPage({ onBack }: LineChartPageProps) {
         <div className={styles.horizontalBarControls}>
           <Stack space="small">
             <Text className={styles.sectionTitle}>Chart</Text>
+            <div className={styles.fieldRow}>
+              <Text className={styles.fieldLabel}>Title</Text>
+              <Textbox onValueInput={setChartTitle} value={chartTitle} />
+            </div>
             <div className={styles.fieldRow}>
               <Text className={styles.fieldLabel}>Lines</Text>
               <Dropdown

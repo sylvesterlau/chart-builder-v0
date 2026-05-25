@@ -6,9 +6,6 @@ import {
 } from "../config";
 import {
   clamp,
-  formatAxisNumber,
-  isCartesianXAxisLineVisible,
-  isCartesianYAxisLineVisible,
   normalizeLineChartConfig,
 } from "../helpers";
 import {
@@ -22,6 +19,22 @@ import {
   applyTypographyTokenToText,
   loadTypographyTokenFontsBatch,
 } from "./applyTypographyToken";
+import { buildLineKeyInfo } from "./cartesianKeyInfo";
+import { buildLineTooltip } from "./cartesianTooltip";
+import {
+  createCartesianKeyInfo,
+  loadCartesianKeyInfoFonts,
+} from "./drawCartesianKeyInfo";
+import {
+  createCartesianTooltip,
+  loadCartesianTooltipFonts,
+} from "./drawCartesianTooltip";
+import {
+  drawCartesianXAxis,
+  drawCartesianYAxis,
+  drawCartesianYAxisTitle,
+} from "./drawCartesianAxis";
+import { createChartTitle, loadChartTitleFont } from "./drawChartTitle";
 
 const ROOT_NAME = "_demo/line chart/1";
 
@@ -166,181 +179,6 @@ function createPathFromValues(
     .join(" ");
 }
 
-async function drawYAxisTitle(
-  parent: FrameNode,
-  config: NormalizedLineChartConfig,
-) {
-  const yAxisPosition = config.yAxisPosition ?? "right";
-  const yTitle = config.color.typography.yAxisTitle;
-  const leftTitle = await createText("", yTitle, textColor.primary);
-  leftTitle.name = "Left axis title";
-  leftTitle.characters = yAxisPosition === "left" ? config.yAxisTitle : "";
-  leftTitle.textAlignHorizontal = "LEFT";
-  leftTitle.textAutoResize = "NONE";
-  leftTitle.resize(parent.width / 2 - 4, yTitle.lineHeight);
-  parent.appendChild(leftTitle);
-
-  const title = await createText(
-    yAxisPosition === "right" ? config.yAxisTitle : "",
-    yTitle,
-    textColor.primary,
-  );
-  title.name = "Right axis title";
-  title.textAlignHorizontal = "RIGHT";
-  title.textAutoResize = "NONE";
-  title.resize(parent.width / 2 - 4, yTitle.lineHeight);
-  parent.appendChild(title);
-  title.layoutGrow = 1;
-}
-
-async function drawYAxis(
-  parent: FrameNode,
-  config: NormalizedLineChartConfig,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-) {
-  const axis = await createFrameNode(parent, "Y-axis", x, y, width, height);
-  const yAxisPosition = config.yAxisPosition ?? "right";
-  const yLabelStyle = config.color.yAxisLabel;
-  Object.assign(axis, {
-    layoutMode: "VERTICAL",
-    primaryAxisSizingMode: "FIXED",
-    counterAxisSizingMode: "FIXED",
-    primaryAxisAlignItems: "SPACE_BETWEEN",
-    counterAxisAlignItems: "MIN",
-    itemSpacing: 0,
-  });
-
-  for (const tick of config.yTicks) {
-    const lineFrame = await createFrameNode(axis, "Y-axis line", 0, 0, width, 1);
-    Object.assign(lineFrame, {
-      layoutMode: "HORIZONTAL",
-      primaryAxisSizingMode: "FIXED",
-      counterAxisSizingMode: "AUTO",
-      primaryAxisAlignItems: "CENTER",
-      counterAxisAlignItems: "CENTER",
-      itemSpacing: 0,
-    });
-
-    const axisLine = await createLine(
-      lineFrame,
-      "Axis line",
-      0,
-      0,
-      width,
-      config.color.gridLine,
-      1,
-    );
-    axisLine.opacity = isCartesianYAxisLineVisible(config.axisLineVisibility)
-      ? 1
-      : 0;
-
-    const label = await createText(
-      formatAxisNumber(tick),
-      yLabelStyle,
-      textColor.primary,
-    );
-    label.name = yAxisPosition === "right" ? "Right label" : "Left label";
-    label.textAlignHorizontal = yAxisPosition === "right" ? "LEFT" : "RIGHT";
-    lineFrame.appendChild(label);
-    label.layoutPositioning = "ABSOLUTE";
-    label.x = yAxisPosition === "right" ? width + 8 : -label.width - 8;
-    label.y = -8;
-  }
-
-  const rulerX = yAxisPosition === "right" ? width - 1 : 0;
-  const ruler = await createRect(
-    axis,
-    "Ruler",
-    rulerX,
-    -1,
-    1,
-    height + 1,
-    config.color.axisLine,
-  );
-  ruler.layoutPositioning = "ABSOLUTE";
-  ruler.x = rulerX;
-  ruler.y = -1;
-}
-
-async function drawLineXAxis(
-  parent: FrameNode,
-  config: NormalizedLineChartConfig,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-) {
-  const axis = await createFrameNode(parent, "X-axis", x, y, width, height);
-  Object.assign(axis, {
-    layoutMode: "HORIZONTAL",
-    primaryAxisSizingMode: "FIXED",
-    counterAxisSizingMode: "FIXED",
-    primaryAxisAlignItems: "MIN",
-    counterAxisAlignItems: "MAX",
-    itemSpacing: 0,
-  });
-  const xLabelStyle = config.color.typography.xAxisLabel;
-  const groupWidth = width / config.xAxisLabels.length;
-
-  for (let index = 0; index < config.xAxisLabels.length; index++) {
-    const labelText = config.xAxisLabels[index];
-    const lineFrame = await createFrameNode(
-      axis,
-      "X-axis line",
-      groupWidth * index,
-      0,
-      groupWidth,
-      height,
-    );
-    Object.assign(lineFrame, {
-      layoutMode: "VERTICAL",
-      primaryAxisSizingMode: "FIXED",
-      counterAxisSizingMode: "FIXED",
-      primaryAxisAlignItems: "MIN",
-      counterAxisAlignItems: "CENTER",
-      itemSpacing: 0,
-    });
-
-    await createRect(
-      lineFrame,
-      "Axis line",
-      groupWidth / 2,
-      0,
-      1,
-      height,
-      config.color.gridLine,
-      isCartesianXAxisLineVisible(config.axisLineVisibility) ? 1 : 0,
-    );
-
-    if (labelText) {
-      const label = await createText(labelText, xLabelStyle, textColor.primary);
-      label.name = "Axis label";
-      label.textAlignHorizontal = "CENTER";
-      label.textAutoResize = "WIDTH_AND_HEIGHT";
-      lineFrame.appendChild(label);
-      label.layoutPositioning = "ABSOLUTE";
-      label.x = groupWidth / 2 - label.width / 2;
-      label.y = height + 6;
-    }
-  }
-
-  const ruler = await createRect(
-    axis,
-    "Ruler",
-    0,
-    height - 1,
-    width,
-    1,
-    config.color.axisLine,
-  );
-  ruler.layoutPositioning = "ABSOLUTE";
-  ruler.x = 0;
-  ruler.y = height - 1;
-}
-
 async function drawSelectedLabel(
   parent: FrameNode,
   labelText: string,
@@ -366,7 +204,6 @@ async function drawSelectedLabel(
     counterAxisSizingMode: "AUTO",
     paddingLeft: 8,
     paddingRight: 8,
-    paddingBottom: 2,
     counterAxisAlignItems: "CENTER",
   });
   const label = await createText(labelText, labelTextStyle, textColor.onDark);
@@ -423,11 +260,6 @@ async function drawMarker(
   seriesIndex: number,
 ) {
   const marker = await createFrameNode(parent, ".Marker", x - 7, y - 7, 14, 14);
-  Object.assign(marker, {
-    layoutMode: "HORIZONTAL",
-    primaryAxisAlignItems: "CENTER",
-    counterAxisAlignItems: "CENTER",
-  });
 
   if (seriesIndex === 1) {
     const shape = await createRect(marker, "Shape", 2.25, 2.25, 9.5, 9.5, fillToken);
@@ -495,47 +327,50 @@ async function drawLines(
     );
   }
 
-  if (config.selectedIndex < 0) return;
+  const hasSelection = config.selectedIndex >= 0;
+  const markerIndex = hasSelection ? config.selectedIndex : config.pointCount - 1;
+  const markerRatio =
+    config.pointCount <= 1 ? 0 : markerIndex / (config.pointCount - 1);
+  const markerX = markerRatio * width;
 
-  const selectedRatio =
-    config.pointCount <= 1 ? 0 : config.selectedIndex / (config.pointCount - 1);
-  const selectedX = selectedRatio * width;
-  const labelText =
-    config.pointLabels[config.selectedIndex] || `P${config.selectedIndex + 1}`;
+  if (hasSelection) {
+    const labelText =
+      config.pointLabels[markerIndex] || `P${markerIndex + 1}`;
 
-  await drawDashedIndicator(
-    lineFrame,
-    selectedX,
-    -40,
-    height,
-    config.color.axisLine,
-  );
-  await drawSelectedLabel(
-    lineFrame,
-    labelText,
-    selectedX,
-    height + 4,
-    config.color.selected.labelBg,
-    config.color.typography.xAxisLabel,
-  );
+    await drawDashedIndicator(
+      lineFrame,
+      markerX,
+      -40,
+      height,
+      config.color.axisLine,
+    );
+    await drawSelectedLabel(
+      lineFrame,
+      labelText,
+      markerX,
+      height + 4,
+      config.color.selected.labelBg,
+      config.color.typography.xAxisLabel,
+    );
+  }
 
   for (let index = 0; index < visibleSeries.length; index++) {
     const series = visibleSeries[index];
     const value = clamp(
-      Number(series.values[config.selectedIndex]) || 0,
+      Number(series.values[markerIndex]) || 0,
       config.minValue,
       config.maxValue,
     );
     const valueRange = Math.max(1, config.maxValue - config.minValue);
     const selectedY =
       clamp(1 - (value - config.minValue) / valueRange, 0, 1) * height;
-    await drawMarker(lineFrame, selectedX, selectedY, dataVisAt(index), index);
+    await drawMarker(lineFrame, markerX, selectedY, dataVisAt(index), index);
   }
 }
 
 async function drawChart(parent: FrameNode, config: NormalizedLineChartConfig) {
   const yTitleRowHeight = config.color.typography.yAxisTitle.lineHeight;
-  const contentStackOffset = 40 + yTitleRowHeight;
+  const contentStackOffset = 24 + yTitleRowHeight;
 
   const chart = await createFrameNode(
     parent,
@@ -543,7 +378,7 @@ async function drawChart(parent: FrameNode, config: NormalizedLineChartConfig) {
     0,
     0,
     parent.width,
-    parent.height,
+    config.height,
     chartBackground,
   );
   Object.assign(chart, {
@@ -553,7 +388,7 @@ async function drawChart(parent: FrameNode, config: NormalizedLineChartConfig) {
     itemSpacing: 8,
     paddingLeft: 16,
     paddingRight: 16,
-    paddingTop: 16,
+    paddingTop: 0,
     paddingBottom: 16,
     clipsContent: true,
   });
@@ -572,11 +407,16 @@ async function drawChart(parent: FrameNode, config: NormalizedLineChartConfig) {
   Object.assign(titleFrame, {
     layoutMode: "HORIZONTAL",
     primaryAxisSizingMode: "FIXED",
-    counterAxisSizingMode: "FIXED",
+    counterAxisSizingMode: "AUTO",
     itemSpacing: 8,
   });
   titleFrame.layoutSizingHorizontal = "FILL";
-  await drawYAxisTitle(titleFrame, config);
+  await drawCartesianYAxisTitle(titleFrame, {
+    color: config.color,
+    textColor: textColor.primary,
+    yAxisPosition: config.yAxisPosition,
+    yAxisTitle: config.yAxisTitle,
+  });
 
   const contentFrame = await createFrameNode(
     chart,
@@ -584,7 +424,7 @@ async function drawChart(parent: FrameNode, config: NormalizedLineChartConfig) {
     0,
     0,
     parent.width - 32,
-    parent.height - contentStackOffset,
+    config.height - contentStackOffset,
   );
   contentFrame.layoutSizingHorizontal = "FILL";
   contentFrame.layoutSizingVertical = "FILL";
@@ -598,21 +438,50 @@ async function drawChart(parent: FrameNode, config: NormalizedLineChartConfig) {
   const plotHeight = contentFrame.height - 30;
   const lineWidth =
     config.lineRange === "full" ? xAxisWidth : Math.round(yAxisWidth * 0.788);
+  const selectedIndicatorX =
+    config.selectedIndex >= 0
+      ? 16 +
+        plotX +
+        (config.pointCount <= 1
+          ? 0
+          : (config.selectedIndex / (config.pointCount - 1)) * lineWidth)
+      : null;
 
   if (yAxisWidth < 180 || plotHeight < 160) {
     throw new Error("Chart size is too small for the selected data.");
   }
 
-  await drawYAxis(contentFrame, config, plotX, plotY, yAxisWidth, plotHeight);
-  await drawLineXAxis(
+  await drawCartesianYAxis(
     contentFrame,
-    config,
+    {
+      axisLineVisibility: config.axisLineVisibility,
+      color: config.color,
+      textColor: textColor.primary,
+      ticks: config.yTicks,
+      yAxisPosition: config.yAxisPosition,
+    },
+    plotX,
+    plotY,
+    yAxisWidth,
+    plotHeight,
+  );
+  await drawCartesianXAxis(
+    contentFrame,
+    {
+      axisLineVisibility: config.axisLineVisibility,
+      color: config.color,
+      labelYOffset: 4,
+      labels: config.xAxisLabels,
+      rulerY: plotHeight - 1,
+      textColor: textColor.primary,
+    },
     plotX,
     plotY,
     xAxisWidth,
     plotHeight,
   );
   await drawLines(contentFrame, config, plotX, plotY, lineWidth, plotHeight);
+  return { chart, indicatorX: selectedIndicatorX };
 }
 
 export async function drawLineChart(chartData: Partial<LineChartConfig>) {
@@ -622,21 +491,38 @@ export async function drawLineChart(chartData: Partial<LineChartConfig>) {
   );
   await figma.currentPage.loadAsync();
   await loadLineChartFonts(config);
+  await loadChartTitleFont();
+  await loadCartesianKeyInfoFonts();
+  await loadCartesianTooltipFonts();
 
   const chart = figma.createFrame();
   chart.name = ROOT_NAME;
-  chart.resize(config.width, config.height);
-  chart.clipsContent = true;
+  chart.resize(config.width, 1);
+  chart.clipsContent = false;
   Object.assign(chart, {
     layoutMode: "VERTICAL",
-    primaryAxisSizingMode: "FIXED",
+    primaryAxisSizingMode: "AUTO",
     counterAxisSizingMode: "FIXED",
   });
   await applyColorTokenToFills(chart, chartBackground);
 
   positionChart(chart);
   figma.currentPage.appendChild(chart);
-  await drawChart(chart, config);
+  const title = await createChartTitle(config.chartTitle);
+  if (title) {
+    chart.appendChild(title);
+  }
+  const keyInfo = await createCartesianKeyInfo(buildLineKeyInfo(config));
+  if (keyInfo) {
+    chart.appendChild(keyInfo);
+  }
+  const drawnChart = await drawChart(chart, config);
+  await createCartesianTooltip(
+    chart,
+    buildLineTooltip(config),
+    drawnChart.indicatorX ?? 0,
+    drawnChart.chart.y,
+  );
 
   figma.currentPage.selection = [chart];
   figma.viewport.scrollAndZoomIntoView([chart]);

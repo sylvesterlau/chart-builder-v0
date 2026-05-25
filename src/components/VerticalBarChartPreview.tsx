@@ -17,6 +17,11 @@ import {
   typographyResolvedLineHeight,
   typographyTokenToPreviewCss,
 } from "../utils/typographyTokenDisplay";
+import { buildBarKeyInfo } from "../utils/cartesianKeyInfo";
+import { buildBarTooltip } from "../utils/cartesianTooltip";
+import CartesianKeyInfoPreview from "./CartesianKeyInfoPreview";
+import CartesianTooltipPreview from "./CartesianTooltipPreview";
+import ChartTitlePreview from "./ChartTitlePreview";
 
 interface VerticalBarChartPreviewProps {
   config: VerticalBarChartConfig;
@@ -45,7 +50,7 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
   const { typography: ty, yAxisLabel: yLab } = config.color;
   const yTitleRowHeight = ty.yAxisTitle.lineHeight;
   const contentWidth = Math.max(1, config.width - 32);
-  const contentHeight = Math.max(1, config.height - 40 - yTitleRowHeight);
+  const contentHeight = Math.max(1, config.height - 24 - yTitleRowHeight);
   const plotHeight = Math.max(1, contentHeight - 54);
   const labelGutter = 46;
   const plotWidth = Math.max(1, contentWidth - labelGutter);
@@ -94,22 +99,48 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
   );
   const defaultFontFamily =
     typographyTokenToPreviewCss(ty.xAxisLabel, resolvedTypography).fontFamily;
+  const chartBgColor = colorTokenPreviewBackground(chartBackground, resolvedColors);
+  const rawSelectedAnchorX =
+    config.selectedIndex >= 0 && config.selectedIndex < labels.length
+      ? 16 + plotX + groupWidth * config.selectedIndex + groupWidth / 2
+      : 0;
+  const previewScale = 0.9;
+  const selectedAnchorX =
+    config.width / 2 + (rawSelectedAnchorX - config.width / 2) * previewScale;
+  const chartTop = (config.chartTitle.trim() ? 46 : 0) + 100;
 
   return (
     <div
       style={{
-        background: colorTokenPreviewBackground(chartBackground, resolvedColors),
-        boxSizing: "border-box",
-        color: colorTokenPreviewBackground(textColor.primary, resolvedColors),
-        fontFamily: defaultFontFamily,
-        height: `${config.height}px`,
-        overflow: "hidden",
-        padding: "16px",
-        transform: "scale(0.9)",
-        transformOrigin: "top center",
+        background: chartBgColor,
+        display: "flex",
+        flexDirection: "column",
+        position: "relative",
         width: `${config.width}px`,
       }}
     >
+      <CartesianTooltipPreview
+        anchorX={selectedAnchorX}
+        chartTop={chartTop}
+        chartWidth={config.width}
+        data={buildBarTooltip(config)}
+      />
+      <ChartTitlePreview title={config.chartTitle} />
+      <CartesianKeyInfoPreview data={buildBarKeyInfo(config)} />
+      <div
+        style={{
+          background: chartBgColor,
+          boxSizing: "border-box",
+          color: colorTokenPreviewBackground(textColor.primary, resolvedColors),
+          fontFamily: defaultFontFamily,
+          height: `${config.height}px`,
+          overflow: "hidden",
+          padding: "0 16px 16px",
+          transform: "scale(0.9)",
+          transformOrigin: "top center",
+          width: `${config.width}px`,
+        }}
+      >
       <div
         style={{
           display: "flex",
@@ -387,6 +418,7 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
             })}
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

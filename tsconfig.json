@@ -1,7 +1,7 @@
 {
   "extends": "@create-figma-plugin/tsconfig",
   "compilerOptions": {
-    "ignoreDeprecations": "5.0",
+    "ignoreDeprecations": "6.0",
     "skipLibCheck": true,
     "types": ["@figma/plugin-typings"]
   },
