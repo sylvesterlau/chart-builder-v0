@@ -2,6 +2,10 @@ import {
   semiDonutChartConfig,
   dataVisAt,
   getSemiDonutSizeBounds,
+  resolveSemiDonutRingWidth,
+  resolveSemiDonutSliceGapPx,
+  semiDonutGapPxToPercent,
+  semiDonutRingWidthPxToRatio,
   textColor,
   typography,
 } from "../config";
@@ -52,19 +56,21 @@ async function createSemiDonutSlice(
   layerName: string,
   fillToken: ColorToken,
   chartSize: number,
+  innerRadiusRatio: number,
+  gapPercent: number,
   isFirst: Boolean = false,
 ): Promise<EllipseNode | null> {
   if (endPercent - startPercent <= 0) {
     return null;
   }
   const slice = figma.createEllipse();
-  const gap = isFirst ? 0 : 0.5;
+  const gap = isFirst ? 0 : gapPercent;
   slice.name = layerName;
   slice.resize(chartSize, chartSize);
   slice.arcData = {
     startingAngle: -Math.PI * (1 - (startPercent + gap) / 100),
     endingAngle: -Math.PI * (1 - endPercent / 100),
-    innerRadius: semiDonutChartConfig.ratio,
+    innerRadius: innerRadiusRatio,
   };
   await applyColorTokenToFills(slice, fillToken);
   return slice;
@@ -133,6 +139,14 @@ export async function drawSemiDonutChart(chartData: ChartData) {
   ).trim();
   const frameWidth = resolveSemiDonutFrameWidth(chartData.frameWidth);
   const chartSize = resolveSemiDonutSize(chartData.semiDonutSize, frameWidth);
+  const ringWidthPx = resolveSemiDonutRingWidth(chartData.semiDonutRingWidth);
+  const innerRadiusRatio = semiDonutRingWidthPxToRatio(ringWidthPx, chartSize);
+  const sliceGapPx = resolveSemiDonutSliceGapPx(chartData.semiDonutSliceGap);
+  const gapPercent = semiDonutGapPxToPercent(
+    sliceGapPx,
+    chartSize,
+    innerRadiusRatio,
+  );
   const totalValueY = Math.round(chartSize * (90 / 318));
 
   if (chartTitle.trim()) {
@@ -167,6 +181,8 @@ export async function drawSemiDonutChart(chartData: ChartData) {
         layerName,
         sliceColor,
         chartSize,
+        innerRadiusRatio,
+        gapPercent,
         isFirstSlice,
       );
       if (slice) {

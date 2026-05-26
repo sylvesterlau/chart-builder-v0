@@ -2,6 +2,7 @@ import {
   RangeSlider,
   Stack,
   Text,
+  Textbox,
   TextboxNumeric,
   VerticalSpace,
 } from "@create-figma-plugin/ui";
@@ -104,10 +105,7 @@ function ChartWidthSlider({
         value={sliderValue}
       />
       <VerticalSpace space="small" />
-      <TextboxNumeric
-        onNumericValueInput={onNumericValueInput}
-        value={value}
-      />
+      <TextboxNumeric onNumericValueInput={onNumericValueInput} value={value} />
     </div>
   );
 }
@@ -233,9 +231,19 @@ interface ChartSizeControlProps {
   frameWidthMin: number;
   isChartSizeValid: boolean;
   isFrameWidthValid: boolean;
+  isRingWidthValid?: boolean;
+  isSliceGapValid?: boolean;
   onChartSizeNumericInput: (value: number | null) => void;
   onChartSizeSliderInput: (event: Event) => void;
   onFrameWidthInput: (value: number | null) => void;
+  onRingWidthInput?: (value: number | null) => void;
+  onSliceGapInput?: (value: string) => void;
+  ringWidthInput?: string;
+  ringWidthMax?: number;
+  ringWidthMin?: number;
+  sliceGapInput?: string;
+  sliceGapMax?: number;
+  sliceGapMin?: number;
 }
 
 function ChartSizeControl({
@@ -248,9 +256,19 @@ function ChartSizeControl({
   frameWidthMin,
   isChartSizeValid,
   isFrameWidthValid,
+  isRingWidthValid,
+  isSliceGapValid,
   onChartSizeNumericInput,
   onChartSizeSliderInput,
   onFrameWidthInput,
+  onRingWidthInput,
+  onSliceGapInput,
+  ringWidthInput,
+  ringWidthMax,
+  ringWidthMin,
+  sliceGapInput,
+  sliceGapMax,
+  sliceGapMin,
 }: ChartSizeControlProps) {
   return (
     <Stack space="small">
@@ -280,8 +298,43 @@ function ChartSizeControl({
       </div>
       {!isChartSizeValid ? (
         <div className={styles.fieldHintError}>
-          Size must be between {chartSizeBounds.min} and {chartSizeBounds.max}{" "}
-          ({chartSizeRangeLabel}).
+          Size must be between {chartSizeBounds.min} and {chartSizeBounds.max} (
+          {chartSizeRangeLabel}).
+        </div>
+      ) : null}
+      {ringWidthMin !== undefined &&
+      ringWidthMax !== undefined &&
+      ringWidthInput !== undefined &&
+      onRingWidthInput ? (
+        <div>
+          <div className={styles.fieldRow}>
+            <Text className={styles.fieldLabel}>Ring width</Text>
+            <TextboxNumeric
+              onNumericValueInput={onRingWidthInput}
+              value={ringWidthInput}
+            />
+          </div>
+          {isRingWidthValid === false ? (
+            <div className={styles.fieldHintError}>
+              Ring width must be between {ringWidthMin} and {ringWidthMax}.
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+      {sliceGapMin !== undefined &&
+      sliceGapMax !== undefined &&
+      sliceGapInput !== undefined &&
+      onSliceGapInput ? (
+        <div>
+          <div className={styles.fieldRow}>
+            <Text className={styles.fieldLabel}>Slice gap</Text>
+            <Textbox onValueInput={onSliceGapInput} value={sliceGapInput} />
+          </div>
+          {isSliceGapValid === false ? (
+            <div className={styles.fieldHintError}>
+              Gap must be between {sliceGapMin} and {sliceGapMax}.
+            </div>
+          ) : null}
         </div>
       ) : null}
     </Stack>

@@ -2,6 +2,8 @@ import { h } from "preact";
 import {
   chartBackground,
   dataVisAt,
+  donutGapPxToPercent,
+  donutRingWidthPxToRatio,
   getPieChartAreaHeight,
   pieChartConfig,
   textColor,
@@ -34,6 +36,8 @@ interface PieDonutPreviewProps {
   showIndicator: boolean;
   showIndicatorPercentage: boolean;
   indicatorLineExtend: number;
+  sliceGap: number;
+  donutRingWidth: number;
   showPercentage: boolean;
   valuePrefix: string;
   valueSuffix: string;
@@ -70,37 +74,17 @@ function describePieSlice(
   ].join(" ");
 }
 
-function describeDonutSlice(
+function describeArc(
   centerX: number,
   centerY: number,
-  outerRadius: number,
-  innerRadius: number,
+  radius: number,
   startAngle: number,
   endAngle: number,
 ) {
-  const startOuter = polarToCartesian(
-    centerX,
-    centerY,
-    outerRadius,
-    startAngle,
-  );
-  const endOuter = polarToCartesian(centerX, centerY, outerRadius, endAngle);
-  const startInner = polarToCartesian(
-    centerX,
-    centerY,
-    innerRadius,
-    startAngle,
-  );
-  const endInner = polarToCartesian(centerX, centerY, innerRadius, endAngle);
-  const sweep = endAngle - startAngle;
-  const largeArcFlag = Math.abs(sweep) > 180 ? 1 : 0;
-  return [
-    `M ${startOuter.x} ${startOuter.y}`,
-    `A ${outerRadius} ${outerRadius} 0 ${largeArcFlag} 1 ${endOuter.x} ${endOuter.y}`,
-    `L ${endInner.x} ${endInner.y}`,
-    `A ${innerRadius} ${innerRadius} 0 ${largeArcFlag} 0 ${startInner.x} ${startInner.y}`,
-    "Z",
-  ].join(" ");
+  const start = polarToCartesian(centerX, centerY, radius, startAngle);
+  const end = polarToCartesian(centerX, centerY, radius, endAngle);
+  const arcSweep = Math.abs(endAngle - startAngle) <= 180 ? 0 : 1;
+  return `M ${start.x} ${start.y} A ${radius} ${radius} 0 ${arcSweep} 1 ${end.x} ${end.y}`;
 }
 
 function PieDonutPreview({
@@ -113,6 +97,8 @@ function PieDonutPreview({
   showIndicator,
   showIndicatorPercentage,
   indicatorLineExtend,
+  sliceGap,
+  donutRingWidth,
   showPercentage,
   valuePrefix,
   valueSuffix,
@@ -133,10 +119,6 @@ function PieDonutPreview({
     typography.indicator.percentage,
     resolvedTypography,
   );
-  const sliceStrokeWeight = numberTokenResolvedValue(
-    pieChartConfig.indicator.sliceStrokeWeight,
-    resolvedNumbers,
-  );
   const leaderLineStrokeWeight = numberTokenResolvedValue(
     pieChartConfig.indicator.leaderLineStrokeWeight,
     resolvedNumbers,
@@ -155,7 +137,17 @@ function PieDonutPreview({
   const lineExtend = indicatorLineExtend * indicatorScale;
   const labelCenterOffset =
     pieChartConfig.indicator.labelCenterOffset * indicatorScale;
-  const donutInnerRadius = pieRadius * pieChartConfig.donutInnerRadiusRatio;
+  const donutInnerRadiusRatio =
+    chartKind === "donut"
+      ? donutRingWidthPxToRatio(donutRingWidth, chartSize)
+      : 0;
+  const donutInnerRadius = pieRadius * donutInnerRadiusRatio;
+  const donutStrokeRadius = (pieRadius + donutInnerRadius) / 2;
+  const donutRingWidthPx = pieRadius - donutInnerRadius;
+  const donutGapPercent =
+    chartKind === "donut"
+      ? donutGapPxToPercent(sliceGap, chartSize, donutInnerRadiusRatio)
+      : 0;
   const previewLayoutWidth = Math.round(frameWidth * PREVIEW_SCALE);
   const legendItems = items
     .map((item, index) => ({ ...item, index }))
@@ -168,7 +160,7 @@ function PieDonutPreview({
   }
 
   let currentStartAngle = -90;
-  const slices = chartItems.map((item) => {
+  const pieSlices = chartItems.map((item) => {
     const sweepAngle = (item.value / total) * 360;
     const startAngle = currentStartAngle;
     const endAngle = startAngle + sweepAngle;
@@ -181,6 +173,26 @@ function PieDonutPreview({
       percentage: (item.value / total) * 100,
     };
   });
+
+  let donutStartPercent = 0;
+  const donutSlices = chartItems.map((item, arcIndex) => {
+    const exactPercent = (item.value / total) * 100;
+    const adjustedStartPercent = donutStartPercent + donutGapPercent;
+    const endPercent = donutStartPercent + exactPercent;
+    donutStartPercent = endPercent;
+    const startAngle = -90 + adjustedStartPercent * 3.6;
+    const endAngle = -90 + endPercent * 3.6;
+    return {
+      item,
+      startAngle,
+      endAngle,
+      midAngle: (startAngle + endAngle) / 2,
+      percentage: exactPercent,
+      visible: endPercent - adjustedStartPercent > 0,
+    };
+  });
+
+  const slices = chartKind === "donut" ? donutSlices : pieSlices;
 
   return (
     <div
@@ -226,29 +238,45 @@ function PieDonutPreview({
               width="100%"
               style={{ display: "block", maxWidth: `${frameWidth}px` }}
             >
-              {slices.map(
-                ({ item, startAngle, endAngle, midAngle, percentage }) => {
+              {slices.map((slice) => {
+                  if ("visible" in slice && slice.visible === false) {
+                    return null;
+                  }
+                  const { item, startAngle, endAngle, midAngle, percentage } =
+                    slice;
                   const color = colorTokenSwatchHex(
                     dataVisAt(item.index),
                     resolvedColors,
                   );
-                  const path =
-                    chartKind === "donut"
-                      ? describeDonutSlice(
+                  const sliceMarkup =
+                    chartKind === "donut" ? (
+                      <path
+                        d={describeArc(
+                          centerX,
+                          centerY,
+                          donutStrokeRadius,
+                          startAngle,
+                          endAngle,
+                        )}
+                        fill="none"
+                        stroke={color}
+                        strokeLinecap="butt"
+                        strokeWidth={donutRingWidthPx}
+                      />
+                    ) : (
+                      <path
+                        d={describePieSlice(
                           centerX,
                           centerY,
                           pieRadius,
-                          donutInnerRadius,
                           startAngle,
                           endAngle,
-                        )
-                      : describePieSlice(
-                          centerX,
-                          centerY,
-                          pieRadius,
-                          startAngle,
-                          endAngle,
-                        );
+                        )}
+                        fill={color}
+                        stroke={chartBg}
+                        strokeWidth={sliceGap}
+                      />
+                    );
                   const lineEndPoint = polarToCartesian(
                     centerX,
                     centerY,
@@ -282,12 +310,7 @@ function PieDonutPreview({
                           strokeWidth={leaderLineStrokeWeight}
                         />
                       ) : null}
-                      <path
-                        d={path}
-                        fill={color}
-                        stroke={chartBg}
-                        strokeWidth={sliceStrokeWeight}
-                      />
+                      {sliceMarkup}
                       {showIndicator ? (
                         <text
                           x={labelCenterPoint.x}

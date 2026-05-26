@@ -2,7 +2,8 @@ import { h } from "preact";
 import {
   chartBackground,
   dataVisAt,
-  semiDonutChartConfig,
+  semiDonutGapPxToPercent,
+  semiDonutRingWidthPxToRatio,
   textColor,
   typography,
 } from "../config";
@@ -26,6 +27,8 @@ interface SemiDonutChartPreviewProps {
   chartTitle: string;
   items: ChartItem[];
   legendStyle: LegendStyle;
+  ringWidth: number;
+  sliceGap: number;
   showPercentage: boolean;
   valuePrefix: string;
   valueSuffix: string;
@@ -72,6 +75,8 @@ function SemiDonutChartPreview({
   chartTitle,
   items,
   legendStyle,
+  ringWidth,
+  sliceGap,
   showPercentage,
   valuePrefix,
   valueSuffix,
@@ -97,9 +102,15 @@ function SemiDonutChartPreview({
   }
 
   const outerRadius = chartSize / 2;
-  const innerRadius = outerRadius * semiDonutChartConfig.ratio;
-  const ringWidth = outerRadius - innerRadius;
+  const innerRadiusRatio = semiDonutRingWidthPxToRatio(ringWidth, chartSize);
+  const innerRadius = outerRadius * innerRadiusRatio;
+  const ringWidthPx = outerRadius - innerRadius;
   const strokeRadius = (outerRadius + innerRadius) / 2;
+  const gapPercent = semiDonutGapPxToPercent(
+    sliceGap,
+    chartSize,
+    innerRadiusRatio,
+  );
   let startPercent = 0;
   const totalValueText = formatValueText(
     totalOfLegends,
@@ -166,7 +177,7 @@ function SemiDonutChartPreview({
               );
               const exactPercent = (item.value / total) * 100;
               const adjustedStartPercent =
-                arcIndex === 0 ? startPercent : startPercent + 0.5;
+                arcIndex === 0 ? startPercent : startPercent + gapPercent;
               const endPercent = startPercent + exactPercent;
               startPercent = endPercent;
               if (endPercent - adjustedStartPercent <= 0) {
@@ -187,7 +198,7 @@ function SemiDonutChartPreview({
                   )}
                   fill="none"
                   stroke={color}
-                  strokeWidth={ringWidth}
+                  strokeWidth={ringWidthPx}
                   strokeLinecap="butt"
                 />
               );

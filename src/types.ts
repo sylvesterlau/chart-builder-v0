@@ -85,8 +85,16 @@ export interface ChartData {
   frameWidth?: number;
   /** Semi-donut ring diameter (px). */
   semiDonutSize?: number;
+  /** Semi-donut slice gap along mid-ring arc (px). */
+  semiDonutSliceGap?: number;
+  /** Semi-donut ring radial thickness (px). */
+  semiDonutRingWidth?: number;
   /** Indicator leader line extend past slice edge (px). */
   indicatorLineExtend?: number;
+  /** Pie/donut slice separator stroke (px). */
+  pieSliceGap?: number;
+  /** Donut ring radial thickness (px). */
+  donutRingWidth?: number;
 }
 
 export type VerticalBarMode = "single" | "dual";

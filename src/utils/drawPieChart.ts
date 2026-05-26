@@ -1,10 +1,14 @@
 import {
   chartBackground,
   dataVisAt,
+  donutGapPxToPercent,
+  donutRingWidthPxToRatio,
   getPieChartSizeBounds,
   getPieChartAreaHeight,
   pieChartConfig,
+  resolveDonutRingWidth,
   resolveIndicatorLineExtend,
+  resolvePieSliceGap,
   textColor,
   typography,
 } from "../config";
@@ -68,6 +72,39 @@ async function createPieSlice(
   fillToken: ReturnType<typeof dataVisAt>,
   name: string,
   pieRadius: number,
+  centerX: number,
+  centerY: number,
+  sliceGapPx: number,
+): Promise<EllipseNode> {
+  const slice = figma.createEllipse();
+  slice.name = name;
+  slice.resize(pieRadius * 2, pieRadius * 2);
+  slice.x = centerX - pieRadius;
+  slice.y = centerY - pieRadius;
+  slice.strokeWeight = sliceGapPx;
+  slice.strokeAlign = "CENTER";
+  const sweep = endAngle - startAngle;
+  if (sweep >= 359.999) {
+    await applyColorTokenToFills(slice, fillToken);
+    await applyColorTokenToStrokes(slice, chartBackground);
+    return slice;
+  }
+  slice.arcData = {
+    startingAngle: (startAngle * Math.PI) / 180,
+    endingAngle: (endAngle * Math.PI) / 180,
+    innerRadius: 0,
+  };
+  await applyColorTokenToFills(slice, fillToken);
+  await applyColorTokenToStrokes(slice, chartBackground);
+  return slice;
+}
+
+async function createDonutSlice(
+  startAngle: number,
+  endAngle: number,
+  fillToken: ReturnType<typeof dataVisAt>,
+  name: string,
+  pieRadius: number,
   innerRadiusRatio: number,
   centerX: number,
   centerY: number,
@@ -77,31 +114,13 @@ async function createPieSlice(
   slice.resize(pieRadius * 2, pieRadius * 2);
   slice.x = centerX - pieRadius;
   slice.y = centerY - pieRadius;
-  await applyStrokeWeight(slice, pieChartConfig.indicator.sliceStrokeWeight);
-  slice.strokeAlign = "CENTER";
-  const sweep = endAngle - startAngle;
-  if (sweep >= 359.999) {
-    if (innerRadiusRatio <= 0) {
-      await applyColorTokenToFills(slice, fillToken);
-      await applyColorTokenToStrokes(slice, chartBackground);
-      return slice;
-    }
-    slice.arcData = {
-      startingAngle: 0,
-      endingAngle: 2 * Math.PI,
-      innerRadius: innerRadiusRatio,
-    };
-    await applyColorTokenToFills(slice, fillToken);
-    await applyColorTokenToStrokes(slice, chartBackground);
-    return slice;
-  }
+  slice.strokeWeight = 0;
   slice.arcData = {
     startingAngle: (startAngle * Math.PI) / 180,
     endingAngle: (endAngle * Math.PI) / 180,
     innerRadius: innerRadiusRatio,
   };
   await applyColorTokenToFills(slice, fillToken);
-  await applyColorTokenToStrokes(slice, chartBackground);
   return slice;
 }
 
@@ -150,8 +169,7 @@ export async function drawPieChart(chartData: ChartData) {
 
   const chartTitle = chartData.chartTitle ?? "";
   const pieChartKind = chartData.pieChartKind ?? "pie";
-  const innerRadiusRatio =
-    pieChartKind === "donut" ? pieChartConfig.donutInnerRadiusRatio : 0;
+  const sliceGapPx = resolvePieSliceGap(chartData.pieSliceGap);
   const shouldShowLegend = chartData.legendStyle !== "none";
   const legendTileLayout =
     chartData.legendStyle === "topAndBottom" ? "topAndBottom" : "leftAndRight";
@@ -165,6 +183,13 @@ export async function drawPieChart(chartData: ChartData) {
     chartData.semiDonutSize,
     frameWidth,
   );
+  const innerRadiusRatio =
+    pieChartKind === "donut"
+      ? donutRingWidthPxToRatio(
+          resolveDonutRingWidth(chartData.donutRingWidth),
+          chartSize,
+        )
+      : 0;
   const frameHeight = getPieChartAreaHeight(
     frameWidth,
     chartSize,
@@ -208,14 +233,38 @@ export async function drawPieChart(chartData: ChartData) {
   });
 
   const legendList = shouldShowLegend ? createLegendList() : null;
+  const donutGapPercent =
+    pieChartKind === "donut"
+      ? donutGapPxToPercent(sliceGapPx, chartSize, innerRadiusRatio)
+      : 0;
 
   let currentStartAngle = -90;
+  let donutStartPercent = 0;
   for (let i = 0; i < chartItems.length; i++) {
     const item = chartItems[i];
     const sliceColor = dataVisAt(item.index);
+    const exactPercent = (item.value / sum) * 100;
     const sweepAngle = (item.value / sum) * 360;
-    const endAngle = currentStartAngle + sweepAngle;
-    const midAngle = currentStartAngle + sweepAngle / 2;
+    let startAngle: number;
+    let endAngle: number;
+    let midAngle: number;
+
+    if (pieChartKind === "donut") {
+      const adjustedStartPercent = donutStartPercent + donutGapPercent;
+      const endPercent = donutStartPercent + exactPercent;
+      startAngle = -90 + adjustedStartPercent * 3.6;
+      endAngle = -90 + endPercent * 3.6;
+      midAngle = (startAngle + endAngle) / 2;
+      donutStartPercent = endPercent;
+      if (endPercent - adjustedStartPercent <= 0) {
+        continue;
+      }
+    } else {
+      startAngle = currentStartAngle;
+      endAngle = startAngle + sweepAngle;
+      midAngle = startAngle + sweepAngle / 2;
+      currentStartAngle = endAngle;
+    }
 
     let indicatorText: FrameNode | null = null;
     if (showIndicator) {
@@ -258,16 +307,28 @@ export async function drawPieChart(chartData: ChartData) {
       );
     }
 
-    const slice = await createPieSlice(
-      currentStartAngle,
-      endAngle,
-      sliceColor,
-      `${item.label} (${item.value})`,
-      pieRadius,
-      innerRadiusRatio,
-      centerX,
-      centerY,
-    );
+    const slice =
+      pieChartKind === "donut"
+        ? await createDonutSlice(
+            startAngle,
+            endAngle,
+            sliceColor,
+            `${item.label} (${item.value})`,
+            pieRadius,
+            innerRadiusRatio,
+            centerX,
+            centerY,
+          )
+        : await createPieSlice(
+            startAngle,
+            endAngle,
+            sliceColor,
+            `${item.label} (${item.value})`,
+            pieRadius,
+            centerX,
+            centerY,
+            sliceGapPx,
+          );
     chartFrame.appendChild(slice);
     if (indicatorText) {
       chartFrame.appendChild(indicatorText);
@@ -289,8 +350,6 @@ export async function drawPieChart(chartData: ChartData) {
         legendList.appendChild(legend);
       }
     }
-
-    currentStartAngle = endAngle;
   }
 
   const finalFrame = await createFinalFrame(

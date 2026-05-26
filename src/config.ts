@@ -308,7 +308,15 @@ export const ds = {
       size: 318,
       sizeMinRatio: 0.5,
       sizeMaxRatio: 1,
-      ratio: 0.88,
+      /** Inner/outer radius ratio bounds (ring width is derived from px + chart size). */
+      ratioMin: 0.5,
+      ratioMax: 0.99,
+      /** Ring radial thickness (px); converted to inner/outer ratio from chart size. */
+      ringWidth: 20,
+      /** Slice gap along mid-ring arc (px); converted to semicircle % from chart size. */
+      sliceGap: 2,
+      sliceGapMin: 0,
+      sliceGapMax: 20,
       totalValue: {
         typography: {
           title: {
@@ -339,7 +347,16 @@ export const ds = {
       sizeMaxRatio: 0.6,
       radius: 100,
       radiusLarge: 120,
-      /** Full donut hole as a fraction of outer radius (preview + draw). */
+      /** Donut inner/outer radius ratio bounds (ring width derived from px + chart size). */
+      ratioMin: 0.5,
+      ratioMax: 0.99,
+      /** Donut ring radial thickness (px); converted to inner radius ratio from chart size. */
+      ringWidth: 20,
+      /** Separator stroke between pie/donut slices (px). */
+      sliceGap: 1.5,
+      sliceGapMin: 0,
+      sliceGapMax: 20,
+      /** @deprecated Default inner radius ratio; use ringWidth + chart size when editable. */
       donutInnerRadiusRatio: 0.8,
       indicator: {
         /** Leader line extend past slice outer edge (px). */
@@ -563,9 +580,135 @@ export function getSemiDonutSizeBounds(frameWidth: number) {
   return getChartSizeBounds(frameWidth, sizeMinRatio, sizeMaxRatio);
 }
 
+/** Mid-ring radius used for semi-donut stroke / arc gap conversion. */
+export function getSemiDonutMidRadius(chartSize: number, ratio: number): number {
+  return (chartSize * (1 + ratio)) / 4;
+}
+
+export function getSemiDonutRingWidthBounds(chartSize: number) {
+  const { ratioMin, ratioMax } = semiDonutChartConfig;
+  return {
+    min: Math.round((chartSize / 2) * (1 - ratioMax)),
+    max: Math.round((chartSize / 2) * (1 - ratioMin)),
+  };
+}
+
+export function semiDonutRingWidthPxToRatio(
+  ringWidthPx: number,
+  chartSize: number,
+): number {
+  const { ratioMin, ratioMax } = semiDonutChartConfig;
+  if (chartSize <= 0) {
+    return ratioMin;
+  }
+  const ratio = 1 - (2 * ringWidthPx) / chartSize;
+  return Math.min(ratioMax, Math.max(ratioMin, ratio));
+}
+
+export function resolveSemiDonutRingWidth(ringWidthPx: number | undefined): number {
+  return ringWidthPx ?? semiDonutChartConfig.ringWidth;
+}
+
+export function isValidSemiDonutRingWidth(
+  ringWidthPx: number,
+  chartSize: number,
+): boolean {
+  if (!Number.isFinite(ringWidthPx) || chartSize <= 0) {
+    return false;
+  }
+  const { min, max } = getSemiDonutRingWidthBounds(chartSize);
+  return ringWidthPx >= min && ringWidthPx <= max;
+}
+
+export function resolveSemiDonutSliceGapPx(gapPx: number | undefined): number {
+  const { sliceGap, sliceGapMin, sliceGapMax } = semiDonutChartConfig;
+  const value = gapPx ?? sliceGap;
+  return Math.min(sliceGapMax, Math.max(sliceGapMin, value));
+}
+
+/** Convert arc gap (px) at mid-ring to % of the 180° semicircle. */
+export function semiDonutGapPxToPercent(
+  gapPx: number,
+  chartSize: number,
+  ratio: number,
+): number {
+  if (gapPx <= 0 || chartSize <= 0) {
+    return 0;
+  }
+  const rMid = getSemiDonutMidRadius(chartSize, ratio);
+  if (rMid <= 0) {
+    return 0;
+  }
+  return (gapPx * 100) / (Math.PI * rMid);
+}
+
+/** Convert arc gap (px) at mid-ring to % of the full 360° donut. */
+export function donutGapPxToPercent(
+  gapPx: number,
+  chartSize: number,
+  ratio: number,
+): number {
+  if (gapPx <= 0 || chartSize <= 0) {
+    return 0;
+  }
+  const rMid = getSemiDonutMidRadius(chartSize, ratio);
+  if (rMid <= 0) {
+    return 0;
+  }
+  return (gapPx * 100) / (2 * Math.PI * rMid);
+}
+
 export function getPieChartSizeBounds(frameWidth: number) {
   const { sizeMinRatio, sizeMaxRatio } = pieChartConfig;
   return getChartSizeBounds(frameWidth, sizeMinRatio, sizeMaxRatio);
+}
+
+export function getDonutRingWidthBounds(chartSize: number) {
+  const { ratioMin, ratioMax } = pieChartConfig;
+  return {
+    min: Math.round((chartSize / 2) * (1 - ratioMax)),
+    max: Math.round((chartSize / 2) * (1 - ratioMin)),
+  };
+}
+
+export function donutRingWidthPxToRatio(
+  ringWidthPx: number,
+  chartSize: number,
+): number {
+  const { ratioMin, ratioMax } = pieChartConfig;
+  if (chartSize <= 0) {
+    return ratioMin;
+  }
+  const ratio = 1 - (2 * ringWidthPx) / chartSize;
+  return Math.min(ratioMax, Math.max(ratioMin, ratio));
+}
+
+export function resolveDonutRingWidth(ringWidthPx: number | undefined): number {
+  return ringWidthPx ?? pieChartConfig.ringWidth;
+}
+
+export function isValidDonutRingWidth(
+  ringWidthPx: number,
+  chartSize: number,
+): boolean {
+  if (!Number.isFinite(ringWidthPx) || chartSize <= 0) {
+    return false;
+  }
+  const { min, max } = getDonutRingWidthBounds(chartSize);
+  return ringWidthPx >= min && ringWidthPx <= max;
+}
+
+export function resolvePieSliceGap(gapPx: number | undefined): number {
+  const { sliceGap, sliceGapMin, sliceGapMax } = pieChartConfig;
+  const value = gapPx ?? sliceGap;
+  return Math.min(sliceGapMax, Math.max(sliceGapMin, value));
+}
+
+export function isValidPieSliceGap(gapPx: number): boolean {
+  const { sliceGapMin, sliceGapMax } = pieChartConfig;
+  return (
+    Number.isFinite(gapPx) && gapPx >= sliceGapMin && gapPx <= sliceGapMax
+  );
 }
 
 export function resolveIndicatorLineExtend(lineExtend: number | undefined): number {

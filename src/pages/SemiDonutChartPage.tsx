@@ -22,7 +22,9 @@ import LegendControl, {
 } from "../components/editControl/LegendControl";
 import SemiDonutChartPreview from "../components/SemiDonutChartPreview";
 import {
+  getSemiDonutRingWidthBounds,
   getSemiDonutSizeBounds,
+  isValidSemiDonutRingWidth,
   pluginUISize,
   sampleData,
   semiDonutChartConfig,
@@ -73,6 +75,13 @@ function sanitizeDecimalInput(value: string) {
   return sanitizedValue;
 }
 
+function isValidSemiDonutSliceGap(value: number) {
+  const { sliceGapMin, sliceGapMax } = semiDonutChartConfig;
+  return (
+    Number.isFinite(value) && value >= sliceGapMin && value <= sliceGapMax
+  );
+}
+
 function SemiDonutChartPage({ onBack }: SemiDonutChartPageProps) {
   useRefreshDesignTokensOnMount();
   const sizeControl = useChartSizeControl({
@@ -83,6 +92,24 @@ function SemiDonutChartPage({ onBack }: SemiDonutChartPageProps) {
     frameWidthMin: semiDonutChartConfig.frameWidthMin,
     getChartSizeBounds: getSemiDonutSizeBounds,
   });
+  const [sliceGap, setSliceGap] = useState<number>(
+    semiDonutChartConfig.sliceGap,
+  );
+  const [sliceGapInput, setSliceGapInput] = useState<string>(
+    String(semiDonutChartConfig.sliceGap),
+  );
+  const sliceGapInputValid = isValidSemiDonutSliceGap(Number(sliceGapInput));
+  const [ringWidth, setRingWidth] = useState<number>(
+    semiDonutChartConfig.ringWidth,
+  );
+  const [ringWidthInput, setRingWidthInput] = useState<string>(
+    String(semiDonutChartConfig.ringWidth),
+  );
+  const ringWidthBounds = getSemiDonutRingWidthBounds(sizeControl.chartSize);
+  const ringWidthInputValid = isValidSemiDonutRingWidth(
+    Number(ringWidthInput),
+    sizeControl.chartSize,
+  );
   const [chartTitle, setChartTitle] = useState<string>("Chart title");
   const [showChartTitle, setShowChartTitle] = useState<boolean>(false);
   const effectiveChartTitle = getEffectiveChartTitle(showChartTitle, chartTitle);
@@ -170,12 +197,16 @@ function SemiDonutChartPage({ onBack }: SemiDonutChartPageProps) {
         totalValueTitle,
         frameWidth: sizeControl.frameWidth,
         semiDonutSize: sizeControl.chartSize,
+        semiDonutSliceGap: sliceGap,
+        semiDonutRingWidth: ringWidth,
       });
     },
     [
       items,
       sizeControl.frameWidth,
       sizeControl.chartSize,
+      sliceGap,
+      ringWidth,
       effectiveChartTitle,
       effectiveLegendStyle,
       showPercentage,
@@ -211,6 +242,8 @@ function SemiDonutChartPage({ onBack }: SemiDonutChartPageProps) {
             chartTitle={effectiveChartTitle}
             items={items}
             legendStyle={effectiveLegendStyle}
+            ringWidth={ringWidth}
+            sliceGap={sliceGap}
             showPercentage={showPercentage}
             valuePrefix={valuePrefix}
             valueSuffix={valueSuffix}
@@ -240,9 +273,39 @@ function SemiDonutChartPage({ onBack }: SemiDonutChartPageProps) {
             frameWidthMin={sizeControl.frameWidthMin}
             isChartSizeValid={sizeControl.isChartSizeValid}
             isFrameWidthValid={sizeControl.isFrameWidthValid}
+            isRingWidthValid={ringWidthInputValid}
+            isSliceGapValid={sliceGapInputValid}
             onChartSizeNumericInput={sizeControl.handleChartSizeNumericInput}
             onChartSizeSliderInput={sizeControl.handleChartSizeSliderInput}
             onFrameWidthInput={sizeControl.handleFrameWidthInput}
+            onRingWidthInput={(value) => {
+              if (value === null) {
+                setRingWidthInput("");
+                return;
+              }
+              const nextInput = String(value);
+              setRingWidthInput(nextInput);
+              if (isValidSemiDonutRingWidth(value, sizeControl.chartSize)) {
+                setRingWidth(Math.round(value));
+              }
+            }}
+            onSliceGapInput={(value) => {
+              const sanitizedValue = sanitizeDecimalInput(value);
+              setSliceGapInput(sanitizedValue);
+              const numericValue = Number(sanitizedValue);
+              if (
+                sanitizedValue !== "" &&
+                isValidSemiDonutSliceGap(numericValue)
+              ) {
+                setSliceGap(numericValue);
+              }
+            }}
+            ringWidthInput={ringWidthInput}
+            ringWidthMax={ringWidthBounds.max}
+            ringWidthMin={ringWidthBounds.min}
+            sliceGapInput={sliceGapInput}
+            sliceGapMax={semiDonutChartConfig.sliceGapMax}
+            sliceGapMin={semiDonutChartConfig.sliceGapMin}
           />
           <VerticalSpace space="medium" />
           <div className={styles.divider} />
