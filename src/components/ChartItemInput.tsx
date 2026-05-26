@@ -1,6 +1,6 @@
 import { IconMinusSmall24, Textbox } from "@create-figma-plugin/ui";
 import { h } from "preact";
-import { dataVisAt } from "../config";
+import { dataVisAt } from "../utils/dataVisAt";
 import { colorTokenSwatchHex } from "../utils/colorTokenDisplay";
 import { useColorTokenResolved } from "./ColorChips/colorTokenSwatchContext";
 import styles from "../ui.css";

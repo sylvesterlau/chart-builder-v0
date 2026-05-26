@@ -1,17 +1,20 @@
 import {
   chartBackground,
-  dataVisAt,
-  donutGapPxToPercent,
-  donutRingWidthPxToRatio,
-  getPieChartSizeBounds,
-  getPieChartAreaHeight,
+  chartGeneralConfig,
   pieChartConfig,
-  resolveDonutRingWidth,
-  resolveIndicatorLineExtend,
-  resolvePieSliceGap,
   textColor,
   typography,
 } from "../config";
+import {
+  donutGapPxToPercent,
+  donutRingWidthPxToRatio,
+  getPieChartAreaHeight,
+  getPieChartSizeBounds,
+  resolveDonutRingWidth,
+  resolveIndicatorLineExtend,
+  resolvePieSliceGap,
+} from "./chart/pieDonutCalculate";
+import { dataVisAt } from "./dataVisAt";
 import { formatLegendPercentageDisplay, getSum } from "../helpers";
 import { ChartData } from "../types";
 import {
@@ -25,22 +28,12 @@ import {
 import { createChartTitle, loadChartTitleFont } from "./drawChartTitle";
 import { applyStrokeWeight } from "./applyNumberToken";
 import { createFinalFrame } from "./figmaOperations";
-import {
-  createLegend,
-  createLegendList,
-  loadLegendFonts,
-} from "./drawLegend";
+import { createLegend, createLegendList, loadLegendFonts } from "./drawLegend";
 
 function resolvePieFrameWidth(frameWidth: number | undefined): number {
-  const {
-    frameWidth: defaultWidth,
-    frameWidthMin,
-    frameWidthMax,
-  } = pieChartConfig;
-  const value = frameWidth ?? defaultWidth;
-  return Math.round(
-    Math.min(frameWidthMax, Math.max(frameWidthMin, value)),
-  );
+  const { frameWidthMin, frameWidthMax } = pieChartConfig;
+  const value = frameWidth ?? chartGeneralConfig.frameWidth;
+  return Math.round(Math.min(frameWidthMax, Math.max(frameWidthMin, value)));
 }
 
 function resolvePieChartSize(
@@ -147,7 +140,10 @@ async function createIndicatorTextFrame(
 
   if (showIndicatorPercentage) {
     const percentNode = figma.createText();
-    await applyTypographyTokenToText(percentNode, typography.indicator.percentage);
+    await applyTypographyTokenToText(
+      percentNode,
+      typography.indicator.percentage,
+    );
     percentNode.characters = `${formatLegendPercentageDisplay(percentage)}%`;
     textFrame.appendChild(percentNode);
     await applyColorTokenToFills(percentNode, textColor.primary);
@@ -179,10 +175,7 @@ export async function drawPieChart(chartData: ChartData) {
   const valuePrefix = chartData.valuePrefix ?? "";
   const valueSuffix = chartData.valueSuffix ?? "HKD";
   const frameWidth = resolvePieFrameWidth(chartData.frameWidth);
-  const chartSize = resolvePieChartSize(
-    chartData.semiDonutSize,
-    frameWidth,
-  );
+  const chartSize = resolvePieChartSize(chartData.semiDonutSize, frameWidth);
   const innerRadiusRatio =
     pieChartKind === "donut"
       ? donutRingWidthPxToRatio(

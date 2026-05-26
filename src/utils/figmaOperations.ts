@@ -1,5 +1,5 @@
 // Figma operations
-import { chartBackground } from "../config";
+import { chartBackground, chartGeneralConfig } from "../config";
 import { applyColorTokenToFills } from "./applyColorToken";
 
 // check Theme collection by ID
@@ -19,7 +19,7 @@ export async function checkThemeCol(colID: string) {
 
 // Draw final frame
 export async function createFinalFrame(
-  frameWidth: number = 390,
+  frameWidth: number = chartGeneralConfig.frameWidth,
   name: string = "Chart + legend",
 ): Promise<FrameNode> {
   const finalFrame = figma.createFrame();

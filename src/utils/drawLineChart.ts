@@ -1,9 +1,9 @@
 import {
   chartBackground,
-  dataVisAt,
   lineChartConfig,
   textColor,
 } from "../config";
+import { dataVisAt } from "./dataVisAt";
 import {
   clamp,
   normalizeLineChartConfig,

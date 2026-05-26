@@ -1,14 +1,17 @@
 import {
-  semiDonutChartConfig,
-  dataVisAt,
+  chartGeneralConfig,
+  semiDonutChartLayout,
+  textColor,
+  typography,
+} from "../config";
+import {
   getSemiDonutSizeBounds,
   resolveSemiDonutRingWidth,
   resolveSemiDonutSliceGapPx,
   semiDonutGapPxToPercent,
   semiDonutRingWidthPxToRatio,
-  textColor,
-  typography,
-} from "../config";
+} from "./chart/semiDonutCalculate";
+import { dataVisAt } from "./dataVisAt";
 import { getSum, transformToPercents, TransformedChartItem } from "../helpers";
 import { ChartData } from "../types";
 import type { ColorToken } from "../types";
@@ -22,12 +25,8 @@ import { createFinalFrame } from "./figmaOperations";
 import { createLegend, createLegendList, loadLegendFonts } from "./drawLegend";
 
 function resolveSemiDonutFrameWidth(frameWidth: number | undefined): number {
-  const {
-    frameWidth: defaultWidth,
-    frameWidthMin,
-    frameWidthMax,
-  } = semiDonutChartConfig;
-  const value = frameWidth ?? defaultWidth;
+  const { frameWidthMin, frameWidthMax } = semiDonutChartLayout;
+  const value = frameWidth ?? chartGeneralConfig.frameWidth;
   return Math.round(
     Math.min(frameWidthMax, Math.max(frameWidthMin, value)),
   );
@@ -37,9 +36,9 @@ function resolveSemiDonutSize(
   semiDonutSize: number | undefined,
   frameWidth: number,
 ): number {
-  const { size: defaultSize } = semiDonutChartConfig;
+  const { defaultChartSize } = semiDonutChartLayout;
   const { min, max } = getSemiDonutSizeBounds(frameWidth);
-  const value = semiDonutSize ?? defaultSize;
+  const value = semiDonutSize ?? defaultChartSize;
   return Math.round(Math.min(max, Math.max(min, value)));
 }
 

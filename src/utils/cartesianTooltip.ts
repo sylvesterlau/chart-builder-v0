@@ -1,4 +1,4 @@
-import { dataVisAt } from "../config";
+import { dataVisAt } from "./dataVisAt";
 import {
   LineChartConfig,
   LineChartSeries,

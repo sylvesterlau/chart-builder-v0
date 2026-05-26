@@ -1,12 +1,14 @@
 import { h } from "preact";
 import {
   chartBackground,
-  dataVisAt,
-  semiDonutGapPxToPercent,
-  semiDonutRingWidthPxToRatio,
   textColor,
   typography,
 } from "../config";
+import {
+  semiDonutGapPxToPercent,
+  semiDonutRingWidthPxToRatio,
+} from "../utils/chart/semiDonutCalculate";
+import { dataVisAt } from "../utils/dataVisAt";
 import { LegendStyle } from "../types";
 import { ChartItem } from "./ChartItemInput";
 import ChartTitlePreview from "./ChartTitlePreview";

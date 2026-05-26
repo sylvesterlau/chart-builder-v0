@@ -1,14 +1,16 @@
 import { h } from "preact";
 import {
   chartBackground,
-  dataVisAt,
-  donutGapPxToPercent,
-  donutRingWidthPxToRatio,
-  getPieChartAreaHeight,
   pieChartConfig,
   textColor,
   typography,
 } from "../config";
+import {
+  donutGapPxToPercent,
+  donutRingWidthPxToRatio,
+  getPieChartAreaHeight,
+} from "../utils/chart/pieDonutCalculate";
+import { dataVisAt } from "../utils/dataVisAt";
 import { formatLegendPercentageDisplay } from "../helpers";
 import { LegendStyle, PiePageChartKind } from "../types";
 import { ChartItem } from "./ChartItemInput";
@@ -239,110 +241,109 @@ function PieDonutPreview({
               style={{ display: "block", maxWidth: `${frameWidth}px` }}
             >
               {slices.map((slice) => {
-                  if ("visible" in slice && slice.visible === false) {
-                    return null;
-                  }
-                  const { item, startAngle, endAngle, midAngle, percentage } =
-                    slice;
-                  const color = colorTokenSwatchHex(
-                    dataVisAt(item.index),
-                    resolvedColors,
+                if ("visible" in slice && slice.visible === false) {
+                  return null;
+                }
+                const { item, startAngle, endAngle, midAngle, percentage } =
+                  slice;
+                const color = colorTokenSwatchHex(
+                  dataVisAt(item.index),
+                  resolvedColors,
+                );
+                const sliceMarkup =
+                  chartKind === "donut" ? (
+                    <path
+                      d={describeArc(
+                        centerX,
+                        centerY,
+                        donutStrokeRadius,
+                        startAngle,
+                        endAngle,
+                      )}
+                      fill="none"
+                      stroke={color}
+                      strokeLinecap="butt"
+                      strokeWidth={donutRingWidthPx}
+                    />
+                  ) : (
+                    <path
+                      d={describePieSlice(
+                        centerX,
+                        centerY,
+                        pieRadius,
+                        startAngle,
+                        endAngle,
+                      )}
+                      fill={color}
+                      stroke={chartBg}
+                      strokeWidth={sliceGap}
+                    />
                   );
-                  const sliceMarkup =
-                    chartKind === "donut" ? (
-                      <path
-                        d={describeArc(
-                          centerX,
-                          centerY,
-                          donutStrokeRadius,
-                          startAngle,
-                          endAngle,
-                        )}
-                        fill="none"
+                const lineEndPoint = polarToCartesian(
+                  centerX,
+                  centerY,
+                  pieRadius + lineExtend,
+                  midAngle,
+                );
+                const lineStartPoint =
+                  chartKind === "donut"
+                    ? polarToCartesian(
+                        centerX,
+                        centerY,
+                        donutInnerRadius,
+                        midAngle,
+                      )
+                    : { x: centerX, y: centerY };
+                const labelCenterPoint = polarToCartesian(
+                  centerX,
+                  centerY,
+                  pieRadius + lineExtend + labelCenterOffset,
+                  midAngle,
+                );
+                return (
+                  <g key={`${item.label}-${item.index}`}>
+                    {showIndicator ? (
+                      <line
+                        x1={lineStartPoint.x}
+                        y1={lineStartPoint.y}
+                        x2={lineEndPoint.x}
+                        y2={lineEndPoint.y}
                         stroke={color}
-                        strokeLinecap="butt"
-                        strokeWidth={donutRingWidthPx}
+                        strokeWidth={leaderLineStrokeWeight}
                       />
-                    ) : (
-                      <path
-                        d={describePieSlice(
-                          centerX,
-                          centerY,
-                          pieRadius,
-                          startAngle,
-                          endAngle,
-                        )}
-                        fill={color}
-                        stroke={chartBg}
-                        strokeWidth={sliceGap}
-                      />
-                    );
-                  const lineEndPoint = polarToCartesian(
-                    centerX,
-                    centerY,
-                    pieRadius + lineExtend,
-                    midAngle,
-                  );
-                  const lineStartPoint =
-                    chartKind === "donut"
-                      ? polarToCartesian(
-                          centerX,
-                          centerY,
-                          donutInnerRadius,
-                          midAngle,
-                        )
-                      : { x: centerX, y: centerY };
-                  const labelCenterPoint = polarToCartesian(
-                    centerX,
-                    centerY,
-                    pieRadius + lineExtend + labelCenterOffset,
-                    midAngle,
-                  );
-                  return (
-                    <g key={`${item.label}-${item.index}`}>
-                      {showIndicator ? (
-                        <line
-                          x1={lineStartPoint.x}
-                          y1={lineStartPoint.y}
-                          x2={lineEndPoint.x}
-                          y2={lineEndPoint.y}
-                          stroke={color}
-                          strokeWidth={leaderLineStrokeWeight}
-                        />
-                      ) : null}
-                      {sliceMarkup}
-                      {showIndicator ? (
-                        <text
+                    ) : null}
+                    {sliceMarkup}
+                    {showIndicator ? (
+                      <text
+                        x={labelCenterPoint.x}
+                        y={labelCenterPoint.y}
+                        fill={chartTextPrimary}
+                        fontFamily={`${indicatorLabelMetrics.fontFamily}, sans-serif`}
+                        fontSize={indicatorLabelMetrics.fontSize}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                      >
+                        <tspan
                           x={labelCenterPoint.x}
-                          y={labelCenterPoint.y}
-                          fill={chartTextPrimary}
-                          fontFamily={`${indicatorLabelMetrics.fontFamily}, sans-serif`}
-                          fontSize={indicatorLabelMetrics.fontSize}
-                          textAnchor="middle"
-                          dominantBaseline="middle"
+                          dy={showIndicatorPercentage ? "-0.6em" : "0"}
+                          fontWeight={indicatorLabelMetrics.fontWeight}
                         >
+                          {item.label || `Item ${item.index + 1}`}
+                        </tspan>
+                        {showIndicatorPercentage ? (
                           <tspan
                             x={labelCenterPoint.x}
-                            dy={showIndicatorPercentage ? "-0.6em" : "0"}
-                            fontWeight={indicatorLabelMetrics.fontWeight}
+                            dy="1.2em"
+                            fontWeight={indicatorPercentMetrics.fontWeight}
                           >
-                            {item.label || `Item ${item.index + 1}`}
+                            {formatLegendPercentageDisplay(percentage)}%
                           </tspan>
-                          {showIndicatorPercentage ? (
-                            <tspan
-                              x={labelCenterPoint.x}
-                              dy="1.2em"
-                              fontWeight={indicatorPercentMetrics.fontWeight}
-                            >
-                              {formatLegendPercentageDisplay(percentage)}%
-                            </tspan>
-                          ) : null}
-                        </text>
-                      ) : null}
-                    </g>
-                  );
-                },
-              )}
+                        ) : null}
+                      </text>
+                    ) : null}
+                  </g>
+                );
+              })}
             </svg>
           </div>
           <LegendPreview

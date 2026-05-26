@@ -1,11 +1,11 @@
 import { h } from "preact";
 import {
   dividerColor,
-  dataVisAt,
   legendSpacingConfig,
   textColor,
   typography,
 } from "../config";
+import { dataVisAt } from "../utils/dataVisAt";
 import { useColorTokenResolved } from "./ColorChips/colorTokenSwatchContext";
 import { useNumberTokenResolved } from "./NumChips/numberTokenValueContext";
 import { useTypographyTokenResolved } from "./TypographyChips/typographyTokenValueContext";

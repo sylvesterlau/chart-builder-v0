@@ -1,4 +1,8 @@
 import type { ColorToken, NumberToken, TypographyToken } from "./types";
+import {
+  createLinePointLabels,
+  createSeededLineValues,
+} from "./utils/chart/lineChartCalculate";
 
 // chart sample data — demo inputs, not visual tokens
 export const sampleData = {
@@ -26,6 +30,77 @@ export const pluginUISize = {
     width: 680,
     height: 560,
   },
+} as const;
+
+/** Shared type scale; component typography references these tokens. */
+const typeScale = {
+  T12: {
+    fontFamily: "Inter",
+    fontSize: 12,
+    fontWeight: 400,
+    lineHeight: 20,
+    key: "8efff2a3611b231864f23fcff8139b81a85e5884",
+  } satisfies Readonly<TypographyToken>,
+  T12Semibold: {
+    fontFamily: "Inter",
+    fontSize: 12,
+    fontWeight: 600,
+    lineHeight: 20,
+    key: "211a069c48b16cf4e88c22f7bb158d15461cf4b5",
+  } satisfies Readonly<TypographyToken>,
+  T14Light: {
+    fontFamily: "Inter",
+    fontSize: 14,
+    fontWeight: 300,
+    lineHeight: 20,
+  } satisfies Readonly<TypographyToken>,
+  T14: {
+    fontFamily: "Inter",
+    fontSize: 14,
+    fontWeight: 400,
+    lineHeight: 20,
+    key: "6c0bedfa63b7860e94170b3aa921c56e1e3636a7",
+  } satisfies Readonly<TypographyToken>,
+  T14Medium: {
+    fontFamily: "Inter",
+    fontSize: 14,
+    fontWeight: 500,
+    lineHeight: 20,
+  } satisfies Readonly<TypographyToken>,
+  T14Semibold: {
+    fontFamily: "Inter",
+    fontSize: 14,
+    fontWeight: 600,
+    lineHeight: 20,
+    key: "b9b2c385b0bee1d96f002c8b9315aba5e246802b",
+  } satisfies Readonly<TypographyToken>,
+  T19: {
+    fontFamily: "Inter",
+    fontSize: 19,
+    fontWeight: 400,
+    lineHeight: 27,
+    key: "8823d3e6d7f127e6bf95013924394e2915e402d1",
+  } satisfies Readonly<TypographyToken>,
+  T19Medium: {
+    fontFamily: "Inter",
+    fontSize: 19,
+    fontWeight: 500,
+    lineHeight: 23,
+    key: "8823d3e6d7f127e6bf95013924394e2915e402d1",
+  } satisfies Readonly<TypographyToken>,
+  T19Semibold: {
+    fontFamily: "Inter",
+    fontSize: 19,
+    fontWeight: 600,
+    lineHeight: 27,
+    key: "8823d3e6d7f127e6bf95013924394e2915e402d1",
+  } satisfies Readonly<TypographyToken>,
+  T28: {
+    fontFamily: "Inter",
+    fontSize: 28,
+    fontWeight: 400,
+    lineHeight: 36,
+  } satisfies Readonly<TypographyToken>,
 } as const;
 
 /**
@@ -98,15 +173,9 @@ export const ds = {
       key: "707ed5f9ab4b5788817328c6002d8026dcdf8ae2",
     } satisfies Readonly<ColorToken>,
   },
-
+  typography: typeScale,
   chartTitle: {
-    typography: {
-      fontFamily: "Inter",
-      fontSize: 19,
-      fontWeight: 500,
-      lineHeight: 23,
-      key: "8823d3e6d7f127e6bf95013924394e2915e402d1",
-    } satisfies Readonly<TypographyToken>,
+    typography: typeScale.T19Medium,
     padding: {
       horizontal: {
         value: 16,
@@ -121,51 +190,13 @@ export const ds = {
 
   cartesianKeyInfo: {
     typography: {
-      range: {
-        fontFamily: "Inter",
-        fontSize: 14,
-        fontWeight: 300,
-        lineHeight: 20,
-      } satisfies Readonly<TypographyToken>,
-      label: {
-        fontFamily: "Inter",
-        fontSize: 14,
-        fontWeight: 400,
-        lineHeight: 20,
-        key: "6c0bedfa63b7860e94170b3aa921c56e1e3636a7",
-      } satisfies Readonly<TypographyToken>,
-      valueLarge: {
-        fontFamily: "Inter",
-        fontSize: 28,
-        fontWeight: 400,
-        lineHeight: 36,
-      } satisfies Readonly<TypographyToken>,
-      value: {
-        fontFamily: "Inter",
-        fontSize: 19,
-        fontWeight: 400,
-        lineHeight: 27,
-        key: "8823d3e6d7f127e6bf95013924394e2915e402d1",
-      } satisfies Readonly<TypographyToken>,
-      rowValue: {
-        fontFamily: "Inter",
-        fontSize: 14,
-        fontWeight: 600,
-        lineHeight: 20,
-        key: "b9b2c385b0bee1d96f002c8b9315aba5e246802b",
-      } satisfies Readonly<TypographyToken>,
-      unit: {
-        fontFamily: "Inter",
-        fontSize: 14,
-        fontWeight: 500,
-        lineHeight: 20,
-      } satisfies Readonly<TypographyToken>,
-      change: {
-        fontFamily: "Inter",
-        fontSize: 14,
-        fontWeight: 500,
-        lineHeight: 20,
-      } satisfies Readonly<TypographyToken>,
+      range: typeScale.T14Light,
+      label: typeScale.T14,
+      valueLarge: typeScale.T28,
+      value: typeScale.T19,
+      rowValue: typeScale.T14Semibold,
+      unit: typeScale.T14Medium,
+      change: typeScale.T14Medium,
     },
     spacing: {
       horizontalPadding: {
@@ -202,27 +233,9 @@ export const ds = {
     pointerWidth: 16,
     pointerHeight: 8,
     typography: {
-      title: {
-        fontFamily: "Inter",
-        fontSize: 14,
-        fontWeight: 600,
-        lineHeight: 20,
-        key: "b9b2c385b0bee1d96f002c8b9315aba5e246802b",
-      } satisfies Readonly<TypographyToken>,
-      label: {
-        fontFamily: "Inter",
-        fontSize: 14,
-        fontWeight: 400,
-        lineHeight: 20,
-        key: "6c0bedfa63b7860e94170b3aa921c56e1e3636a7",
-      } satisfies Readonly<TypographyToken>,
-      value: {
-        fontFamily: "Inter",
-        fontSize: 14,
-        fontWeight: 600,
-        lineHeight: 20,
-        key: "b9b2c385b0bee1d96f002c8b9315aba5e246802b",
-      } satisfies Readonly<TypographyToken>,
+      title: typeScale.T14Semibold,
+      label: typeScale.T14,
+      value: typeScale.T14Semibold,
     },
     spacing: {
       outerPadding: {
@@ -256,27 +269,9 @@ export const ds = {
 
   legend: {
     typography: {
-      label: {
-        fontFamily: "Inter",
-        fontSize: 14,
-        fontWeight: 400,
-        lineHeight: 20,
-        key: "6c0bedfa63b7860e94170b3aa921c56e1e3636a7",
-      } satisfies Readonly<TypographyToken>,
-      value: {
-        fontFamily: "Inter",
-        fontSize: 14,
-        fontWeight: 600,
-        lineHeight: 20,
-        key: "b9b2c385b0bee1d96f002c8b9315aba5e246802b",
-      } satisfies Readonly<TypographyToken>,
-      percentage: {
-        fontFamily: "Inter",
-        fontSize: 14,
-        fontWeight: 400,
-        lineHeight: 20,
-        key: "6c0bedfa63b7860e94170b3aa921c56e1e3636a7",
-      } satisfies Readonly<TypographyToken>,
+      label: typeScale.T14,
+      value: typeScale.T14Semibold,
+      percentage: typeScale.T14,
     },
     spacing: {
       horizontalPadding: {
@@ -301,44 +296,21 @@ export const ds = {
   },
 
   chart: {
-    semiDonut: {
+    general: {
       frameWidth: 390,
-      frameWidthMin: 360,
-      frameWidthMax: 1000,
-      size: 318,
-      sizeMinRatio: 0.5,
-      sizeMaxRatio: 1,
-      /** Inner/outer radius ratio bounds (ring width is derived from px + chart size). */
-      ratioMin: 0.5,
-      ratioMax: 0.99,
-      /** Ring radial thickness (px); converted to inner/outer ratio from chart size. */
+    },
+    semiDonut: {
       ringWidth: 20,
-      /** Slice gap along mid-ring arc (px); converted to semicircle % from chart size. */
       sliceGap: 2,
-      sliceGapMin: 0,
-      sliceGapMax: 20,
       totalValue: {
         typography: {
-          title: {
-            fontFamily: "Inter",
-            fontSize: 14,
-            fontWeight: 400,
-            lineHeight: 20,
-            key: "6c0bedfa63b7860e94170b3aa921c56e1e3636a7",
-          } satisfies Readonly<TypographyToken>,
-          value: {
-            fontFamily: "Inter",
-            fontSize: 19,
-            fontWeight: 600,
-            lineHeight: 27,
-            key: "8823d3e6d7f127e6bf95013924394e2915e402d1",
-          } satisfies Readonly<TypographyToken>,
+          title: typeScale.T14,
+          value: typeScale.T19Semibold,
         },
       },
     },
-    /** Pie + donut preview/draw (donut uses `donutInnerRadiusRatio`). */
+    /** Pie */
     pie: {
-      frameWidth: 390,
       frameWidthMin: 360,
       frameWidthMax: 1000,
       frameHeight: 312,
@@ -347,49 +319,28 @@ export const ds = {
       sizeMaxRatio: 0.6,
       radius: 100,
       radiusLarge: 120,
-      /** Donut inner/outer radius ratio bounds (ring width derived from px + chart size). */
       ratioMin: 0.5,
       ratioMax: 0.99,
-      /** Donut ring radial thickness (px); converted to inner radius ratio from chart size. */
       ringWidth: 20,
-      /** Separator stroke between pie/donut slices (px). */
       sliceGap: 1.5,
       sliceGapMin: 0,
       sliceGapMax: 20,
-      /** @deprecated Default inner radius ratio; use ringWidth + chart size when editable. */
-      donutInnerRadiusRatio: 0.8,
       indicator: {
-        /** Leader line extend past slice outer edge (px). */
         lineExtend: 8,
         lineExtendMin: 0,
         lineExtendMax: 20,
-        /** Offset from line end to label anchor (px). */
         labelCenterOffset: 30,
-        /** Separator stroke between pie/donut slices (SVG path stroke + Figma ellipse). */
         sliceStrokeWeight: {
           value: 1.5,
           key: "e7a7a7e1c7572287d371c5fb928b4cac8879bda6",
         } satisfies NumberToken,
-        /** Indicator leader line stroke (SVG line + Figma vector). */
         leaderLineStrokeWeight: {
           value: 1.5,
           key: "02a12e48d546e86ffbc3cbe52bf3027d21b40815",
         } satisfies NumberToken,
         typography: {
-          label: {
-            fontFamily: "Inter",
-            fontSize: 12,
-            fontWeight: 400,
-            lineHeight: 20,
-            key: "8efff2a3611b231864f23fcff8139b81a85e5884",
-          } satisfies Readonly<TypographyToken>,
-          percentage: {
-            fontFamily: "Inter",
-            fontSize: 12,
-            fontWeight: 600,
-            lineHeight: 20,
-            key: "211a069c48b16cf4e88c22f7bb158d15461cf4b5",
-          } satisfies Readonly<TypographyToken>,
+          label: typeScale.T12,
+          percentage: typeScale.T12Semibold,
         },
       },
     },
@@ -420,35 +371,11 @@ export const cartesianChartConfig = {
       } satisfies Readonly<ColorToken>,
     },
     typography: {
-      xAxisTitle: {
-        fontFamily: "Inter",
-        fontSize: 12,
-        fontWeight: 600,
-        lineHeight: 20,
-        key: "211a069c48b16cf4e88c22f7bb158d15461cf4b5",
-      } satisfies Readonly<TypographyToken>,
-      yAxisTitle: {
-        fontFamily: "Inter",
-        fontSize: 12,
-        fontWeight: 600,
-        lineHeight: 20,
-        key: "211a069c48b16cf4e88c22f7bb158d15461cf4b5",
-      } satisfies Readonly<TypographyToken>,
-      xAxisLabel: {
-        fontFamily: "Inter",
-        fontSize: 12,
-        fontWeight: 400,
-        lineHeight: 20,
-        key: "8efff2a3611b231864f23fcff8139b81a85e5884",
-      } satisfies Readonly<TypographyToken>,
+      xAxisTitle: typeScale.T12Semibold,
+      yAxisTitle: typeScale.T12Semibold,
+      xAxisLabel: typeScale.T12,
     },
-    yAxisLabel: {
-      fontFamily: "Inter",
-      fontSize: 12,
-      fontWeight: 400,
-      lineHeight: 20,
-      key: "8efff2a3611b231864f23fcff8139b81a85e5884",
-    } satisfies Readonly<TypographyToken>,
+    yAxisLabel: typeScale.T12,
   },
 } as const;
 
@@ -479,44 +406,6 @@ export const verticalBarChartConfig = {
     },
   ],
 } as const;
-
-function createSeededLineValues(
-  count: number,
-  seed: number,
-  start: number,
-  volatility: number,
-  drift: number,
-  min: number,
-  max: number,
-): number[] {
-  let state = seed;
-  let value = start;
-  const values: number[] = [];
-  for (let index = 0; index < count; index += 1) {
-    state = (state * 1664525 + 1013904223) % 4294967296;
-    const random = state / 4294967296 - 0.5;
-    const wave = Math.sin(index / 6) * volatility * 0.35;
-    value = Math.max(
-      min,
-      Math.min(max, value + random * volatility + drift + wave),
-    );
-    values.push(Math.round(value));
-  }
-  return values;
-}
-
-function createLinePointLabels(count: number): string[] {
-  const start = new Date(Date.UTC(2026, 0, 1));
-  return Array.from({ length: count }, (_, index) => {
-    const date = new Date(start);
-    date.setUTCDate(start.getUTCDate() + index);
-    return date.toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      timeZone: "UTC",
-    });
-  });
-}
 
 export const lineChartConfig = {
   chartType: "lineChart" as const,
@@ -553,205 +442,25 @@ export const lineChartConfig = {
     },
   ],
 } as const;
-/** Cycle through `ds.colors.dataVis.general` by row index. */
-export function dataVisAt(index: number): ColorToken {
-  const palette = ds.colors.dataVis.general;
-  return palette[index % palette.length];
-}
 
 // --- Legacy flat exports (reference `ds`; existing imports keep working) ---
 
 export const semiDonutChartConfig = ds.chart.semiDonut;
 export const pieChartConfig = ds.chart.pie;
+export const chartGeneralConfig = ds.chart.general;
 
-export function getChartSizeBounds(
-  frameWidth: number,
-  sizeMinRatio: number,
-  sizeMaxRatio: number,
-) {
-  return {
-    min: Math.round(frameWidth * sizeMinRatio),
-    max: Math.round(frameWidth * sizeMaxRatio),
-  };
-}
-
-export function getSemiDonutSizeBounds(frameWidth: number) {
-  const { sizeMinRatio, sizeMaxRatio } = semiDonutChartConfig;
-  return getChartSizeBounds(frameWidth, sizeMinRatio, sizeMaxRatio);
-}
-
-/** Mid-ring radius used for semi-donut stroke / arc gap conversion. */
-export function getSemiDonutMidRadius(chartSize: number, ratio: number): number {
-  return (chartSize * (1 + ratio)) / 4;
-}
-
-export function getSemiDonutRingWidthBounds(chartSize: number) {
-  const { ratioMin, ratioMax } = semiDonutChartConfig;
-  return {
-    min: Math.round((chartSize / 2) * (1 - ratioMax)),
-    max: Math.round((chartSize / 2) * (1 - ratioMin)),
-  };
-}
-
-export function semiDonutRingWidthPxToRatio(
-  ringWidthPx: number,
-  chartSize: number,
-): number {
-  const { ratioMin, ratioMax } = semiDonutChartConfig;
-  if (chartSize <= 0) {
-    return ratioMin;
-  }
-  const ratio = 1 - (2 * ringWidthPx) / chartSize;
-  return Math.min(ratioMax, Math.max(ratioMin, ratio));
-}
-
-export function resolveSemiDonutRingWidth(ringWidthPx: number | undefined): number {
-  return ringWidthPx ?? semiDonutChartConfig.ringWidth;
-}
-
-export function isValidSemiDonutRingWidth(
-  ringWidthPx: number,
-  chartSize: number,
-): boolean {
-  if (!Number.isFinite(ringWidthPx) || chartSize <= 0) {
-    return false;
-  }
-  const { min, max } = getSemiDonutRingWidthBounds(chartSize);
-  return ringWidthPx >= min && ringWidthPx <= max;
-}
-
-export function resolveSemiDonutSliceGapPx(gapPx: number | undefined): number {
-  const { sliceGap, sliceGapMin, sliceGapMax } = semiDonutChartConfig;
-  const value = gapPx ?? sliceGap;
-  return Math.min(sliceGapMax, Math.max(sliceGapMin, value));
-}
-
-/** Convert arc gap (px) at mid-ring to % of the 180° semicircle. */
-export function semiDonutGapPxToPercent(
-  gapPx: number,
-  chartSize: number,
-  ratio: number,
-): number {
-  if (gapPx <= 0 || chartSize <= 0) {
-    return 0;
-  }
-  const rMid = getSemiDonutMidRadius(chartSize, ratio);
-  if (rMid <= 0) {
-    return 0;
-  }
-  return (gapPx * 100) / (Math.PI * rMid);
-}
-
-/** Convert arc gap (px) at mid-ring to % of the full 360° donut. */
-export function donutGapPxToPercent(
-  gapPx: number,
-  chartSize: number,
-  ratio: number,
-): number {
-  if (gapPx <= 0 || chartSize <= 0) {
-    return 0;
-  }
-  const rMid = getSemiDonutMidRadius(chartSize, ratio);
-  if (rMid <= 0) {
-    return 0;
-  }
-  return (gapPx * 100) / (2 * Math.PI * rMid);
-}
-
-export function getPieChartSizeBounds(frameWidth: number) {
-  const { sizeMinRatio, sizeMaxRatio } = pieChartConfig;
-  return getChartSizeBounds(frameWidth, sizeMinRatio, sizeMaxRatio);
-}
-
-export function getDonutRingWidthBounds(chartSize: number) {
-  const { ratioMin, ratioMax } = pieChartConfig;
-  return {
-    min: Math.round((chartSize / 2) * (1 - ratioMax)),
-    max: Math.round((chartSize / 2) * (1 - ratioMin)),
-  };
-}
-
-export function donutRingWidthPxToRatio(
-  ringWidthPx: number,
-  chartSize: number,
-): number {
-  const { ratioMin, ratioMax } = pieChartConfig;
-  if (chartSize <= 0) {
-    return ratioMin;
-  }
-  const ratio = 1 - (2 * ringWidthPx) / chartSize;
-  return Math.min(ratioMax, Math.max(ratioMin, ratio));
-}
-
-export function resolveDonutRingWidth(ringWidthPx: number | undefined): number {
-  return ringWidthPx ?? pieChartConfig.ringWidth;
-}
-
-export function isValidDonutRingWidth(
-  ringWidthPx: number,
-  chartSize: number,
-): boolean {
-  if (!Number.isFinite(ringWidthPx) || chartSize <= 0) {
-    return false;
-  }
-  const { min, max } = getDonutRingWidthBounds(chartSize);
-  return ringWidthPx >= min && ringWidthPx <= max;
-}
-
-export function resolvePieSliceGap(gapPx: number | undefined): number {
-  const { sliceGap, sliceGapMin, sliceGapMax } = pieChartConfig;
-  const value = gapPx ?? sliceGap;
-  return Math.min(sliceGapMax, Math.max(sliceGapMin, value));
-}
-
-export function isValidPieSliceGap(gapPx: number): boolean {
-  const { sliceGapMin, sliceGapMax } = pieChartConfig;
-  return (
-    Number.isFinite(gapPx) && gapPx >= sliceGapMin && gapPx <= sliceGapMax
-  );
-}
-
-export function resolveIndicatorLineExtend(lineExtend: number | undefined): number {
-  const {
-    lineExtend: defaultLineExtend,
-    lineExtendMin,
-    lineExtendMax,
-  } = pieChartConfig.indicator;
-  const value = lineExtend ?? defaultLineExtend;
-  return Math.round(
-    Math.min(lineExtendMax, Math.max(lineExtendMin, value)),
-  );
-}
-
-export function getPieChartAreaHeight(
-  frameWidth: number,
-  chartSize: number,
-  showIndicator: boolean,
-  showIndicatorPercentage: boolean = true,
-  indicatorLineExtend?: number,
-): number {
-  const ratioHeight = Math.round(
-    frameWidth * (pieChartConfig.frameHeight / pieChartConfig.frameWidth),
-  );
-  if (!showIndicator) {
-    return ratioHeight;
-  }
-
-  const pieRadius = chartSize / 2;
-  const indicatorScale = pieRadius / pieChartConfig.radius;
-  const { lineExtend, labelCenterOffset } = pieChartConfig.indicator;
-  const resolvedLineExtend = resolveIndicatorLineExtend(indicatorLineExtend);
-  const outerReach =
-    pieRadius +
-    resolvedLineExtend * indicatorScale +
-    labelCenterOffset * indicatorScale;
-  const { label, percentage } = pieChartConfig.indicator.typography;
-  const textHeight = showIndicatorPercentage
-    ? label.lineHeight + percentage.lineHeight
-    : label.lineHeight;
-  const indicatorHeight = Math.round(2 * outerReach + textHeight);
-  return Math.max(ratioHeight, indicatorHeight);
-}
+/** Semi-donut edit/draw layout constraints (not part of design-system tokens). */
+export const semiDonutChartLayout = {
+  frameWidthMin: 360,
+  frameWidthMax: 1000,
+  defaultChartSize: 318,
+  sizeMinRatio: 0.5,
+  sizeMaxRatio: 1,
+  ratioMin: 0.5,
+  ratioMax: 0.99,
+  sliceGapMin: 0,
+  sliceGapMax: 20,
+} as const;
 
 export const legendSpacingConfig = ds.legend.spacing;
 export const dataVisColor = ds.colors.dataVis;

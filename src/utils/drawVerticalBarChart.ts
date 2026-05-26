@@ -1,9 +1,9 @@
 import {
   chartBackground,
-  dataVisAt,
   textColor,
   verticalBarChartConfig,
 } from "../config";
+import { dataVisAt } from "./dataVisAt";
 import {
   clamp,
   normalizeVerticalBarChartConfig,

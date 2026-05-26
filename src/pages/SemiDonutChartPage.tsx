@@ -22,13 +22,17 @@ import LegendControl, {
 } from "../components/editControl/LegendControl";
 import SemiDonutChartPreview from "../components/SemiDonutChartPreview";
 import {
-  getSemiDonutRingWidthBounds,
-  getSemiDonutSizeBounds,
-  isValidSemiDonutRingWidth,
+  chartGeneralConfig,
   pluginUISize,
   sampleData,
   semiDonutChartConfig,
+  semiDonutChartLayout,
 } from "../config";
+import {
+  getSemiDonutRingWidthBounds,
+  getSemiDonutSizeBounds,
+  isValidSemiDonutRingWidth,
+} from "../utils/chart/semiDonutCalculate";
 import { LegendStyle } from "../types";
 import { useRefreshDesignTokensOnMount } from "../utils/useRefreshDesignTokens";
 import styles from "../ui.css";
@@ -76,7 +80,7 @@ function sanitizeDecimalInput(value: string) {
 }
 
 function isValidSemiDonutSliceGap(value: number) {
-  const { sliceGapMin, sliceGapMax } = semiDonutChartConfig;
+  const { sliceGapMin, sliceGapMax } = semiDonutChartLayout;
   return (
     Number.isFinite(value) && value >= sliceGapMin && value <= sliceGapMax
   );
@@ -86,10 +90,10 @@ function SemiDonutChartPage({ onBack }: SemiDonutChartPageProps) {
   useRefreshDesignTokensOnMount();
   const sizeControl = useChartSizeControl({
     chartSizeRangeLabel: "50%–100% of width",
-    defaultChartSize: semiDonutChartConfig.size,
-    defaultFrameWidth: semiDonutChartConfig.frameWidth,
-    frameWidthMax: semiDonutChartConfig.frameWidthMax,
-    frameWidthMin: semiDonutChartConfig.frameWidthMin,
+    defaultChartSize: semiDonutChartLayout.defaultChartSize,
+    defaultFrameWidth: chartGeneralConfig.frameWidth,
+    frameWidthMax: semiDonutChartLayout.frameWidthMax,
+    frameWidthMin: semiDonutChartLayout.frameWidthMin,
     getChartSizeBounds: getSemiDonutSizeBounds,
   });
   const [sliceGap, setSliceGap] = useState<number>(
@@ -304,8 +308,8 @@ function SemiDonutChartPage({ onBack }: SemiDonutChartPageProps) {
             ringWidthMax={ringWidthBounds.max}
             ringWidthMin={ringWidthBounds.min}
             sliceGapInput={sliceGapInput}
-            sliceGapMax={semiDonutChartConfig.sliceGapMax}
-            sliceGapMin={semiDonutChartConfig.sliceGapMin}
+            sliceGapMax={semiDonutChartLayout.sliceGapMax}
+            sliceGapMin={semiDonutChartLayout.sliceGapMin}
           />
           <VerticalSpace space="medium" />
           <div className={styles.divider} />

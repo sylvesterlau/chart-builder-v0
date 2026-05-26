@@ -1,4 +1,5 @@
-import { cartesianTooltipConfig, dataVisAt, textColor } from "../config";
+import { cartesianTooltipConfig, textColor } from "../config";
+import { dataVisAt } from "./dataVisAt";
 import type { ColorToken, TypographyToken } from "../types";
 import { applyColorTokenToFills, applyColorTokenToStrokes } from "./applyColorToken";
 import {

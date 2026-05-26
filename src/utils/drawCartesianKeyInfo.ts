@@ -1,4 +1,5 @@
-import { cartesianKeyInfoConfig, chartBackground, dataVisAt, textColor } from "../config";
+import { cartesianKeyInfoConfig, chartBackground, textColor } from "../config";
+import { dataVisAt } from "./dataVisAt";
 import {
   CartesianKeyInfoData,
   formatPercentageChange,

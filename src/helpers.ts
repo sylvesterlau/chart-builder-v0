@@ -1,5 +1,5 @@
 // helpers.ts for reused function
-import { dataVisAt } from "./config";
+import { dataVisAt } from "./utils/dataVisAt";
 import {
   ChartData,
   ColorToken,

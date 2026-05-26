@@ -1,4 +1,4 @@
-import { chartTitleConfig, textColor } from "../config";
+import { chartGeneralConfig, chartTitleConfig, textColor } from "../config";
 import { applyChartTitlePadding } from "./applyNumberToken";
 import { applyColorTokenToFills } from "./applyColorToken";
 import {
@@ -12,7 +12,7 @@ export async function loadChartTitleFont() {
 
 export async function createChartTitle(
   title: string,
-  frameWidth: number = 390,
+  frameWidth: number = chartGeneralConfig.frameWidth,
 ): Promise<FrameNode | null> {
   const trimmedTitle = title.trim();
   if (!trimmedTitle) {

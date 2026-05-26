@@ -1,5 +1,6 @@
 import { h } from "preact";
-import { chartBackground, dataVisAt } from "../config";
+import { chartBackground } from "../config";
+import { dataVisAt } from "../utils/dataVisAt";
 import { LegendStyle } from "../types";
 import { ChartItem } from "./ChartItemInput";
 import ChartTitlePreview from "./ChartTitlePreview";

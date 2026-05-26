@@ -1,4 +1,4 @@
-import { dataVisAt } from "../config";
+import { dataVisAt } from "./dataVisAt";
 import { ChartData } from "../types";
 import { getSum, transformToPercents, TransformedChartItem } from "../helpers";
 import type { ColorToken } from "../types";

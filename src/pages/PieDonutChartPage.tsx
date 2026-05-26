@@ -25,14 +25,17 @@ import LegendControl, {
 } from "../components/editControl/LegendControl";
 import PieDonutPreview from "../components/PieDonutPreview";
 import {
-  getDonutRingWidthBounds,
-  getPieChartSizeBounds,
-  isValidDonutRingWidth,
-  isValidPieSliceGap,
+  chartGeneralConfig,
   pieChartConfig,
   pluginUISize,
   sampleData,
 } from "../config";
+import {
+  getDonutRingWidthBounds,
+  getPieChartSizeBounds,
+  isValidDonutRingWidth,
+  isValidPieSliceGap,
+} from "../utils/chart/pieDonutCalculate";
 import { LegendStyle } from "../types";
 import { useRefreshDesignTokensOnMount } from "../utils/useRefreshDesignTokens";
 import styles from "../ui.css";
@@ -99,7 +102,7 @@ function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
     chartSizeRangeLabel: "30%–60% of width",
     clampChartSizeToMaxOnFrameWidthChange: true,
     defaultChartSize: pieChartConfig.chartSize,
-    defaultFrameWidth: pieChartConfig.frameWidth,
+    defaultFrameWidth: chartGeneralConfig.frameWidth,
     frameWidthMax: pieChartConfig.frameWidthMax,
     frameWidthMin: pieChartConfig.frameWidthMin,
     getChartSizeBounds: getPieChartSizeBounds,
@@ -122,7 +125,10 @@ function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
   );
   const [chartTitle, setChartTitle] = useState<string>("Chart title");
   const [showChartTitle, setShowChartTitle] = useState<boolean>(false);
-  const effectiveChartTitle = getEffectiveChartTitle(showChartTitle, chartTitle);
+  const effectiveChartTitle = getEffectiveChartTitle(
+    showChartTitle,
+    chartTitle,
+  );
   const [items, setItems] = useState<ChartItem[]>(createSampleItems);
   const [showLegend, setShowLegend] = useState<boolean>(true);
   const [legendStyle, setLegendStyle] = useState<LegendStyle>("leftAndRight");
@@ -328,9 +334,7 @@ function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
                     }
                     const nextInput = String(value);
                     setDonutRingWidthInput(nextInput);
-                    if (
-                      isValidDonutRingWidth(value, sizeControl.chartSize)
-                    ) {
+                    if (isValidDonutRingWidth(value, sizeControl.chartSize)) {
                       setDonutRingWidth(Math.round(value));
                     }
                   }
@@ -340,10 +344,7 @@ function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
               const sanitizedValue = sanitizeDecimalInput(value);
               setSliceGapInput(sanitizedValue);
               const numericValue = Number(sanitizedValue);
-              if (
-                sanitizedValue !== "" &&
-                isValidPieSliceGap(numericValue)
-              ) {
+              if (sanitizedValue !== "" && isValidPieSliceGap(numericValue)) {
                 setSliceGap(numericValue);
               }
             }}
