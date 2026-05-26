@@ -312,6 +312,15 @@ function DesignSystemConfigPage({ onBack }: DesignSystemConfigPageProps) {
               <ColorTokenChip token={ds.colors.background} />
             </div>
             <VerticalSpace space="medium" />
+            <Divider />
+            <VerticalSpace space="medium" />
+
+            <Text className={uiStyles.sectionTitle}>Type scale</Text>
+            <VerticalSpace space="small" />
+            <TypographyBlock pathPrefix="typography" root={ds.typography} />
+            <VerticalSpace space="medium" />
+            <Divider />
+            <VerticalSpace space="medium" />
 
             <Text className={uiStyles.sectionTitle}>Chart title</Text>
             <VerticalSpace space="small" />

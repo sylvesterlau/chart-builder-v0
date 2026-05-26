@@ -1,3 +1,4 @@
+import { title } from "./pages/HomePage.module.css";
 import type { ColorToken, NumberToken, TypographyToken } from "./types";
 import {
   createLinePointLabels,
@@ -34,73 +35,90 @@ export const pluginUISize = {
 
 /** Shared type scale; component typography references these tokens. */
 const typeScale = {
-  T12: {
-    fontFamily: "Inter",
-    fontSize: 12,
-    fontWeight: 400,
-    lineHeight: 20,
-    key: "8efff2a3611b231864f23fcff8139b81a85e5884",
-  } satisfies Readonly<TypographyToken>,
-  T12Semibold: {
-    fontFamily: "Inter",
-    fontSize: 12,
-    fontWeight: 600,
-    lineHeight: 20,
-    key: "211a069c48b16cf4e88c22f7bb158d15461cf4b5",
-  } satisfies Readonly<TypographyToken>,
-  T14Light: {
-    fontFamily: "Inter",
-    fontSize: 14,
-    fontWeight: 300,
-    lineHeight: 20,
-  } satisfies Readonly<TypographyToken>,
-  T14: {
-    fontFamily: "Inter",
-    fontSize: 14,
-    fontWeight: 400,
-    lineHeight: 20,
-    key: "6c0bedfa63b7860e94170b3aa921c56e1e3636a7",
-  } satisfies Readonly<TypographyToken>,
-  T14Medium: {
-    fontFamily: "Inter",
-    fontSize: 14,
-    fontWeight: 500,
-    lineHeight: 20,
-  } satisfies Readonly<TypographyToken>,
-  T14Semibold: {
-    fontFamily: "Inter",
-    fontSize: 14,
-    fontWeight: 600,
-    lineHeight: 20,
-    key: "b9b2c385b0bee1d96f002c8b9315aba5e246802b",
-  } satisfies Readonly<TypographyToken>,
-  T19: {
-    fontFamily: "Inter",
-    fontSize: 19,
-    fontWeight: 400,
-    lineHeight: 27,
-    key: "8823d3e6d7f127e6bf95013924394e2915e402d1",
-  } satisfies Readonly<TypographyToken>,
-  T19Medium: {
-    fontFamily: "Inter",
-    fontSize: 19,
-    fontWeight: 500,
-    lineHeight: 23,
-    key: "8823d3e6d7f127e6bf95013924394e2915e402d1",
-  } satisfies Readonly<TypographyToken>,
-  T19Semibold: {
-    fontFamily: "Inter",
-    fontSize: 19,
-    fontWeight: 600,
-    lineHeight: 27,
-    key: "8823d3e6d7f127e6bf95013924394e2915e402d1",
-  } satisfies Readonly<TypographyToken>,
-  T28: {
-    fontFamily: "Inter",
-    fontSize: 28,
-    fontWeight: 400,
-    lineHeight: 36,
-  } satisfies Readonly<TypographyToken>,
+  caption: {
+    regular: {
+      fontFamily: "Inter",
+      fontSize: 12,
+      fontWeight: 400,
+      lineHeight: 20,
+      key: "8efff2a3611b231864f23fcff8139b81a85e5884",
+    } satisfies Readonly<TypographyToken>,
+    medium: {
+      fontFamily: "Inter",
+      fontSize: 12,
+      fontWeight: 500,
+      lineHeight: 20,
+      key: "19b21b435c609ea25d26a5226d0753d52faecce0",
+    } satisfies Readonly<TypographyToken>,
+    semibold: {
+      fontFamily: "Inter",
+      fontSize: 12,
+      fontWeight: 600,
+      lineHeight: 20,
+      key: "211a069c48b16cf4e88c22f7bb158d15461cf4b5",
+    } satisfies Readonly<TypographyToken>,
+  },
+  label: {
+    light: {
+      fontFamily: "Inter",
+      fontSize: 14,
+      fontWeight: 300,
+      lineHeight: 20,
+    } satisfies Readonly<TypographyToken>,
+    regular: {
+      fontFamily: "Inter",
+      fontSize: 14,
+      fontWeight: 400,
+      lineHeight: 20,
+      key: "6c0bedfa63b7860e94170b3aa921c56e1e3636a7",
+    } satisfies Readonly<TypographyToken>,
+    medium: {
+      fontFamily: "Inter",
+      fontSize: 14,
+      fontWeight: 500,
+      lineHeight: 20,
+      key: "fdea4ce6bf257fe42bbe7b3ffa6a794a03de69ad",
+    } satisfies Readonly<TypographyToken>,
+    semibold: {
+      fontFamily: "Inter",
+      fontSize: 14,
+      fontWeight: 600,
+      lineHeight: 20,
+      key: "b9b2c385b0bee1d96f002c8b9315aba5e246802b",
+    } satisfies Readonly<TypographyToken>,
+  },
+  heading: {
+    regular: {
+      fontFamily: "Inter",
+      fontSize: 19,
+      fontWeight: 400,
+      lineHeight: 27,
+      key: "6e8a38a9703ae020956f1c20bdc845e42cb3dcdc",
+    } satisfies Readonly<TypographyToken>,
+    medium: {
+      fontFamily: "Inter",
+      fontSize: 19,
+      fontWeight: 500,
+      lineHeight: 27,
+      key: "8823d3e6d7f127e6bf95013924394e2915e402d1",
+    } satisfies Readonly<TypographyToken>,
+    semibold: {
+      fontFamily: "Inter",
+      fontSize: 19,
+      fontWeight: 600,
+      lineHeight: 27,
+      key: "0e042962bf4523576d7d9000ef6c0405348bf338",
+    } satisfies Readonly<TypographyToken>,
+  },
+
+  title: {
+    regular: {
+      fontFamily: "Inter",
+      fontSize: 28,
+      fontWeight: 400,
+      lineHeight: 36,
+    } satisfies Readonly<TypographyToken>,
+  },
 } as const;
 
 /**
@@ -175,7 +193,7 @@ export const ds = {
   },
   typography: typeScale,
   chartTitle: {
-    typography: typeScale.T19Medium,
+    typography: typeScale.heading.medium,
     padding: {
       horizontal: {
         value: 16,
@@ -190,13 +208,13 @@ export const ds = {
 
   cartesianKeyInfo: {
     typography: {
-      range: typeScale.T14Light,
-      label: typeScale.T14,
-      valueLarge: typeScale.T28,
-      value: typeScale.T19,
-      rowValue: typeScale.T14Semibold,
-      unit: typeScale.T14Medium,
-      change: typeScale.T14Medium,
+      range: typeScale.label.light,
+      label: typeScale.label.regular,
+      valueLarge: typeScale.title.regular,
+      value: typeScale.heading.regular,
+      rowValue: typeScale.label.semibold,
+      unit: typeScale.label.medium,
+      change: typeScale.label.medium,
     },
     spacing: {
       horizontalPadding: {
@@ -233,9 +251,9 @@ export const ds = {
     pointerWidth: 16,
     pointerHeight: 8,
     typography: {
-      title: typeScale.T14Semibold,
-      label: typeScale.T14,
-      value: typeScale.T14Semibold,
+      title: typeScale.label.semibold,
+      label: typeScale.label.regular,
+      value: typeScale.label.semibold,
     },
     spacing: {
       outerPadding: {
@@ -269,9 +287,9 @@ export const ds = {
 
   legend: {
     typography: {
-      label: typeScale.T14,
-      value: typeScale.T14Semibold,
-      percentage: typeScale.T14,
+      label: typeScale.label.regular,
+      value: typeScale.label.semibold,
+      percentage: typeScale.label.regular,
     },
     spacing: {
       horizontalPadding: {
@@ -304,8 +322,8 @@ export const ds = {
       sliceGap: 2,
       totalValue: {
         typography: {
-          title: typeScale.T14,
-          value: typeScale.T19Semibold,
+          title: typeScale.label.regular,
+          value: typeScale.heading.semibold,
         },
       },
     },
@@ -339,8 +357,8 @@ export const ds = {
           key: "02a12e48d546e86ffbc3cbe52bf3027d21b40815",
         } satisfies NumberToken,
         typography: {
-          label: typeScale.T12,
-          percentage: typeScale.T12Semibold,
+          label: typeScale.caption.regular,
+          percentage: typeScale.caption.semibold,
         },
       },
     },
@@ -371,11 +389,11 @@ export const cartesianChartConfig = {
       } satisfies Readonly<ColorToken>,
     },
     typography: {
-      xAxisTitle: typeScale.T12Semibold,
-      yAxisTitle: typeScale.T12Semibold,
-      xAxisLabel: typeScale.T12,
+      xAxisTitle: typeScale.caption.semibold,
+      yAxisTitle: typeScale.caption.semibold,
+      xAxisLabel: typeScale.caption.regular,
     },
-    yAxisLabel: typeScale.T12,
+    yAxisLabel: typeScale.caption.regular,
   },
 } as const;
 
