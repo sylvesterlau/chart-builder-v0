@@ -3,6 +3,8 @@ import {
   IconPlus16,
   Stack,
   Text,
+  Textbox,
+  TextboxNumeric,
   VerticalSpace,
 } from "@create-figma-plugin/ui";
 import { emit } from "@create-figma-plugin/utilities";
@@ -16,7 +18,13 @@ import LegendControl, {
   getEffectiveLegendStyle,
 } from "../components/editControl/LegendControl";
 import HorizontalBarChartPreview from "../components/HorizontalBarChartPreview";
-import { pluginUISize, sampleData } from "../config";
+import {
+  chartGeneralConfig,
+  horizontalBarChartLayout,
+  pieChartConfig,
+  pluginUISize,
+  sampleData,
+} from "../config";
 import { LegendStyle } from "../types";
 import { useRefreshDesignTokensOnMount } from "../utils/useRefreshDesignTokens";
 import styles from "../ui.css";
@@ -25,7 +33,23 @@ interface HorizontalBarPageProps {
 }
 const MIN_ITEMS = 2;
 const MAX_ITEMS = 10;
-const DEFAULT_ITEM_COUNT = 3;
+const DEFAULT_ITEM_COUNT = 4;
+const { frameWidthMin, frameWidthMax } = pieChartConfig;
+const {
+  sliceGap: defaultSliceGap,
+  sliceGapMin,
+  sliceGapMax,
+} = horizontalBarChartLayout;
+
+function isValidFrameWidth(value: number) {
+  return (
+    Number.isFinite(value) && value >= frameWidthMin && value <= frameWidthMax
+  );
+}
+
+function isValidSliceGap(value: number) {
+  return Number.isFinite(value) && value >= sliceGapMin && value <= sliceGapMax;
+}
 
 function createEmptyItem(index: number): ChartItem {
   return { label: `Item ${index + 1}`, value: 0, valueInput: "0" };
@@ -57,7 +81,10 @@ function HorizontalBarPage({ onBack }: HorizontalBarPageProps) {
   useRefreshDesignTokensOnMount();
   const [chartTitle, setChartTitle] = useState<string>("Chart title");
   const [showChartTitle, setShowChartTitle] = useState<boolean>(false);
-  const effectiveChartTitle = getEffectiveChartTitle(showChartTitle, chartTitle);
+  const effectiveChartTitle = getEffectiveChartTitle(
+    showChartTitle,
+    chartTitle,
+  );
   const [items, setItems] = useState<ChartItem[]>(createSampleItems);
   const [showLegend, setShowLegend] = useState<boolean>(true);
   const [legendStyle, setLegendStyle] = useState<LegendStyle>("leftAndRight");
@@ -69,6 +96,29 @@ function HorizontalBarPage({ onBack }: HorizontalBarPageProps) {
   const [showPercentage, setShowPercentage] = useState<boolean>(true);
   const [valuePrefix, setValuePrefix] = useState<string>("");
   const [valueSuffix, setValueSuffix] = useState<string>("HKD");
+  const [frameWidth, setFrameWidth] = useState<number>(
+    chartGeneralConfig.frameWidth,
+  );
+  const [frameWidthInput, setFrameWidthInput] = useState<string>(
+    String(chartGeneralConfig.frameWidth),
+  );
+  const frameWidthInputValid = isValidFrameWidth(Number(frameWidthInput));
+  const handleFrameWidthInput = useCallback(function (value: number | null) {
+    if (value === null) {
+      setFrameWidthInput("");
+      return;
+    }
+    const nextInput = String(value);
+    setFrameWidthInput(nextInput);
+    if (isValidFrameWidth(value)) {
+      setFrameWidth(Math.round(value));
+    }
+  }, []);
+  const [sliceGap, setSliceGap] = useState<number>(defaultSliceGap);
+  const [sliceGapInput, setSliceGapInput] = useState<string>(
+    String(defaultSliceGap),
+  );
+  const sliceGapInputValid = isValidSliceGap(Number(sliceGapInput));
   useEffect(() => {
     emit("RESIZE_PLUGIN_UI_WINDOW", {
       width: pluginUISize.editPage.width,
@@ -125,6 +175,8 @@ function HorizontalBarPage({ onBack }: HorizontalBarPageProps) {
           label: item.label,
           value: item.value,
         })),
+        frameWidth,
+        horBarSliceGap: sliceGap,
         legendStyle: effectiveLegendStyle,
         showPercentage,
         valuePrefix,
@@ -135,7 +187,9 @@ function HorizontalBarPage({ onBack }: HorizontalBarPageProps) {
     },
     [
       effectiveChartTitle,
+      frameWidth,
       items,
+      sliceGap,
       effectiveLegendStyle,
       showPercentage,
       valuePrefix,
@@ -158,10 +212,14 @@ function HorizontalBarPage({ onBack }: HorizontalBarPageProps) {
             Horizontal bar chart
           </Text>
         </div>
-        <div className={styles.horizontalBarPreviewPanel}>
+        <div
+          className={`${styles.horizontalBarPreviewPanel} ${styles.horizontalBarPreviewPanelVariableWidth}`}
+        >
           <HorizontalBarChartPreview
             chartTitle={effectiveChartTitle}
+            frameWidth={frameWidth}
             items={items}
+            sliceGap={sliceGap}
             legendStyle={effectiveLegendStyle}
             showPercentage={showPercentage}
             valuePrefix={valuePrefix}
@@ -177,6 +235,43 @@ function HorizontalBarPage({ onBack }: HorizontalBarPageProps) {
             title={chartTitle}
             visible={showChartTitle}
           />
+          <VerticalSpace space="medium" />
+          <div className={styles.divider} />
+          <VerticalSpace space="medium" />
+          <Stack space="small">
+            <Text className={styles.sectionTitle}>Size</Text>
+            <div className={styles.fieldRow}>
+              <Text className={styles.fieldLabel}>Frame width</Text>
+              <TextboxNumeric
+                onNumericValueInput={handleFrameWidthInput}
+                value={frameWidthInput}
+              />
+            </div>
+            {!frameWidthInputValid ? (
+              <div className={styles.fieldHintError}>
+                Width must be between {frameWidthMin} and {frameWidthMax}.
+              </div>
+            ) : null}
+            <div className={styles.fieldRow}>
+              <Text className={styles.fieldLabel}>Slice gap</Text>
+              <Textbox
+                onValueInput={(value) => {
+                  const sanitizedValue = sanitizeDecimalInput(value);
+                  setSliceGapInput(sanitizedValue);
+                  const numericValue = Number(sanitizedValue);
+                  if (sanitizedValue !== "" && isValidSliceGap(numericValue)) {
+                    setSliceGap(numericValue);
+                  }
+                }}
+                value={sliceGapInput}
+              />
+            </div>
+            {!sliceGapInputValid ? (
+              <div className={styles.fieldHintError}>
+                Gap must be between {sliceGapMin} and {sliceGapMax}.
+              </div>
+            ) : null}
+          </Stack>
           <VerticalSpace space="medium" />
           <div className={styles.divider} />
           <VerticalSpace space="medium" />

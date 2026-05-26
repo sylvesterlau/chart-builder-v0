@@ -10,7 +10,9 @@ import { colorTokenPreviewBackground, colorTokenSwatchHex } from "../utils/color
 
 interface HorizontalBarChartPreviewProps {
   chartTitle: string;
+  frameWidth: number;
   items: ChartItem[];
+  sliceGap: number;
   legendStyle: LegendStyle;
   showPercentage: boolean;
   valuePrefix: string;
@@ -23,7 +25,9 @@ function formatPercent(value: number) {
 
 function HorizontalBarChartPreview({
   chartTitle,
+  frameWidth,
   items,
+  sliceGap,
   legendStyle,
   showPercentage,
   valuePrefix,
@@ -53,10 +57,11 @@ function HorizontalBarChartPreview({
         display: "flex",
         flexDirection: "column",
         gap: "16px",
+        maxWidth: `${frameWidth}px`,
         padding: "16px 0",
-        width: "100%",
         transform: "scale(0.9)",
         transformOrigin: "top center",
+        width: `${frameWidth}px`,
       }}
     >
       <ChartTitlePreview title={chartTitle} />
@@ -64,7 +69,7 @@ function HorizontalBarChartPreview({
         style={{
           boxSizing: "border-box",
           display: "flex",
-          gap: "2px",
+          gap: `${sliceGap}px`,
           height: "12px",
           padding: "0 16px",
           overflow: "hidden",

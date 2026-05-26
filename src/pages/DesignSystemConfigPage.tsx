@@ -12,6 +12,7 @@ import {
   cartesianChartConfig,
   chartTitleConfig,
   ds,
+  horizontalBarChartLayout,
   lineChartConfig,
   pluginUISize,
   verticalBarChartConfig,
@@ -37,6 +38,7 @@ type DesignSystemTabId =
   | "legend"
   | "semiDonut"
   | "pieDonut"
+  | "horizontalBar"
   | "verticalBar"
   | "lineChart"
   | "util";
@@ -52,6 +54,7 @@ const DESIGN_SYSTEM_TABS: ReadonlyArray<{
   { id: "legend", label: "Legend" },
   { id: "semiDonut", label: "Semi-donut" },
   { id: "pieDonut", label: "Pie & donut" },
+  { id: "horizontalBar", label: "Horizontal bar" },
   { id: "verticalBar", label: "Vertical bar" },
   { id: "lineChart", label: "Line chart" },
   { id: "util", label: "Util" },
@@ -460,6 +463,23 @@ function DesignSystemConfigPage({ onBack }: DesignSystemConfigPageProps) {
               pathPrefix="chart.pie.indicator.typography"
               root={ds.chart.pie.indicator.typography}
             />
+          </div>
+        ) : null}
+
+        {activeTab === "horizontalBar" ? (
+          <div>
+            <Text className={uiStyles.sectionTitle}>Layout</Text>
+            <VerticalSpace space="small" />
+            <div className={uiStyles.configValueList}>
+              {Object.entries(horizontalBarChartLayout).map(function ([key, value]) {
+                return (
+                  <div key={key} className={uiStyles.configValueRow}>
+                    <span className={uiStyles.fieldLabel}>{key}</span>
+                    <NumChip value={value} />
+                  </div>
+                );
+              })}
+            </div>
           </div>
         ) : null}
 

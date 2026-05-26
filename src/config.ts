@@ -480,6 +480,13 @@ export const semiDonutChartLayout = {
   sliceGapMax: 20,
 } as const;
 
+/** Horizontal bar edit/draw layout constraints (not part of design-system tokens). */
+export const horizontalBarChartLayout = {
+  sliceGap: 2,
+  sliceGapMin: 0,
+  sliceGapMax: 20,
+} as const;
+
 export const legendSpacingConfig = ds.legend.spacing;
 export const dataVisColor = ds.colors.dataVis;
 export const textColor = ds.colors.text;

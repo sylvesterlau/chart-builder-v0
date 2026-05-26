@@ -95,6 +95,8 @@ export interface ChartData {
   pieSliceGap?: number;
   /** Donut ring radial thickness (px). */
   donutRingWidth?: number;
+  /** Horizontal bar gap between segments (px). */
+  horBarSliceGap?: number;
 }
 
 export type VerticalBarMode = "single" | "dual";
