@@ -1,12 +1,13 @@
 import {
   dividerColor,
+  legendShapeConfig,
   legendSpacingConfig,
   textColor,
   typography,
 } from "../config";
 import { formatLegendPercentageDisplay } from "../helpers";
 import type { ColorToken } from "../types";
-import { applyLegendSpacing } from "./applyNumberToken";
+import { applyItemSpacing, applyLegendSpacing } from "./applyNumberToken";
 import {
   applyColorTokenToFills,
   applyColorTokenToStrokes,
@@ -46,7 +47,8 @@ export async function createLegend(
   const legendLabel = label.trim() || "Item";
   const shapeNode = figma.createRectangle();
   shapeNode.name = "Color";
-  shapeNode.resize(14, 14);
+  const shapeSize = legendShapeConfig.size.value;
+  shapeNode.resize(shapeSize, shapeSize);
 
   const valueTextInline = formatLegendValue(value, valuePrefix, valueSuffix);
   const percentText =
@@ -102,7 +104,7 @@ export async function createLegend(
       layoutMode: "HORIZONTAL",
       primaryAxisSizingMode: "AUTO",
       counterAxisSizingMode: "AUTO",
-      itemSpacing: 4,
+      itemSpacing: 0,
       counterAxisAlignItems: "CENTER",
       layoutAlign: "STRETCH",
     });
@@ -110,7 +112,10 @@ export async function createLegend(
     if (percentText !== null) {
       const percentNode = figma.createText();
       percentNode.name = percentText;
-      await applyTypographyTokenToText(percentNode, typography.legend.percentage);
+      await applyTypographyTokenToText(
+        percentNode,
+        typography.legend.percentage,
+      );
       percentNode.characters = percentText;
       Object.assign(percentNode, { layoutAlign: "MIN" });
       textNodes.push(percentNode);
@@ -148,7 +153,7 @@ export async function createLegend(
       layoutMode: "HORIZONTAL",
       primaryAxisSizingMode: "AUTO",
       counterAxisSizingMode: "AUTO",
-      itemSpacing: 4,
+      itemSpacing: legendSpacingConfig.leftRightItemSpacing.value,
       counterAxisAlignItems: "CENTER",
       layoutGrow: 1,
       layoutAlign: "STRETCH",
@@ -158,11 +163,15 @@ export async function createLegend(
     if (percentText !== null) {
       const percentNode = figma.createText();
       percentNode.name = percentText;
-      await applyTypographyTokenToText(percentNode, typography.legend.percentage);
+      await applyTypographyTokenToText(
+        percentNode,
+        typography.legend.percentage,
+      );
       percentNode.characters = percentText;
       textNodes.push(percentNode);
       labelRow.appendChild(percentNode);
     }
+    await applyItemSpacing(labelRow, legendSpacingConfig.leftRightItemSpacing);
 
     const valueNode = figma.createText();
     valueNode.name = "Value";

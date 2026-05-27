@@ -212,7 +212,7 @@ export const ds = {
       label: typeScale.label.regular,
       valueLarge: typeScale.title.regular,
       value: typeScale.heading.regular,
-      rowValue: typeScale.label.semibold,
+      rowValue: typeScale.label.medium,
       unit: typeScale.label.medium,
       change: typeScale.label.medium,
     },
@@ -251,9 +251,9 @@ export const ds = {
     pointerWidth: 16,
     pointerHeight: 8,
     typography: {
-      title: typeScale.label.semibold,
+      title: typeScale.label.medium,
       label: typeScale.label.regular,
-      value: typeScale.label.semibold,
+      value: typeScale.label.medium,
     },
     spacing: {
       outerPadding: {
@@ -288,7 +288,7 @@ export const ds = {
   legend: {
     typography: {
       label: typeScale.label.regular,
-      value: typeScale.label.semibold,
+      value: typeScale.label.medium,
       percentage: typeScale.label.regular,
     },
     spacing: {
@@ -303,6 +303,15 @@ export const ds = {
       gap: {
         value: 8,
         key: "cb58133bee7f18a9cce49cbc9c63c806e4f816b1",
+      } satisfies NumberToken,
+      /** Label ↔ percentage gap in left-and-right legend rows. */
+      leftRightItemSpacing: {
+        value: 4,
+      } satisfies NumberToken,
+    },
+    shape: {
+      size: {
+        value: 14,
       } satisfies NumberToken,
     },
     color: {
@@ -323,7 +332,7 @@ export const ds = {
       totalValue: {
         typography: {
           title: typeScale.label.regular,
-          value: typeScale.heading.semibold,
+          value: typeScale.heading.medium,
         },
       },
     },
@@ -358,7 +367,7 @@ export const ds = {
         } satisfies NumberToken,
         typography: {
           label: typeScale.caption.regular,
-          percentage: typeScale.caption.semibold,
+          percentage: typeScale.caption.medium,
         },
       },
     },
@@ -389,8 +398,8 @@ export const cartesianChartConfig = {
       } satisfies Readonly<ColorToken>,
     },
     typography: {
-      xAxisTitle: typeScale.caption.semibold,
-      yAxisTitle: typeScale.caption.semibold,
+      xAxisTitle: typeScale.caption.medium,
+      yAxisTitle: typeScale.caption.medium,
       xAxisLabel: typeScale.caption.regular,
     },
     yAxisLabel: typeScale.caption.regular,
@@ -488,6 +497,7 @@ export const horizontalBarChartLayout = {
 } as const;
 
 export const legendSpacingConfig = ds.legend.spacing;
+export const legendShapeConfig = ds.legend.shape;
 export const dataVisColor = ds.colors.dataVis;
 export const textColor = ds.colors.text;
 export const dividerColor = ds.legend.color.divider;

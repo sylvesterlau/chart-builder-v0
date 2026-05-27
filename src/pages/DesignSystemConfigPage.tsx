@@ -380,6 +380,18 @@ function DesignSystemConfigPage({ onBack }: DesignSystemConfigPageProps) {
             <Divider />
             <VerticalSpace space="medium" />
 
+            <Text className={uiStyles.sectionTitle}>Shape</Text>
+            <VerticalSpace space="small" />
+            <div className={uiStyles.configValueList}>
+              <div className={uiStyles.configValueRow}>
+                <span className={uiStyles.fieldLabel}>size</span>
+                <NumberTokenChip token={ds.legend.shape.size as NumberToken} />
+              </div>
+            </div>
+            <VerticalSpace space="small" />
+            <Divider />
+            <VerticalSpace space="medium" />
+
             <Text className={uiStyles.sectionTitle}>Divider</Text>
             <VerticalSpace space="medium" />
             <div className={uiStyles.configValueList}>

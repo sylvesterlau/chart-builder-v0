@@ -33,6 +33,7 @@ function registerNumberTokenKeys(obj: unknown): void {
 
 registerNumberTokenKeys(ds.chartTitle.padding);
 registerNumberTokenKeys(ds.legend.spacing);
+registerNumberTokenKeys(ds.legend.shape);
 registerNumberTokenKeys(ds.chart.pie.indicator);
 
 export function numberTokenHasVariableBinding(token: NumberToken): boolean {

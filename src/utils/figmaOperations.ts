@@ -33,8 +33,8 @@ export async function createFinalFrame(
     counterAxisSizingMode: "FIXED", // width : hug
     counterAxisAlignItems: "CENTER",
     itemSpacing: 0,
-    paddingTop: 16,
-    paddingBottom: 16,
+    paddingTop: 0,
+    paddingBottom: 0,
   });
   await applyColorTokenToFills(finalFrame, chartBackground);
   return finalFrame;
