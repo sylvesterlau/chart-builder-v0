@@ -20,9 +20,10 @@
   },
   "figma-plugin": {
     "editorType": [
-      "figma"
+      "figma",
+      "figjam"
     ],
-    "id": "chart-builder",
+    "id": "[replace with plugin id]",
     "name": "Chart Builder",
     "main": "src/main.ts",
     "ui": "src/ui.tsx",
