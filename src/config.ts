@@ -50,21 +50,8 @@ const typeScale = {
       lineHeight: 20,
       key: "19b21b435c609ea25d26a5226d0753d52faecce0",
     } satisfies Readonly<TypographyToken>,
-    semibold: {
-      fontFamily: "Inter",
-      fontSize: 12,
-      fontWeight: 600,
-      lineHeight: 20,
-      key: "211a069c48b16cf4e88c22f7bb158d15461cf4b5",
-    } satisfies Readonly<TypographyToken>,
   },
   label: {
-    light: {
-      fontFamily: "Inter",
-      fontSize: 14,
-      fontWeight: 300,
-      lineHeight: 20,
-    } satisfies Readonly<TypographyToken>,
     regular: {
       fontFamily: "Inter",
       fontSize: 14,
@@ -78,13 +65,6 @@ const typeScale = {
       fontWeight: 500,
       lineHeight: 20,
       key: "fdea4ce6bf257fe42bbe7b3ffa6a794a03de69ad",
-    } satisfies Readonly<TypographyToken>,
-    semibold: {
-      fontFamily: "Inter",
-      fontSize: 14,
-      fontWeight: 600,
-      lineHeight: 20,
-      key: "b9b2c385b0bee1d96f002c8b9315aba5e246802b",
     } satisfies Readonly<TypographyToken>,
   },
   heading: {
@@ -101,13 +81,6 @@ const typeScale = {
       fontWeight: 500,
       lineHeight: 27,
       key: "8823d3e6d7f127e6bf95013924394e2915e402d1",
-    } satisfies Readonly<TypographyToken>,
-    semibold: {
-      fontFamily: "Inter",
-      fontSize: 19,
-      fontWeight: 600,
-      lineHeight: 27,
-      key: "0e042962bf4523576d7d9000ef6c0405348bf338",
     } satisfies Readonly<TypographyToken>,
   },
 
@@ -208,7 +181,7 @@ export const ds = {
 
   cartesianKeyInfo: {
     typography: {
-      range: typeScale.label.light,
+      range: typeScale.label.regular,
       label: typeScale.label.regular,
       valueLarge: typeScale.title.regular,
       value: typeScale.heading.regular,

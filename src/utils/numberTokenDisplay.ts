@@ -1,4 +1,4 @@
-import { ds } from "../config";
+import { ds, horizontalBarChartLayout } from "../config";
 import type { NumberToken } from "../types";
 
 const CONFIG_NUMBER_TOKEN_KEYS = new Set<string>();
