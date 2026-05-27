@@ -494,6 +494,12 @@ export const horizontalBarChartLayout = {
   sliceGap: 2,
   sliceGapMin: 0,
   sliceGapMax: 20,
+  horizontalPadding: {
+    value: 16,
+  } satisfies NumberToken,
+  verticalPadding: {
+    value: 16,
+  } satisfies NumberToken,
 } as const;
 
 export const legendSpacingConfig = ds.legend.spacing;

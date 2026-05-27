@@ -487,7 +487,7 @@ function DesignSystemConfigPage({ onBack }: DesignSystemConfigPageProps) {
                 return (
                   <div key={key} className={uiStyles.configValueRow}>
                     <span className={uiStyles.fieldLabel}>{key}</span>
-                    <NumChip value={value} />
+                    <ConfigMetricChip value={value} />
                   </div>
                 );
               })}

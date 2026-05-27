@@ -8,6 +8,11 @@ import { ChartData } from "../types";
 import { getSum, transformToPercents, TransformedChartItem } from "../helpers";
 import type { ColorToken } from "../types";
 import { applyColorTokenToFills } from "./applyColorToken";
+import {
+  applyHorizontalPadding,
+  applyVerticalPadding,
+  numberTokenValue,
+} from "./applyNumberToken";
 import { createChartTitle, loadChartTitleFont } from "./drawChartTitle";
 import { createFinalFrame } from "./figmaOperations";
 import {
@@ -63,8 +68,9 @@ export async function drawHorBarChart(chartData: ChartData) {
   const valuePrefix = chartData.valuePrefix ?? "";
   const valueSuffix = chartData.valueSuffix ?? "HKD";
   const frameWidth = resolveHorBarFrameWidth(chartData.frameWidth);
-  const horizontalPadding = 16;
-  const chartAreaWidth = frameWidth - horizontalPadding * 2;
+  const { horizontalPadding, verticalPadding } = horizontalBarChartLayout;
+  const horizontalPaddingPx = numberTokenValue(horizontalPadding);
+  const chartAreaWidth = frameWidth - horizontalPaddingPx * 2;
   const sliceGapPx = resolveHorBarSliceGap(chartData.horBarSliceGap);
   const segmentCount = transformedData.filter((item) => item.value > 0).length;
   const barTrackWidth =
@@ -87,12 +93,10 @@ export async function drawHorBarChart(chartData: ChartData) {
     primaryAxisSizingMode: "FIXED",
     counterAxisSizingMode: "AUTO",
     counterAxisAlignItems: "CENTER",
-    paddingLeft: 16,
-    paddingRight: 16,
-    paddingTop: 16,
-    paddingBottom: 16,
     layoutAlign: "STRETCH",
   });
+  await applyHorizontalPadding(chartContainerFrame, horizontalPadding);
+  await applyVerticalPadding(chartContainerFrame, verticalPadding);
   const chartFrame = figma.createFrame();
   chartFrame.fills = [];
   chartFrame.resize(chartAreaWidth, 12);

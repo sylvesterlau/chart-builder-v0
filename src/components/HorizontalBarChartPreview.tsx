@@ -1,12 +1,14 @@
 import { h } from "preact";
-import { chartBackground } from "../config";
+import { chartBackground, horizontalBarChartLayout } from "../config";
 import { dataVisAt } from "../utils/dataVisAt";
 import { LegendStyle } from "../types";
 import { ChartItem } from "./ChartItemInput";
 import ChartTitlePreview from "./ChartTitlePreview";
 import LegendPreview from "./LegendPreview";
 import { useColorTokenResolved } from "./ColorChips/colorTokenSwatchContext";
+import { useNumberTokenResolved } from "./NumChips/numberTokenValueContext";
 import { colorTokenPreviewBackground, colorTokenSwatchHex } from "../utils/colorTokenDisplay";
+import { numberTokenResolvedValue } from "../utils/numberTokenDisplay";
 
 interface HorizontalBarChartPreviewProps {
   chartTitle: string;
@@ -34,6 +36,15 @@ function HorizontalBarChartPreview({
   valueSuffix,
 }: HorizontalBarChartPreviewProps) {
   const { values: resolvedColors } = useColorTokenResolved();
+  const { values: resolvedNumbers } = useNumberTokenResolved();
+  const horizontalPadding = numberTokenResolvedValue(
+    horizontalBarChartLayout.horizontalPadding,
+    resolvedNumbers,
+  );
+  const verticalPadding = numberTokenResolvedValue(
+    horizontalBarChartLayout.verticalPadding,
+    resolvedNumbers,
+  );
 
   const legendItems = items
     .map((item, index) => ({ ...item, index }))
@@ -58,7 +69,7 @@ function HorizontalBarChartPreview({
         flexDirection: "column",
         gap: "16px",
         maxWidth: `${frameWidth}px`,
-        padding: "16px 0",
+        padding: 0,
         transform: "scale(0.9)",
         transformOrigin: "top center",
         width: `${frameWidth}px`,
@@ -71,7 +82,7 @@ function HorizontalBarChartPreview({
           display: "flex",
           gap: `${sliceGap}px`,
           height: "12px",
-          padding: "0 16px",
+          padding: `${verticalPadding}px ${horizontalPadding}px`,
           overflow: "hidden",
           width: "100%",
         }}
