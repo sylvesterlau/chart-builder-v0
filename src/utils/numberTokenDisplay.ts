@@ -1,4 +1,4 @@
-import { ds, horizontalBarChartLayout } from "../config";
+import { ds, horizontalBarChartLayout, spacing } from "../config";
 import type { NumberToken } from "../types";
 
 const CONFIG_NUMBER_TOKEN_KEYS = new Set<string>();
@@ -31,7 +31,10 @@ function registerNumberTokenKeys(obj: unknown): void {
   }
 }
 
+registerNumberTokenKeys(spacing);
 registerNumberTokenKeys(ds.chartTitle.padding);
+registerNumberTokenKeys(ds.cartesianKeyInfo.spacing);
+registerNumberTokenKeys(ds.cartesianTooltip.spacing);
 registerNumberTokenKeys(ds.legend.spacing);
 registerNumberTokenKeys(ds.legend.shape);
 registerNumberTokenKeys(horizontalBarChartLayout);

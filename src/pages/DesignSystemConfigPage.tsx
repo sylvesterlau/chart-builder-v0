@@ -15,6 +15,7 @@ import {
   horizontalBarChartLayout,
   lineChartConfig,
   pluginUISize,
+  spacing,
   verticalBarChartConfig,
 } from "../config";
 import type { ColorToken, NumberToken } from "../types";
@@ -141,7 +142,10 @@ function CartesianChartTokenPanel(props: {
         Axis titles & labels · typography
       </Text>
       <VerticalSpace space="small" />
-      <TypographyBlock pathPrefix={`${pathPrefix}.typography`} root={color.typography} />
+      <TypographyBlock
+        pathPrefix={`${pathPrefix}.typography`}
+        root={color.typography}
+      />
       <VerticalSpace space="small" />
       <Divider />
       <VerticalSpace space="medium" />
@@ -150,7 +154,10 @@ function CartesianChartTokenPanel(props: {
         Y-axis tick labels · typography
       </Text>
       <VerticalSpace space="small" />
-      <TypographyBlock pathPrefix={`${pathPrefix}.yAxisLabel`} root={color.yAxisLabel} />
+      <TypographyBlock
+        pathPrefix={`${pathPrefix}.yAxisLabel`}
+        root={color.yAxisLabel}
+      />
     </div>
   );
 }
@@ -318,6 +325,37 @@ function DesignSystemConfigPage({ onBack }: DesignSystemConfigPageProps) {
             <Divider />
             <VerticalSpace space="medium" />
 
+            <Text className={uiStyles.sectionTitle}>Spacing</Text>
+            <VerticalSpace space="small" />
+            <Text className={uiStyles.sectionTitle}>Padding</Text>
+            <VerticalSpace space="small" />
+            <div className={uiStyles.configValueList}>
+              {Object.entries(spacing.padding).map(function ([key, token]) {
+                return (
+                  <div key={key} className={uiStyles.configValueRow}>
+                    <span className={uiStyles.fieldLabel}>{key}</span>
+                    <NumberTokenChip token={token as NumberToken} />
+                  </div>
+                );
+              })}
+            </div>
+            <VerticalSpace space="small" />
+            <Text className={uiStyles.sectionTitle}>Gap</Text>
+            <VerticalSpace space="small" />
+            <div className={uiStyles.configValueList}>
+              {Object.entries(spacing.gap).map(function ([key, token]) {
+                return (
+                  <div key={key} className={uiStyles.configValueRow}>
+                    <span className={uiStyles.fieldLabel}>{key}</span>
+                    <NumberTokenChip token={token as NumberToken} />
+                  </div>
+                );
+              })}
+            </div>
+            <VerticalSpace space="medium" />
+            <Divider />
+            <VerticalSpace space="medium" />
+
             <Text className={uiStyles.sectionTitle}>Type scale</Text>
             <VerticalSpace space="small" />
             <TypographyBlock pathPrefix="typography" root={ds.typography} />
@@ -404,6 +442,7 @@ function DesignSystemConfigPage({ onBack }: DesignSystemConfigPageProps) {
                 );
               })}
             </div>
+            <VerticalSpace space="large" />
           </div>
         ) : null}
 
@@ -483,7 +522,10 @@ function DesignSystemConfigPage({ onBack }: DesignSystemConfigPageProps) {
             <Text className={uiStyles.sectionTitle}>Layout</Text>
             <VerticalSpace space="small" />
             <div className={uiStyles.configValueList}>
-              {Object.entries(horizontalBarChartLayout).map(function ([key, value]) {
+              {Object.entries(horizontalBarChartLayout).map(function ([
+                key,
+                value,
+              ]) {
                 return (
                   <div key={key} className={uiStyles.configValueRow}>
                     <span className={uiStyles.fieldLabel}>{key}</span>

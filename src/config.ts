@@ -1,4 +1,3 @@
-import { title } from "./pages/HomePage.module.css";
 import type { ColorToken, NumberToken, TypographyToken } from "./types";
 import {
   createLinePointLabels,
@@ -40,14 +39,14 @@ const typeScale = {
       fontFamily: "Inter",
       fontSize: 12,
       fontWeight: 400,
-      lineHeight: 20,
+      lineHeight: 16,
       key: "8efff2a3611b231864f23fcff8139b81a85e5884",
     } satisfies Readonly<TypographyToken>,
     medium: {
       fontFamily: "Inter",
       fontSize: 12,
       fontWeight: 500,
-      lineHeight: 20,
+      lineHeight: 16,
       key: "19b21b435c609ea25d26a5226d0753d52faecce0",
     } satisfies Readonly<TypographyToken>,
   },
@@ -84,7 +83,7 @@ const typeScale = {
     } satisfies Readonly<TypographyToken>,
   },
 
-  title: {
+  headline: {
     regular: {
       fontFamily: "Inter",
       fontSize: 28,
@@ -94,11 +93,39 @@ const typeScale = {
   },
 } as const;
 
+/** Shared spacing scale; component spacing tokens reference these NumberTokens. */
+export const spacing = {
+  padding: {
+    normal: {
+      value: 16,
+      key: "f70676fabdbeee4adc99373eb788957ad7e2d71d",
+    } satisfies NumberToken,
+    tight: {
+      value: 12,
+      key: "deb8773dea736196da7559874f5b7a6c7ab50472",
+    } satisfies NumberToken,
+  },
+  gap: {
+    normal: {
+      value: 16,
+      key: "b53449f649ed6c7b19d70d515454342346f4e064",
+    } satisfies NumberToken,
+    s: {
+      value: 8,
+      key: "cb58133bee7f18a9cce49cbc9c63c806e4f816b1",
+    } satisfies NumberToken,
+    xs: {
+      value: 4,
+    } satisfies NumberToken,
+  },
+} as const;
+
 /**
  * Design system: shared colors plus component-scoped layout & typography.
  * Use `ds` for new code; flat exports below alias into `ds` where applicable.
  */
 export const ds = {
+  spacing,
   colors: {
     /** Ordered palette (by index) for slices / bars. */
     dataVis: {
@@ -168,14 +195,8 @@ export const ds = {
   chartTitle: {
     typography: typeScale.heading.medium,
     padding: {
-      horizontal: {
-        value: 16,
-        key: "b53449f649ed6c7b19d70d515454342346f4e064",
-      } satisfies NumberToken,
-      vertical: {
-        value: 8,
-        key: "958a0d4a08f694b42b1c052cead41a901e796118",
-      } satisfies NumberToken,
+      horizontal: spacing.padding.normal,
+      vertical: spacing.gap.s,
     },
   },
 
@@ -183,31 +204,18 @@ export const ds = {
     typography: {
       range: typeScale.label.regular,
       label: typeScale.label.regular,
-      valueLarge: typeScale.title.regular,
+      valueLarge: typeScale.headline.regular,
       value: typeScale.heading.regular,
       rowValue: typeScale.label.medium,
       unit: typeScale.label.medium,
       change: typeScale.label.medium,
     },
     spacing: {
-      horizontalPadding: {
-        value: 16,
-        key: "f70676fabdbeee4adc99373eb788957ad7e2d71d",
-      } satisfies NumberToken,
-      topPadding: {
-        value: 8,
-      } satisfies NumberToken,
-      bottomPadding: {
-        value: 16,
-        key: "deb8773dea736196da7559874f5b7a6c7ab50472",
-      } satisfies NumberToken,
-      itemGap: {
-        value: 8,
-        key: "cb58133bee7f18a9cce49cbc9c63c806e4f816b1",
-      } satisfies NumberToken,
-      rowGap: {
-        value: 4,
-      } satisfies NumberToken,
+      horizontalPadding: spacing.padding.normal,
+      topPadding: spacing.gap.s,
+      bottomPadding: spacing.padding.normal,
+      itemGap: spacing.gap.s,
+      rowGap: spacing.gap.xs,
     },
     color: {
       gain: {
@@ -229,16 +237,9 @@ export const ds = {
       value: typeScale.label.medium,
     },
     spacing: {
-      outerPadding: {
-        value: 16,
-      } satisfies NumberToken,
-      panelPadding: {
-        value: 12,
-      } satisfies NumberToken,
-      itemGap: {
-        value: 8,
-        key: "cb58133bee7f18a9cce49cbc9c63c806e4f816b1",
-      } satisfies NumberToken,
+      outerPadding: spacing.padding.normal,
+      panelPadding: spacing.padding.tight,
+      itemGap: spacing.gap.s,
       pointerInsetEnd: {
         value: 16,
       } satisfies NumberToken,
@@ -265,22 +266,11 @@ export const ds = {
       percentage: typeScale.label.regular,
     },
     spacing: {
-      horizontalPadding: {
-        value: 16,
-        key: "f70676fabdbeee4adc99373eb788957ad7e2d71d",
-      } satisfies NumberToken,
-      verticalPadding: {
-        value: 12,
-        key: "deb8773dea736196da7559874f5b7a6c7ab50472",
-      } satisfies NumberToken,
-      gap: {
-        value: 8,
-        key: "cb58133bee7f18a9cce49cbc9c63c806e4f816b1",
-      } satisfies NumberToken,
+      horizontalPadding: spacing.padding.normal,
+      verticalPadding: spacing.padding.tight,
+      gap: spacing.gap.s,
       /** Label ↔ percentage gap in left-and-right legend rows. */
-      leftRightItemSpacing: {
-        value: 4,
-      } satisfies NumberToken,
+      leftRightItemSpacing: spacing.gap.xs,
     },
     shape: {
       size: {
@@ -467,12 +457,8 @@ export const horizontalBarChartLayout = {
   sliceGap: 2,
   sliceGapMin: 0,
   sliceGapMax: 20,
-  horizontalPadding: {
-    value: 16,
-  } satisfies NumberToken,
-  verticalPadding: {
-    value: 16,
-  } satisfies NumberToken,
+  horizontalPadding: spacing.padding.normal,
+  verticalPadding: spacing.padding.normal,
 } as const;
 
 export const legendSpacingConfig = ds.legend.spacing;

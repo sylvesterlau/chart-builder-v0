@@ -1,9 +1,5 @@
 import { h } from "preact";
-import {
-  chartBackground,
-  textColor,
-  typography,
-} from "../config";
+import { chartBackground, textColor, typography } from "../config";
 import {
   semiDonutGapPxToPercent,
   semiDonutRingWidthPxToRatio,
@@ -172,90 +168,90 @@ function SemiDonutChartPreview({
               width="100%"
               style={{ display: "block", maxWidth: `${frameWidth}px` }}
             >
-            {chartItems.map((item, arcIndex) => {
-              const color = colorTokenSwatchHex(
-                dataVisAt(item.index),
-                resolvedColors,
-              );
-              const exactPercent = (item.value / total) * 100;
-              const adjustedStartPercent =
-                arcIndex === 0 ? startPercent : startPercent + gapPercent;
-              const endPercent = startPercent + exactPercent;
-              startPercent = endPercent;
-              if (endPercent - adjustedStartPercent <= 0) {
-                return null;
-              }
+              {chartItems.map((item, arcIndex) => {
+                const color = colorTokenSwatchHex(
+                  dataVisAt(item.index),
+                  resolvedColors,
+                );
+                const exactPercent = (item.value / total) * 100;
+                const adjustedStartPercent =
+                  arcIndex === 0 ? startPercent : startPercent + gapPercent;
+                const endPercent = startPercent + exactPercent;
+                startPercent = endPercent;
+                if (endPercent - adjustedStartPercent <= 0) {
+                  return null;
+                }
 
-              const startAngle = 180 + adjustedStartPercent * 1.8;
-              const endAngle = 180 + endPercent * 1.8;
-              return (
-                <path
-                  key={`${item.label}-${item.index}`}
-                  d={describeArc(
-                    chartCenterX,
-                    chartCenterY,
-                    strokeRadius,
-                    startAngle,
-                    endAngle,
-                  )}
-                  fill="none"
-                  stroke={color}
-                  strokeWidth={ringWidthPx}
-                  strokeLinecap="butt"
-                />
-              );
-            })}
-          </svg>
-          {showTotalValue ? (
-            <div
-              style={{
-                alignItems: "center",
-                bottom: `${totalValueBottom}px`,
-                display: "flex",
-                flexDirection: "column",
-                left: 0,
-                position: "absolute",
-                right: 0,
-              }}
-            >
+                const startAngle = 180 + adjustedStartPercent * 1.8;
+                const endAngle = 180 + endPercent * 1.8;
+                return (
+                  <path
+                    key={`${item.label}-${item.index}`}
+                    d={describeArc(
+                      chartCenterX,
+                      chartCenterY,
+                      strokeRadius,
+                      startAngle,
+                      endAngle,
+                    )}
+                    fill="none"
+                    stroke={color}
+                    strokeWidth={ringWidthPx}
+                    strokeLinecap="butt"
+                  />
+                );
+              })}
+            </svg>
+            {showTotalValue ? (
               <div
                 style={{
-                  color: chartTextPrimary,
-                  textAlign: "center",
-                  ...typographyTokenToPreviewCss(
-                    typography.totalValue.title,
-                    resolvedTypography,
-                  ),
+                  alignItems: "center",
+                  bottom: `${totalValueBottom}px`,
+                  display: "flex",
+                  flexDirection: "column",
+                  left: 0,
+                  position: "absolute",
+                  right: 0,
                 }}
               >
-                {totalValueTitle}
+                <div
+                  style={{
+                    color: chartTextPrimary,
+                    textAlign: "center",
+                    ...typographyTokenToPreviewCss(
+                      typography.totalValue.title,
+                      resolvedTypography,
+                    ),
+                  }}
+                >
+                  {totalValueTitle}
+                </div>
+                <div
+                  style={{
+                    color: chartTextPrimary,
+                    letterSpacing: "0px",
+                    marginTop: "2px",
+                    textAlign: "center",
+                    whiteSpace: "nowrap",
+                    ...typographyTokenToPreviewCss(
+                      typography.totalValue.value,
+                      resolvedTypography,
+                    ),
+                  }}
+                >
+                  {totalValueText}
+                </div>
               </div>
-              <div
-                style={{
-                  color: chartTextPrimary,
-                  letterSpacing: "0px",
-                  marginTop: "2px",
-                  textAlign: "center",
-                  whiteSpace: "nowrap",
-                  ...typographyTokenToPreviewCss(
-                    typography.totalValue.value,
-                    resolvedTypography,
-                  ),
-                }}
-              >
-                {totalValueText}
-              </div>
-            </div>
-          ) : null}
-        </div>
-        <LegendPreview
-          items={legendItems}
-          legendStyle={legendStyle}
-          total={total}
-          showPercentage={showPercentage}
-          valuePrefix={valuePrefix}
-          valueSuffix={valueSuffix}
-        />
+            ) : null}
+          </div>
+          <LegendPreview
+            items={legendItems}
+            legendStyle={legendStyle}
+            total={total}
+            showPercentage={showPercentage}
+            valuePrefix={valuePrefix}
+            valueSuffix={valueSuffix}
+          />
         </div>
       </div>
     </div>
