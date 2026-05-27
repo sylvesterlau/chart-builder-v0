@@ -5,6 +5,11 @@ import {
   formatPercentageChange,
 } from "./cartesianKeyInfo";
 import type { ColorToken, TypographyToken } from "../types";
+import {
+  applyItemSpacing,
+  applyKeyInfoSpacing,
+  numberTokenValue,
+} from "./applyNumberToken";
 import { applyColorTokenToFills, applyColorTokenToStrokes } from "./applyColorToken";
 import {
   applyTypographyTokenToText,
@@ -126,7 +131,7 @@ async function createLabelRow(
     primaryAxisSizingMode: "AUTO",
     counterAxisSizingMode: "AUTO",
     counterAxisAlignItems: "MIN",
-    itemSpacing: cartesianKeyInfoConfig.spacing.itemGap.value,
+    itemSpacing: numberTokenValue(cartesianKeyInfoConfig.spacing.itemGap),
   });
 
   row.appendChild(await createVisual(data.kind, item.colorTokenIndex));
@@ -137,6 +142,7 @@ async function createLabelRow(
   );
   label.layoutGrow = 1;
   row.appendChild(label);
+  await applyItemSpacing(row, cartesianKeyInfoConfig.spacing.itemGap);
   return row;
 }
 
@@ -153,7 +159,7 @@ async function createValueRow(
     primaryAxisSizingMode: "AUTO",
     counterAxisSizingMode: "AUTO",
     counterAxisAlignItems: "BASELINE",
-    itemSpacing: cartesianKeyInfoConfig.spacing.rowGap.value,
+    itemSpacing: numberTokenValue(cartesianKeyInfoConfig.spacing.rowGap),
   });
 
   row.appendChild(
@@ -189,6 +195,7 @@ async function createValueRow(
     );
   }
 
+  await applyItemSpacing(row, cartesianKeyInfoConfig.spacing.rowGap);
   return row;
 }
 
@@ -217,9 +224,10 @@ async function createRows(data: CartesianKeyInfoData): Promise<FrameNode> {
     layoutMode: "VERTICAL",
     primaryAxisSizingMode: "AUTO",
     counterAxisSizingMode: "FIXED",
-    itemSpacing: cartesianKeyInfoConfig.spacing.rowGap.value,
+    itemSpacing: numberTokenValue(cartesianKeyInfoConfig.spacing.rowGap),
     layoutAlign: "STRETCH",
   });
+  await applyItemSpacing(rows, cartesianKeyInfoConfig.spacing.rowGap);
 
   for (let index = 0; index < data.items.length; index++) {
     const row = await createFrame("Content");
@@ -229,9 +237,10 @@ async function createRows(data: CartesianKeyInfoData): Promise<FrameNode> {
       primaryAxisSizingMode: "AUTO",
       counterAxisSizingMode: "AUTO",
       counterAxisAlignItems: "CENTER",
-      itemSpacing: cartesianKeyInfoConfig.spacing.itemGap.value,
+      itemSpacing: numberTokenValue(cartesianKeyInfoConfig.spacing.itemGap),
       layoutAlign: "STRETCH",
     });
+    await applyItemSpacing(row, cartesianKeyInfoConfig.spacing.itemGap);
     const label = await createLabelRow(data, index);
     label.layoutGrow = 1;
     row.appendChild(label);
@@ -257,12 +266,19 @@ export async function createCartesianKeyInfo(
     primaryAxisSizingMode: "AUTO",
     counterAxisSizingMode: "FIXED",
     layoutAlign: "STRETCH",
-    paddingLeft: cartesianKeyInfoConfig.spacing.horizontalPadding.value,
-    paddingRight: cartesianKeyInfoConfig.spacing.horizontalPadding.value,
-    paddingTop: cartesianKeyInfoConfig.spacing.topPadding.value,
-    paddingBottom: cartesianKeyInfoConfig.spacing.bottomPadding.value,
+    paddingLeft: numberTokenValue(
+      cartesianKeyInfoConfig.spacing.horizontalPadding,
+    ),
+    paddingRight: numberTokenValue(
+      cartesianKeyInfoConfig.spacing.horizontalPadding,
+    ),
+    paddingTop: numberTokenValue(cartesianKeyInfoConfig.spacing.topPadding),
+    paddingBottom: numberTokenValue(
+      cartesianKeyInfoConfig.spacing.bottomPadding,
+    ),
     itemSpacing: 0,
   });
+  await applyKeyInfoSpacing(keyInfo, cartesianKeyInfoConfig.spacing);
 
   if (data.rangeLabel) {
     keyInfo.appendChild(

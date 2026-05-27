@@ -1,5 +1,6 @@
 import {
   chartBackground,
+  spacing,
   textColor,
   verticalBarChartConfig,
 } from "../config";
@@ -15,6 +16,12 @@ import {
   VerticalBarChartConfig,
 } from "../types";
 import { applyColorTokenToFills, applyColorTokenToStrokes } from "./applyColorToken";
+import {
+  applyHorizontalPadding,
+  applyItemSpacing,
+  applyPaddingBottom,
+  numberTokenValue,
+} from "./applyNumberToken";
 import {
   applyTypographyTokenToText,
   loadTypographyTokenFontsBatch,
@@ -168,10 +175,11 @@ async function drawSelectedLabel(
     layoutMode: "HORIZONTAL",
     primaryAxisSizingMode: "AUTO",
     counterAxisSizingMode: "AUTO",
-    paddingLeft: 8,
-    paddingRight: 8,
+    paddingLeft: numberTokenValue(spacing.gap.s),
+    paddingRight: numberTokenValue(spacing.gap.s),
     counterAxisAlignItems: "CENTER",
   });
+  await applyHorizontalPadding(labelFrame, spacing.gap.s);
   const label = await createText(labelText, labelTextStyle, textColor.onDark);
   label.name = "Axis label";
   label.textAlignHorizontal = "CENTER";
@@ -329,13 +337,16 @@ async function drawBarChart(
     layoutMode: "VERTICAL",
     primaryAxisSizingMode: "FIXED",
     counterAxisSizingMode: "FIXED",
-    itemSpacing: 8,
-    paddingLeft: 16,
-    paddingRight: 16,
+    itemSpacing: numberTokenValue(spacing.gap.s),
+    paddingLeft: numberTokenValue(spacing.padding.normal),
+    paddingRight: numberTokenValue(spacing.padding.normal),
     paddingTop: 0,
-    paddingBottom: 16,
+    paddingBottom: numberTokenValue(spacing.padding.normal),
     clipsContent: true,
   });
+  await applyHorizontalPadding(chart, spacing.padding.normal);
+  await applyPaddingBottom(chart, spacing.padding.normal);
+  await applyItemSpacing(chart, spacing.gap.s);
   chart.layoutSizingHorizontal = "FILL";
   chart.layoutSizingVertical = "FILL";
 
@@ -352,8 +363,9 @@ async function drawBarChart(
     layoutMode: "HORIZONTAL",
     primaryAxisSizingMode: "FIXED",
     counterAxisSizingMode: "AUTO",
-    itemSpacing: 8,
+    itemSpacing: numberTokenValue(spacing.gap.s),
   });
+  await applyItemSpacing(titleFrame, spacing.gap.s);
   titleFrame.layoutSizingHorizontal = "FILL";
   await drawCartesianYAxisTitle(titleFrame, {
     color: config.color,

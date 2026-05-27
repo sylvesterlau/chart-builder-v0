@@ -1,6 +1,7 @@
 import {
   chartBackground,
   lineChartConfig,
+  spacing,
   textColor,
 } from "../config";
 import { dataVisAt } from "./dataVisAt";
@@ -15,6 +16,12 @@ import {
   TypographyToken,
 } from "../types";
 import { applyColorTokenToFills, applyColorTokenToStrokes } from "./applyColorToken";
+import {
+  applyHorizontalPadding,
+  applyItemSpacing,
+  applyPaddingBottom,
+  numberTokenValue,
+} from "./applyNumberToken";
 import {
   applyTypographyTokenToText,
   loadTypographyTokenFontsBatch,
@@ -385,13 +392,16 @@ async function drawChart(parent: FrameNode, config: NormalizedLineChartConfig) {
     layoutMode: "VERTICAL",
     primaryAxisSizingMode: "FIXED",
     counterAxisSizingMode: "FIXED",
-    itemSpacing: 8,
-    paddingLeft: 16,
-    paddingRight: 16,
+    itemSpacing: numberTokenValue(spacing.gap.s),
+    paddingLeft: numberTokenValue(spacing.padding.normal),
+    paddingRight: numberTokenValue(spacing.padding.normal),
     paddingTop: 0,
-    paddingBottom: 16,
+    paddingBottom: numberTokenValue(spacing.padding.normal),
     clipsContent: true,
   });
+  await applyHorizontalPadding(chart, spacing.padding.normal);
+  await applyPaddingBottom(chart, spacing.padding.normal);
+  await applyItemSpacing(chart, spacing.gap.s);
   chart.layoutSizingHorizontal = "FILL";
   chart.layoutSizingVertical = "FILL";
 
@@ -408,8 +418,9 @@ async function drawChart(parent: FrameNode, config: NormalizedLineChartConfig) {
     layoutMode: "HORIZONTAL",
     primaryAxisSizingMode: "FIXED",
     counterAxisSizingMode: "AUTO",
-    itemSpacing: 8,
+    itemSpacing: numberTokenValue(spacing.gap.s),
   });
+  await applyItemSpacing(titleFrame, spacing.gap.s);
   titleFrame.layoutSizingHorizontal = "FILL";
   await drawCartesianYAxisTitle(titleFrame, {
     color: config.color,
