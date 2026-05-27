@@ -209,10 +209,11 @@ async function drawSelectedLabel(
     layoutMode: "HORIZONTAL",
     primaryAxisSizingMode: "AUTO",
     counterAxisSizingMode: "AUTO",
-    paddingLeft: 8,
-    paddingRight: 8,
+    paddingLeft: numberTokenValue(spacing.gap.s),
+    paddingRight: numberTokenValue(spacing.gap.s),
     counterAxisAlignItems: "CENTER",
   });
+  await applyHorizontalPadding(labelFrame, spacing.gap.s);
   const label = await createText(labelText, labelTextStyle, textColor.onDark);
   label.name = "Axis label";
   label.textAlignHorizontal = "CENTER";
