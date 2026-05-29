@@ -51,5 +51,5 @@ src/                      # app source root
 - **`ds`** — Primary design-system object: **`colors`** (`dataVis.general`, `text`), **`chartTitle`**, **`legend`** (typography, spacing, `color.divider`), **`chart.semiDonut`** (`size`, `ratio`, `totalValue.typography`), **`chart.pie`** (frame size, radii, `donutInnerRadiusRatio`, **`indicator`** with line/label offsets, slice and leader-line stroke weights, and indicator **typography**).
 - **`pluginUISize`** — Plugin shell only (not under `ds`): **`homePage`** (default) and **`editPage`** (wide chart editors). The design system screen resizes to **490×490** while it is open, then restores the home size on exit.
 - **Legacy exports** — `dataVisColor`, `textColor`, `dividerColor`, `pieChartConfig`, `semiDonutChartConfig`, `legendSpacingConfig`, and **`typography`** (flattened chart title, legend, pie indicator, semi-donut total value) alias into `ds` for existing imports.
-- **`dataVisAt(index)`** — Cycles `ds.colors.dataVis.general` for slice/bar colors.
+- **Chart calculations** — `src/utils/chart/` (`sizeBounds`, `semiDonutCalculate`, `pieDonutCalculate`, `lineChartCalculate`) and `src/utils/dataVisAt.ts` for layout math and palette indexing.
 - **`sampleData`** — Demo rows for chart pages (not part of `ds`).

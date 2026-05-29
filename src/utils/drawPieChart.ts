@@ -1,10 +1,20 @@
 import {
   chartBackground,
-  dataVisAt,
+  chartGeneralConfig,
   pieChartConfig,
   textColor,
   typography,
 } from "../config";
+import {
+  donutGapPxToPercent,
+  donutRingWidthPxToRatio,
+  getPieChartAreaHeight,
+  getPieChartSizeBounds,
+  resolveDonutRingWidth,
+  resolveIndicatorLineExtend,
+  resolvePieSliceGap,
+} from "./chart/pieDonutCalculate";
+import { dataVisAt } from "./dataVisAt";
 import { formatLegendPercentageDisplay, getSum } from "../helpers";
 import { ChartData } from "../types";
 import {
@@ -18,14 +28,23 @@ import {
 import { createChartTitle, loadChartTitleFont } from "./drawChartTitle";
 import { applyStrokeWeight } from "./applyNumberToken";
 import { createFinalFrame } from "./figmaOperations";
-import {
-  createLegend,
-  createLegendList,
-  loadLegendFonts,
-} from "./drawLegend";
+import { createLegend, createLegendList, loadLegendFonts } from "./drawLegend";
 
-const PIE_CENTER_X = pieChartConfig.frameWidth / 2;
-const PIE_CENTER_Y = pieChartConfig.frameHeight / 2;
+function resolvePieFrameWidth(frameWidth: number | undefined): number {
+  const { frameWidthMin, frameWidthMax } = pieChartConfig;
+  const value = frameWidth ?? chartGeneralConfig.frameWidth;
+  return Math.round(Math.min(frameWidthMax, Math.max(frameWidthMin, value)));
+}
+
+function resolvePieChartSize(
+  chartSize: number | undefined,
+  frameWidth: number,
+): number {
+  const { chartSize: defaultSize } = pieChartConfig;
+  const { min, max } = getPieChartSizeBounds(frameWidth);
+  const value = chartSize ?? defaultSize;
+  return Math.round(Math.min(max, Math.max(min, value)));
+}
 
 function polarToCartesian(
   centerX: number,
@@ -46,27 +65,19 @@ async function createPieSlice(
   fillToken: ReturnType<typeof dataVisAt>,
   name: string,
   pieRadius: number,
-  innerRadiusRatio: number,
+  centerX: number,
+  centerY: number,
+  sliceGapPx: number,
 ): Promise<EllipseNode> {
   const slice = figma.createEllipse();
   slice.name = name;
   slice.resize(pieRadius * 2, pieRadius * 2);
-  slice.x = PIE_CENTER_X - pieRadius;
-  slice.y = PIE_CENTER_Y - pieRadius;
-  await applyStrokeWeight(slice, pieChartConfig.indicator.sliceStrokeWeight);
+  slice.x = centerX - pieRadius;
+  slice.y = centerY - pieRadius;
+  slice.strokeWeight = sliceGapPx;
   slice.strokeAlign = "CENTER";
   const sweep = endAngle - startAngle;
   if (sweep >= 359.999) {
-    if (innerRadiusRatio <= 0) {
-      await applyColorTokenToFills(slice, fillToken);
-      await applyColorTokenToStrokes(slice, chartBackground);
-      return slice;
-    }
-    slice.arcData = {
-      startingAngle: 0,
-      endingAngle: 2 * Math.PI,
-      innerRadius: innerRadiusRatio,
-    };
     await applyColorTokenToFills(slice, fillToken);
     await applyColorTokenToStrokes(slice, chartBackground);
     return slice;
@@ -74,10 +85,35 @@ async function createPieSlice(
   slice.arcData = {
     startingAngle: (startAngle * Math.PI) / 180,
     endingAngle: (endAngle * Math.PI) / 180,
-    innerRadius: innerRadiusRatio,
+    innerRadius: 0,
   };
   await applyColorTokenToFills(slice, fillToken);
   await applyColorTokenToStrokes(slice, chartBackground);
+  return slice;
+}
+
+async function createDonutSlice(
+  startAngle: number,
+  endAngle: number,
+  fillToken: ReturnType<typeof dataVisAt>,
+  name: string,
+  pieRadius: number,
+  innerRadiusRatio: number,
+  centerX: number,
+  centerY: number,
+): Promise<EllipseNode> {
+  const slice = figma.createEllipse();
+  slice.name = name;
+  slice.resize(pieRadius * 2, pieRadius * 2);
+  slice.x = centerX - pieRadius;
+  slice.y = centerY - pieRadius;
+  slice.strokeWeight = 0;
+  slice.arcData = {
+    startingAngle: (startAngle * Math.PI) / 180,
+    endingAngle: (endAngle * Math.PI) / 180,
+    innerRadius: innerRadiusRatio,
+  };
+  await applyColorTokenToFills(slice, fillToken);
   return slice;
 }
 
@@ -104,7 +140,10 @@ async function createIndicatorTextFrame(
 
   if (showIndicatorPercentage) {
     const percentNode = figma.createText();
-    await applyTypographyTokenToText(percentNode, typography.indicator.percentage);
+    await applyTypographyTokenToText(
+      percentNode,
+      typography.indicator.percentage,
+    );
     percentNode.characters = `${formatLegendPercentageDisplay(percentage)}%`;
     textFrame.appendChild(percentNode);
     await applyColorTokenToFills(percentNode, textColor.primary);
@@ -126,20 +165,40 @@ export async function drawPieChart(chartData: ChartData) {
 
   const chartTitle = chartData.chartTitle ?? "";
   const pieChartKind = chartData.pieChartKind ?? "pie";
-  const innerRadiusRatio =
-    pieChartKind === "donut" ? pieChartConfig.donutInnerRadiusRatio : 0;
+  const sliceGapPx = resolvePieSliceGap(chartData.pieSliceGap);
   const shouldShowLegend = chartData.legendStyle !== "none";
   const legendTileLayout =
     chartData.legendStyle === "topAndBottom" ? "topAndBottom" : "leftAndRight";
   const showPercentage = chartData.showPercentage !== false;
   const showIndicator = chartData.showIndicator !== false;
   const showIndicatorPercentage = chartData.showIndicatorPercentage !== false;
-  const pieRadius = showIndicator
-    ? pieChartConfig.radius
-    : pieChartConfig.radiusLarge;
-  const donutInnerRadiusPx = pieRadius * innerRadiusRatio;
   const valuePrefix = chartData.valuePrefix ?? "";
   const valueSuffix = chartData.valueSuffix ?? "HKD";
+  const frameWidth = resolvePieFrameWidth(chartData.frameWidth);
+  const chartSize = resolvePieChartSize(chartData.semiDonutSize, frameWidth);
+  const innerRadiusRatio =
+    pieChartKind === "donut"
+      ? donutRingWidthPxToRatio(
+          resolveDonutRingWidth(chartData.donutRingWidth),
+          chartSize,
+        )
+      : 0;
+  const frameHeight = getPieChartAreaHeight(
+    frameWidth,
+    chartSize,
+    showIndicator,
+    showIndicatorPercentage,
+    chartData.indicatorLineExtend,
+  );
+  const centerX = frameWidth / 2;
+  const centerY = frameHeight / 2;
+  const pieRadius = chartSize / 2;
+  const indicatorScale = pieRadius / pieChartConfig.radius;
+  const lineExtend =
+    resolveIndicatorLineExtend(chartData.indicatorLineExtend) * indicatorScale;
+  const labelCenterOffset =
+    pieChartConfig.indicator.labelCenterOffset * indicatorScale;
+  const donutInnerRadiusPx = pieRadius * innerRadiusRatio;
 
   if (chartTitle.trim()) {
     await loadChartTitleFont();
@@ -161,38 +220,57 @@ export async function drawPieChart(chartData: ChartData) {
 
   const chartFrame = figma.createFrame();
   chartFrame.fills = [];
-  chartFrame.resize(pieChartConfig.frameWidth, pieChartConfig.frameHeight);
+  chartFrame.resize(frameWidth, frameHeight);
   Object.assign(chartFrame, {
     name: "Pie chart area",
   });
 
   const legendList = shouldShowLegend ? createLegendList() : null;
+  const donutGapPercent =
+    pieChartKind === "donut"
+      ? donutGapPxToPercent(sliceGapPx, chartSize, innerRadiusRatio)
+      : 0;
 
   let currentStartAngle = -90;
+  let donutStartPercent = 0;
   for (let i = 0; i < chartItems.length; i++) {
     const item = chartItems[i];
     const sliceColor = dataVisAt(item.index);
+    const exactPercent = (item.value / sum) * 100;
     const sweepAngle = (item.value / sum) * 360;
-    const endAngle = currentStartAngle + sweepAngle;
-    const midAngle = currentStartAngle + sweepAngle / 2;
+    let startAngle: number;
+    let endAngle: number;
+    let midAngle: number;
+
+    if (pieChartKind === "donut") {
+      const adjustedStartPercent = donutStartPercent + donutGapPercent;
+      const endPercent = donutStartPercent + exactPercent;
+      startAngle = -90 + adjustedStartPercent * 3.6;
+      endAngle = -90 + endPercent * 3.6;
+      midAngle = (startAngle + endAngle) / 2;
+      donutStartPercent = endPercent;
+      if (endPercent - adjustedStartPercent <= 0) {
+        continue;
+      }
+    } else {
+      startAngle = currentStartAngle;
+      endAngle = startAngle + sweepAngle;
+      midAngle = startAngle + sweepAngle / 2;
+      currentStartAngle = endAngle;
+    }
 
     let indicatorText: FrameNode | null = null;
     if (showIndicator) {
       const lineEndPoint = polarToCartesian(
-        PIE_CENTER_X,
-        PIE_CENTER_Y,
-        pieRadius + pieChartConfig.indicator.lineExtend,
+        centerX,
+        centerY,
+        pieRadius + lineExtend,
         midAngle,
       );
       const lineStartPoint =
         pieChartKind === "donut"
-          ? polarToCartesian(
-              PIE_CENTER_X,
-              PIE_CENTER_Y,
-              donutInnerRadiusPx,
-              midAngle,
-            )
-          : { x: PIE_CENTER_X, y: PIE_CENTER_Y };
+          ? polarToCartesian(centerX, centerY, donutInnerRadiusPx, midAngle)
+          : { x: centerX, y: centerY };
       const line = figma.createVector();
       line.vectorPaths = [
         {
@@ -208,11 +286,9 @@ export async function drawPieChart(chartData: ChartData) {
       chartFrame.appendChild(line);
 
       const labelCenterPoint = polarToCartesian(
-        PIE_CENTER_X,
-        PIE_CENTER_Y,
-        pieRadius +
-          pieChartConfig.indicator.lineExtend +
-          pieChartConfig.indicator.labelCenterOffset,
+        centerX,
+        centerY,
+        pieRadius + lineExtend + labelCenterOffset,
         midAngle,
       );
       indicatorText = await createIndicatorTextFrame(
@@ -224,14 +300,28 @@ export async function drawPieChart(chartData: ChartData) {
       );
     }
 
-    const slice = await createPieSlice(
-      currentStartAngle,
-      endAngle,
-      sliceColor,
-      `${item.label} (${item.value})`,
-      pieRadius,
-      innerRadiusRatio,
-    );
+    const slice =
+      pieChartKind === "donut"
+        ? await createDonutSlice(
+            startAngle,
+            endAngle,
+            sliceColor,
+            `${item.label} (${item.value})`,
+            pieRadius,
+            innerRadiusRatio,
+            centerX,
+            centerY,
+          )
+        : await createPieSlice(
+            startAngle,
+            endAngle,
+            sliceColor,
+            `${item.label} (${item.value})`,
+            pieRadius,
+            centerX,
+            centerY,
+            sliceGapPx,
+          );
     chartFrame.appendChild(slice);
     if (indicatorText) {
       chartFrame.appendChild(indicatorText);
@@ -247,17 +337,19 @@ export async function drawPieChart(chartData: ChartData) {
         valuePrefix,
         valueSuffix,
         legendTileLayout,
+        frameWidth,
       );
       if (legend) {
         legendList.appendChild(legend);
       }
     }
-
-    currentStartAngle = endAngle;
   }
 
-  const finalFrame = await createFinalFrame();
-  const titleFrame = await createChartTitle(chartTitle);
+  const finalFrame = await createFinalFrame(
+    frameWidth,
+    pieChartKind === "donut" ? "Donut chart" : "Pie chart",
+  );
+  const titleFrame = await createChartTitle(chartTitle, frameWidth);
   if (titleFrame) {
     finalFrame.appendChild(titleFrame);
   }

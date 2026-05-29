@@ -1,5 +1,13 @@
-import { cartesianTooltipConfig, dataVisAt, textColor } from "../config";
+import { cartesianTooltipConfig, textColor } from "../config";
+import { dataVisAt } from "./dataVisAt";
 import type { ColorToken, TypographyToken } from "../types";
+import {
+  applyHorizontalPadding,
+  applyItemSpacing,
+  applyPaddingTop,
+  applyVerticalPadding,
+  numberTokenValue,
+} from "./applyNumberToken";
 import { applyColorTokenToFills, applyColorTokenToStrokes } from "./applyColorToken";
 import {
   applyTypographyTokenToText,
@@ -66,7 +74,7 @@ async function createTooltipRow(
     layoutMode: "HORIZONTAL",
     primaryAxisSizingMode: "FIXED",
     counterAxisSizingMode: "AUTO",
-    itemSpacing: cartesianTooltipConfig.spacing.itemGap.value,
+    itemSpacing: numberTokenValue(cartesianTooltipConfig.spacing.itemGap),
     layoutAlign: "STRETCH",
   });
 
@@ -76,7 +84,7 @@ async function createTooltipRow(
     layoutMode: "HORIZONTAL",
     primaryAxisSizingMode: "AUTO",
     counterAxisSizingMode: "AUTO",
-    itemSpacing: cartesianTooltipConfig.spacing.itemGap.value,
+    itemSpacing: numberTokenValue(cartesianTooltipConfig.spacing.itemGap),
     layoutGrow: 1,
   });
   main.appendChild(await createSwatch(item.colorTokenIndex));
@@ -97,6 +105,8 @@ async function createTooltipRow(
   );
   value.textAlignHorizontal = "RIGHT";
   row.appendChild(value);
+  await applyItemSpacing(row, cartesianTooltipConfig.spacing.itemGap);
+  await applyItemSpacing(main, cartesianTooltipConfig.spacing.itemGap);
   return row;
 }
 
@@ -140,17 +150,21 @@ export async function createCartesianTooltip(
     return null;
   }
 
-  const outerPadding = cartesianTooltipConfig.spacing.outerPadding.value;
-  const contentWidth = Math.max(1, parent.width - outerPadding * 2);
+  const { outerPadding, panelPadding, itemGap, pointerInsetEnd } =
+    cartesianTooltipConfig.spacing;
+  const outerPaddingPx = numberTokenValue(outerPadding);
+  const panelPaddingPx = numberTokenValue(panelPadding);
+  const pointerInsetEndPx = numberTokenValue(pointerInsetEnd);
+  const contentWidth = Math.max(1, parent.width - outerPaddingPx * 2);
   const panelContentWidth = Math.max(
     1,
-    contentWidth - cartesianTooltipConfig.spacing.panelPadding.value * 2,
+    contentWidth - panelPaddingPx * 2,
   );
   const pointerLeft = clamp(
-    anchorX - outerPadding - cartesianTooltipConfig.pointerWidth / 2,
+    anchorX - outerPaddingPx - cartesianTooltipConfig.pointerWidth / 2,
     0,
     contentWidth -
-      cartesianTooltipConfig.spacing.pointerInsetEnd.value -
+      pointerInsetEndPx -
       cartesianTooltipConfig.pointerWidth,
   );
   const tooltip = await createFrame("Tooltip");
@@ -159,10 +173,12 @@ export async function createCartesianTooltip(
     layoutMode: "VERTICAL",
     primaryAxisSizingMode: "AUTO",
     counterAxisSizingMode: "FIXED",
-    paddingLeft: outerPadding,
-    paddingRight: outerPadding,
-    paddingTop: outerPadding,
+    paddingLeft: outerPaddingPx,
+    paddingRight: outerPaddingPx,
+    paddingTop: outerPaddingPx,
   });
+  await applyHorizontalPadding(tooltip, outerPadding);
+  await applyPaddingTop(tooltip, outerPadding);
 
   const content = await createFrame("Data-vis tooltip");
   content.resize(contentWidth, 1);
@@ -189,13 +205,16 @@ export async function createCartesianTooltip(
     layoutMode: "VERTICAL",
     primaryAxisSizingMode: "AUTO",
     counterAxisSizingMode: "FIXED",
-    paddingLeft: cartesianTooltipConfig.spacing.panelPadding.value,
-    paddingRight: cartesianTooltipConfig.spacing.panelPadding.value,
-    paddingTop: cartesianTooltipConfig.spacing.panelPadding.value,
-    paddingBottom: cartesianTooltipConfig.spacing.panelPadding.value,
-    itemSpacing: cartesianTooltipConfig.spacing.itemGap.value,
+    paddingLeft: panelPaddingPx,
+    paddingRight: panelPaddingPx,
+    paddingTop: panelPaddingPx,
+    paddingBottom: panelPaddingPx,
+    itemSpacing: numberTokenValue(itemGap),
     layoutAlign: "STRETCH",
   });
+  await applyHorizontalPadding(panel, panelPadding);
+  await applyVerticalPadding(panel, panelPadding);
+  await applyItemSpacing(panel, itemGap);
   await applyColorTokenToFills(panel, cartesianTooltipConfig.color.panel);
   await applyColorTokenToStrokes(panel, cartesianTooltipConfig.color.border);
   panel.strokeWeight = 1;

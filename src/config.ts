@@ -1,4 +1,8 @@
 import type { ColorToken, NumberToken, TypographyToken } from "./types";
+import {
+  createLinePointLabels,
+  createSeededLineValues,
+} from "./utils/chart/lineChartCalculate";
 
 // chart sample data — demo inputs, not visual tokens
 export const sampleData = {
@@ -28,11 +32,100 @@ export const pluginUISize = {
   },
 } as const;
 
+/** Shared type scale; component typography references these tokens. */
+const typeScale = {
+  caption: {
+    regular: {
+      fontFamily: "Inter",
+      fontSize: 12,
+      fontWeight: 400,
+      lineHeight: 16,
+      key: "8efff2a3611b231864f23fcff8139b81a85e5884",
+    } satisfies Readonly<TypographyToken>,
+    medium: {
+      fontFamily: "Inter",
+      fontSize: 12,
+      fontWeight: 500,
+      lineHeight: 16,
+      key: "19b21b435c609ea25d26a5226d0753d52faecce0",
+    } satisfies Readonly<TypographyToken>,
+  },
+  label: {
+    regular: {
+      fontFamily: "Inter",
+      fontSize: 14,
+      fontWeight: 400,
+      lineHeight: 20,
+      key: "6c0bedfa63b7860e94170b3aa921c56e1e3636a7",
+    } satisfies Readonly<TypographyToken>,
+    medium: {
+      fontFamily: "Inter",
+      fontSize: 14,
+      fontWeight: 500,
+      lineHeight: 20,
+      key: "fdea4ce6bf257fe42bbe7b3ffa6a794a03de69ad",
+    } satisfies Readonly<TypographyToken>,
+  },
+  heading: {
+    regular: {
+      fontFamily: "Inter",
+      fontSize: 19,
+      fontWeight: 400,
+      lineHeight: 27,
+      key: "6e8a38a9703ae020956f1c20bdc845e42cb3dcdc",
+    } satisfies Readonly<TypographyToken>,
+    medium: {
+      fontFamily: "Inter",
+      fontSize: 19,
+      fontWeight: 500,
+      lineHeight: 27,
+      key: "8823d3e6d7f127e6bf95013924394e2915e402d1",
+    } satisfies Readonly<TypographyToken>,
+  },
+
+  headline: {
+    regular: {
+      fontFamily: "Inter",
+      fontSize: 28,
+      fontWeight: 400,
+      lineHeight: 36,
+    } satisfies Readonly<TypographyToken>,
+  },
+} as const;
+
+/** Shared spacing scale; component spacing tokens reference these NumberTokens. */
+export const spacing = {
+  padding: {
+    normal: {
+      value: 16,
+      key: "f70676fabdbeee4adc99373eb788957ad7e2d71d",
+    } satisfies NumberToken,
+    tight: {
+      value: 12,
+      key: "deb8773dea736196da7559874f5b7a6c7ab50472",
+    } satisfies NumberToken,
+  },
+  gap: {
+    normal: {
+      value: 16,
+      key: "b53449f649ed6c7b19d70d515454342346f4e064",
+    } satisfies NumberToken,
+    s: {
+      value: 8,
+      key: "cb58133bee7f18a9cce49cbc9c63c806e4f816b1",
+    } satisfies NumberToken,
+    xs: {
+      value: 4,
+    } satisfies NumberToken,
+  },
+} as const;
+
 /**
  * Design system: shared colors plus component-scoped layout & typography.
  * Use `ds` for new code; flat exports below alias into `ds` where applicable.
  */
 export const ds = {
+  spacing,
   colors: {
     /** Ordered palette (by index) for slices / bars. */
     dataVis: {
@@ -98,94 +191,31 @@ export const ds = {
       key: "707ed5f9ab4b5788817328c6002d8026dcdf8ae2",
     } satisfies Readonly<ColorToken>,
   },
-
+  typography: typeScale,
   chartTitle: {
-    typography: {
-      fontFamily: "Inter",
-      fontSize: 19,
-      fontWeight: 500,
-      lineHeight: 23,
-      key: "8823d3e6d7f127e6bf95013924394e2915e402d1",
-    } satisfies Readonly<TypographyToken>,
+    typography: typeScale.heading.medium,
     padding: {
-      horizontal: {
-        value: 16,
-        key: "b53449f649ed6c7b19d70d515454342346f4e064",
-      } satisfies NumberToken,
-      vertical: {
-        value: 8,
-        key: "958a0d4a08f694b42b1c052cead41a901e796118",
-      } satisfies NumberToken,
+      horizontal: spacing.padding.normal,
+      vertical: spacing.gap.s,
     },
   },
 
   cartesianKeyInfo: {
     typography: {
-      range: {
-        fontFamily: "Inter",
-        fontSize: 14,
-        fontWeight: 300,
-        lineHeight: 20,
-      } satisfies Readonly<TypographyToken>,
-      label: {
-        fontFamily: "Inter",
-        fontSize: 14,
-        fontWeight: 400,
-        lineHeight: 20,
-        key: "6c0bedfa63b7860e94170b3aa921c56e1e3636a7",
-      } satisfies Readonly<TypographyToken>,
-      valueLarge: {
-        fontFamily: "Inter",
-        fontSize: 28,
-        fontWeight: 400,
-        lineHeight: 36,
-      } satisfies Readonly<TypographyToken>,
-      value: {
-        fontFamily: "Inter",
-        fontSize: 19,
-        fontWeight: 400,
-        lineHeight: 27,
-        key: "8823d3e6d7f127e6bf95013924394e2915e402d1",
-      } satisfies Readonly<TypographyToken>,
-      rowValue: {
-        fontFamily: "Inter",
-        fontSize: 14,
-        fontWeight: 600,
-        lineHeight: 20,
-        key: "b9b2c385b0bee1d96f002c8b9315aba5e246802b",
-      } satisfies Readonly<TypographyToken>,
-      unit: {
-        fontFamily: "Inter",
-        fontSize: 14,
-        fontWeight: 500,
-        lineHeight: 20,
-      } satisfies Readonly<TypographyToken>,
-      change: {
-        fontFamily: "Inter",
-        fontSize: 14,
-        fontWeight: 500,
-        lineHeight: 20,
-      } satisfies Readonly<TypographyToken>,
+      range: typeScale.label.regular,
+      label: typeScale.label.regular,
+      valueLarge: typeScale.headline.regular,
+      value: typeScale.heading.regular,
+      rowValue: typeScale.label.medium,
+      unit: typeScale.label.medium,
+      change: typeScale.label.medium,
     },
     spacing: {
-      horizontalPadding: {
-        value: 16,
-        key: "f70676fabdbeee4adc99373eb788957ad7e2d71d",
-      } satisfies NumberToken,
-      topPadding: {
-        value: 8,
-      } satisfies NumberToken,
-      bottomPadding: {
-        value: 16,
-        key: "deb8773dea736196da7559874f5b7a6c7ab50472",
-      } satisfies NumberToken,
-      itemGap: {
-        value: 8,
-        key: "cb58133bee7f18a9cce49cbc9c63c806e4f816b1",
-      } satisfies NumberToken,
-      rowGap: {
-        value: 4,
-      } satisfies NumberToken,
+      horizontalPadding: spacing.padding.normal,
+      topPadding: spacing.gap.s,
+      bottomPadding: spacing.padding.normal,
+      itemGap: spacing.gap.s,
+      rowGap: spacing.gap.xs,
     },
     color: {
       gain: {
@@ -202,39 +232,14 @@ export const ds = {
     pointerWidth: 16,
     pointerHeight: 8,
     typography: {
-      title: {
-        fontFamily: "Inter",
-        fontSize: 14,
-        fontWeight: 600,
-        lineHeight: 20,
-        key: "b9b2c385b0bee1d96f002c8b9315aba5e246802b",
-      } satisfies Readonly<TypographyToken>,
-      label: {
-        fontFamily: "Inter",
-        fontSize: 14,
-        fontWeight: 400,
-        lineHeight: 20,
-        key: "6c0bedfa63b7860e94170b3aa921c56e1e3636a7",
-      } satisfies Readonly<TypographyToken>,
-      value: {
-        fontFamily: "Inter",
-        fontSize: 14,
-        fontWeight: 600,
-        lineHeight: 20,
-        key: "b9b2c385b0bee1d96f002c8b9315aba5e246802b",
-      } satisfies Readonly<TypographyToken>,
+      title: typeScale.label.medium,
+      label: typeScale.label.regular,
+      value: typeScale.label.medium,
     },
     spacing: {
-      outerPadding: {
-        value: 16,
-      } satisfies NumberToken,
-      panelPadding: {
-        value: 12,
-      } satisfies NumberToken,
-      itemGap: {
-        value: 8,
-        key: "cb58133bee7f18a9cce49cbc9c63c806e4f816b1",
-      } satisfies NumberToken,
+      outerPadding: spacing.padding.normal,
+      panelPadding: spacing.padding.tight,
+      itemGap: spacing.gap.s,
       pointerInsetEnd: {
         value: 16,
       } satisfies NumberToken,
@@ -256,40 +261,20 @@ export const ds = {
 
   legend: {
     typography: {
-      label: {
-        fontFamily: "Inter",
-        fontSize: 14,
-        fontWeight: 400,
-        lineHeight: 20,
-        key: "6c0bedfa63b7860e94170b3aa921c56e1e3636a7",
-      } satisfies Readonly<TypographyToken>,
-      value: {
-        fontFamily: "Inter",
-        fontSize: 14,
-        fontWeight: 600,
-        lineHeight: 20,
-        key: "b9b2c385b0bee1d96f002c8b9315aba5e246802b",
-      } satisfies Readonly<TypographyToken>,
-      percentage: {
-        fontFamily: "Inter",
-        fontSize: 14,
-        fontWeight: 400,
-        lineHeight: 20,
-        key: "6c0bedfa63b7860e94170b3aa921c56e1e3636a7",
-      } satisfies Readonly<TypographyToken>,
+      label: typeScale.label.regular,
+      value: typeScale.label.medium,
+      percentage: typeScale.label.regular,
     },
     spacing: {
-      horizontalPadding: {
-        value: 16,
-        key: "f70676fabdbeee4adc99373eb788957ad7e2d71d",
-      } satisfies NumberToken,
-      verticalPadding: {
-        value: 12,
-        key: "deb8773dea736196da7559874f5b7a6c7ab50472",
-      } satisfies NumberToken,
-      gap: {
-        value: 8,
-        key: "cb58133bee7f18a9cce49cbc9c63c806e4f816b1",
+      horizontalPadding: spacing.padding.normal,
+      verticalPadding: spacing.padding.tight,
+      gap: spacing.gap.s,
+      /** Label ↔ percentage gap in left-and-right legend rows. */
+      leftRightItemSpacing: spacing.gap.xs,
+    },
+    shape: {
+      size: {
+        value: 14,
       } satisfies NumberToken,
     },
     color: {
@@ -301,66 +286,51 @@ export const ds = {
   },
 
   chart: {
+    general: {
+      frameWidth: 390,
+    },
     semiDonut: {
-      size: 318,
-      ratio: 0.88,
+      ringWidth: 20,
+      sliceGap: 2,
       totalValue: {
         typography: {
-          title: {
-            fontFamily: "Inter",
-            fontSize: 14,
-            fontWeight: 400,
-            lineHeight: 20,
-            key: "6c0bedfa63b7860e94170b3aa921c56e1e3636a7",
-          } satisfies Readonly<TypographyToken>,
-          value: {
-            fontFamily: "Inter",
-            fontSize: 19,
-            fontWeight: 600,
-            lineHeight: 27,
-            key: "8823d3e6d7f127e6bf95013924394e2915e402d1",
-          } satisfies Readonly<TypographyToken>,
+          title: typeScale.label.regular,
+          value: typeScale.heading.medium,
         },
       },
     },
-    /** Pie + donut preview/draw (donut uses `donutInnerRadiusRatio`). */
+    /** Pie */
     pie: {
-      frameWidth: 390,
+      frameWidthMin: 360,
+      frameWidthMax: 1000,
       frameHeight: 312,
+      chartSize: 200,
+      sizeMinRatio: 0.3,
+      sizeMaxRatio: 0.6,
       radius: 100,
       radiusLarge: 120,
-      /** Full donut hole as a fraction of outer radius (preview + draw). */
-      donutInnerRadiusRatio: 0.8,
+      ratioMin: 0.5,
+      ratioMax: 0.99,
+      ringWidth: 20,
+      sliceGap: 1.5,
+      sliceGapMin: 0,
+      sliceGapMax: 20,
       indicator: {
-        /** Leader line extend past slice outer edge (px). */
         lineExtend: 8,
-        /** Offset from line end to label anchor (px). */
+        lineExtendMin: 0,
+        lineExtendMax: 20,
         labelCenterOffset: 30,
-        /** Separator stroke between pie/donut slices (SVG path stroke + Figma ellipse). */
         sliceStrokeWeight: {
           value: 1.5,
           key: "e7a7a7e1c7572287d371c5fb928b4cac8879bda6",
         } satisfies NumberToken,
-        /** Indicator leader line stroke (SVG line + Figma vector). */
         leaderLineStrokeWeight: {
           value: 1.5,
           key: "02a12e48d546e86ffbc3cbe52bf3027d21b40815",
         } satisfies NumberToken,
         typography: {
-          label: {
-            fontFamily: "Inter",
-            fontSize: 12,
-            fontWeight: 400,
-            lineHeight: 20,
-            key: "8efff2a3611b231864f23fcff8139b81a85e5884",
-          } satisfies Readonly<TypographyToken>,
-          percentage: {
-            fontFamily: "Inter",
-            fontSize: 12,
-            fontWeight: 600,
-            lineHeight: 20,
-            key: "211a069c48b16cf4e88c22f7bb158d15461cf4b5",
-          } satisfies Readonly<TypographyToken>,
+          label: typeScale.caption.regular,
+          percentage: typeScale.caption.medium,
         },
       },
     },
@@ -391,35 +361,11 @@ export const cartesianChartConfig = {
       } satisfies Readonly<ColorToken>,
     },
     typography: {
-      xAxisTitle: {
-        fontFamily: "Inter",
-        fontSize: 12,
-        fontWeight: 600,
-        lineHeight: 20,
-        key: "211a069c48b16cf4e88c22f7bb158d15461cf4b5",
-      } satisfies Readonly<TypographyToken>,
-      yAxisTitle: {
-        fontFamily: "Inter",
-        fontSize: 12,
-        fontWeight: 600,
-        lineHeight: 20,
-        key: "211a069c48b16cf4e88c22f7bb158d15461cf4b5",
-      } satisfies Readonly<TypographyToken>,
-      xAxisLabel: {
-        fontFamily: "Inter",
-        fontSize: 12,
-        fontWeight: 400,
-        lineHeight: 20,
-        key: "8efff2a3611b231864f23fcff8139b81a85e5884",
-      } satisfies Readonly<TypographyToken>,
+      xAxisTitle: typeScale.caption.medium,
+      yAxisTitle: typeScale.caption.medium,
+      xAxisLabel: typeScale.caption.regular,
     },
-    yAxisLabel: {
-      fontFamily: "Inter",
-      fontSize: 12,
-      fontWeight: 400,
-      lineHeight: 20,
-      key: "8efff2a3611b231864f23fcff8139b81a85e5884",
-    } satisfies Readonly<TypographyToken>,
+    yAxisLabel: typeScale.caption.regular,
   },
 } as const;
 
@@ -450,44 +396,6 @@ export const verticalBarChartConfig = {
     },
   ],
 } as const;
-
-function createSeededLineValues(
-  count: number,
-  seed: number,
-  start: number,
-  volatility: number,
-  drift: number,
-  min: number,
-  max: number,
-): number[] {
-  let state = seed;
-  let value = start;
-  const values: number[] = [];
-  for (let index = 0; index < count; index += 1) {
-    state = (state * 1664525 + 1013904223) % 4294967296;
-    const random = state / 4294967296 - 0.5;
-    const wave = Math.sin(index / 6) * volatility * 0.35;
-    value = Math.max(
-      min,
-      Math.min(max, value + random * volatility + drift + wave),
-    );
-    values.push(Math.round(value));
-  }
-  return values;
-}
-
-function createLinePointLabels(count: number): string[] {
-  const start = new Date(Date.UTC(2026, 0, 1));
-  return Array.from({ length: count }, (_, index) => {
-    const date = new Date(start);
-    date.setUTCDate(start.getUTCDate() + index);
-    return date.toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      timeZone: "UTC",
-    });
-  });
-}
 
 export const lineChartConfig = {
   chartType: "lineChart" as const,
@@ -524,17 +432,37 @@ export const lineChartConfig = {
     },
   ],
 } as const;
-/** Cycle through `ds.colors.dataVis.general` by row index. */
-export function dataVisAt(index: number): ColorToken {
-  const palette = ds.colors.dataVis.general;
-  return palette[index % palette.length];
-}
 
 // --- Legacy flat exports (reference `ds`; existing imports keep working) ---
 
 export const semiDonutChartConfig = ds.chart.semiDonut;
 export const pieChartConfig = ds.chart.pie;
+export const chartGeneralConfig = ds.chart.general;
+
+/** Semi-donut edit/draw layout constraints (not part of design-system tokens). */
+export const semiDonutChartLayout = {
+  frameWidthMin: 360,
+  frameWidthMax: 1000,
+  defaultChartSize: 318,
+  sizeMinRatio: 0.5,
+  sizeMaxRatio: 1,
+  ratioMin: 0.5,
+  ratioMax: 0.99,
+  sliceGapMin: 0,
+  sliceGapMax: 20,
+} as const;
+
+/** Horizontal bar edit/draw layout constraints (not part of design-system tokens). */
+export const horizontalBarChartLayout = {
+  sliceGap: 2,
+  sliceGapMin: 0,
+  sliceGapMax: 20,
+  horizontalPadding: spacing.padding.normal,
+  verticalPadding: spacing.padding.normal,
+} as const;
+
 export const legendSpacingConfig = ds.legend.spacing;
+export const legendShapeConfig = ds.legend.shape;
 export const dataVisColor = ds.colors.dataVis;
 export const textColor = ds.colors.text;
 export const dividerColor = ds.legend.color.divider;

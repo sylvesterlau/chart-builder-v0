@@ -1,9 +1,17 @@
 import {
-  semiDonutChartConfig,
-  dataVisAt,
+  chartGeneralConfig,
+  semiDonutChartLayout,
   textColor,
   typography,
 } from "../config";
+import {
+  getSemiDonutSizeBounds,
+  resolveSemiDonutRingWidth,
+  resolveSemiDonutSliceGapPx,
+  semiDonutGapPxToPercent,
+  semiDonutRingWidthPxToRatio,
+} from "./chart/semiDonutCalculate";
+import { dataVisAt } from "./dataVisAt";
 import { getSum, transformToPercents, TransformedChartItem } from "../helpers";
 import { ChartData } from "../types";
 import type { ColorToken } from "../types";
@@ -15,6 +23,24 @@ import {
 import { createChartTitle, loadChartTitleFont } from "./drawChartTitle";
 import { createFinalFrame } from "./figmaOperations";
 import { createLegend, createLegendList, loadLegendFonts } from "./drawLegend";
+
+function resolveSemiDonutFrameWidth(frameWidth: number | undefined): number {
+  const { frameWidthMin, frameWidthMax } = semiDonutChartLayout;
+  const value = frameWidth ?? chartGeneralConfig.frameWidth;
+  return Math.round(
+    Math.min(frameWidthMax, Math.max(frameWidthMin, value)),
+  );
+}
+
+function resolveSemiDonutSize(
+  semiDonutSize: number | undefined,
+  frameWidth: number,
+): number {
+  const { defaultChartSize } = semiDonutChartLayout;
+  const { min, max } = getSemiDonutSizeBounds(frameWidth);
+  const value = semiDonutSize ?? defaultChartSize;
+  return Math.round(Math.min(max, Math.max(min, value)));
+}
 
 function formatValueText(value: number, prefix: string, suffix: string) {
   const formattedValue = value.toFixed(2);
@@ -28,19 +54,22 @@ async function createSemiDonutSlice(
   endPercent: number,
   layerName: string,
   fillToken: ColorToken,
+  chartSize: number,
+  innerRadiusRatio: number,
+  gapPercent: number,
   isFirst: Boolean = false,
 ): Promise<EllipseNode | null> {
   if (endPercent - startPercent <= 0) {
     return null;
   }
   const slice = figma.createEllipse();
-  const gap = isFirst ? 0 : 0.5;
+  const gap = isFirst ? 0 : gapPercent;
   slice.name = layerName;
-  slice.resize(semiDonutChartConfig.size, semiDonutChartConfig.size);
+  slice.resize(chartSize, chartSize);
   slice.arcData = {
     startingAngle: -Math.PI * (1 - (startPercent + gap) / 100),
     endingAngle: -Math.PI * (1 - endPercent / 100),
-    innerRadius: semiDonutChartConfig.ratio,
+    innerRadius: innerRadiusRatio,
   };
   await applyColorTokenToFills(slice, fillToken);
   return slice;
@@ -107,6 +136,17 @@ export async function drawSemiDonutChart(chartData: ChartData) {
   const totalValueTitle = (
     chartData.totalValueTitle ?? "Total Asset Value"
   ).trim();
+  const frameWidth = resolveSemiDonutFrameWidth(chartData.frameWidth);
+  const chartSize = resolveSemiDonutSize(chartData.semiDonutSize, frameWidth);
+  const ringWidthPx = resolveSemiDonutRingWidth(chartData.semiDonutRingWidth);
+  const innerRadiusRatio = semiDonutRingWidthPxToRatio(ringWidthPx, chartSize);
+  const sliceGapPx = resolveSemiDonutSliceGapPx(chartData.semiDonutSliceGap);
+  const gapPercent = semiDonutGapPxToPercent(
+    sliceGapPx,
+    chartSize,
+    innerRadiusRatio,
+  );
+  const totalValueY = Math.round(chartSize * (90 / 318));
 
   if (chartTitle.trim()) {
     await loadChartTitleFont();
@@ -115,17 +155,17 @@ export async function drawSemiDonutChart(chartData: ChartData) {
     await loadLegendFonts();
   }
 
-  const legendList = shouldShowLegend ? createLegendList() : null;
+  const legendList = shouldShowLegend ? createLegendList("Legend List") : null;
   const legendTileLayout =
     chartData.legendStyle === "topAndBottom" ? "topAndBottom" : "leftAndRight";
 
   const chartFrame = figma.createFrame();
   chartFrame.fills = [];
-  chartFrame.resize(semiDonutChartConfig.size, semiDonutChartConfig.size / 2);
+  chartFrame.resize(chartSize, chartSize / 2);
   Object.assign(chartFrame, {
     name: "Chart area",
-    x: figma.viewport.center.x - semiDonutChartConfig.size / 2,
-    y: figma.viewport.center.y - semiDonutChartConfig.size / 2,
+    x: figma.viewport.center.x - chartSize / 2,
+    y: figma.viewport.center.y - chartSize / 2,
   });
 
   for (let i = 0; i < transformedData.length; i++) {
@@ -139,6 +179,9 @@ export async function drawSemiDonutChart(chartData: ChartData) {
         item.endPercent,
         layerName,
         sliceColor,
+        chartSize,
+        innerRadiusRatio,
+        gapPercent,
         isFirstSlice,
       );
       if (slice) {
@@ -156,6 +199,7 @@ export async function drawSemiDonutChart(chartData: ChartData) {
           valuePrefix,
           valueSuffix,
           legendTileLayout,
+          frameWidth,
         );
         if (legend) {
           legendList.appendChild(legend);
@@ -187,11 +231,11 @@ export async function drawSemiDonutChart(chartData: ChartData) {
     chartValueFrame.appendChild(totalValFrame);
     totalValFrame.layoutPositioning = "ABSOLUTE";
     totalValFrame.x = (chartFrame.width - totalValFrame.width) / 2;
-    totalValFrame.y = 90;
+    totalValFrame.y = totalValueY;
   }
 
-  const finalFrame = await createFinalFrame();
-  const titleFrame = await createChartTitle(chartTitle);
+  const finalFrame = await createFinalFrame(frameWidth, "Semi-donut Chart");
+  const titleFrame = await createChartTitle(chartTitle, frameWidth);
   if (titleFrame) {
     finalFrame.appendChild(titleFrame);
   }

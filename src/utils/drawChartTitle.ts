@@ -1,4 +1,4 @@
-import { chartTitleConfig, textColor } from "../config";
+import { chartGeneralConfig, chartTitleConfig, textColor } from "../config";
 import { applyChartTitlePadding } from "./applyNumberToken";
 import { applyColorTokenToFills } from "./applyColorToken";
 import {
@@ -10,7 +10,10 @@ export async function loadChartTitleFont() {
   await loadTypographyTokenFonts(chartTitleConfig.typography);
 }
 
-export async function createChartTitle(title: string): Promise<FrameNode | null> {
+export async function createChartTitle(
+  title: string,
+  frameWidth: number = chartGeneralConfig.frameWidth,
+): Promise<FrameNode | null> {
   const trimmedTitle = title.trim();
   if (!trimmedTitle) {
     return null;
@@ -20,7 +23,7 @@ export async function createChartTitle(title: string): Promise<FrameNode | null>
   const titleNode = figma.createText();
 
   titleFrame.fills = [];
-  titleFrame.resize(390, 46);
+  titleFrame.resize(frameWidth, 46);
   Object.assign(titleFrame, {
     name: "chart title",
     layoutMode: "HORIZONTAL",

@@ -4,6 +4,7 @@ declare const styles: {
   readonly "chartItemDeleteButtonWrap": string;
   readonly "chartItemInput": string;
   readonly "chartItemInputField": string;
+  readonly "chartWidthControl": string;
   readonly "colorColumn": string;
   readonly "colorGrid": string;
   readonly "colorTokenBlock": string;
@@ -12,12 +13,15 @@ declare const styles: {
   readonly "configValueRow": string;
   readonly "dataSectionActions": string;
   readonly "divider": string;
+  readonly "editSectionHeader": string;
   readonly "field-label": string;
   readonly "field-row": string;
   readonly "fieldGroupLabel": string;
   readonly "fieldHintError": string;
   readonly "fieldLabel": string;
   readonly "fieldRow": string;
+  readonly "fieldRowAlignStart": string;
+  readonly "fieldRowSegmentControl": string;
   readonly "horizontalBarActions": string;
   readonly "horizontalBarBackButton": string;
   readonly "horizontalBarControls": string;
@@ -25,6 +29,7 @@ declare const styles: {
   readonly "horizontalBarLeftPanel": string;
   readonly "horizontalBarPage": string;
   readonly "horizontalBarPreviewPanel": string;
+  readonly "horizontalBarPreviewPanelVariableWidth": string;
   readonly "horizontalBarRightPanel": string;
   readonly "horizontalBarTypeTitle": string;
   readonly "navBackButton": string;

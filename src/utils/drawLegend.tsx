@@ -1,12 +1,13 @@
 import {
   dividerColor,
+  legendShapeConfig,
   legendSpacingConfig,
   textColor,
   typography,
 } from "../config";
 import { formatLegendPercentageDisplay } from "../helpers";
 import type { ColorToken } from "../types";
-import { applyLegendSpacing } from "./applyNumberToken";
+import { applyItemSpacing, applyLegendSpacing } from "./applyNumberToken";
 import {
   applyColorTokenToFills,
   applyColorTokenToStrokes,
@@ -40,21 +41,14 @@ export async function createLegend(
   valuePrefix: string = "",
   valueSuffix: string = "HKD",
   tileLayout: "leftAndRight" | "topAndBottom" = "leftAndRight",
+  frameWidth: number = 390,
 ): Promise<FrameNode | null> {
   const legend = figma.createFrame();
+  const legendLabel = label.trim() || "Item";
   const shapeNode = figma.createRectangle();
-  shapeNode.name = "Shape";
-  shapeNode.resize(14, 14);
-
-  let inlineLabelText = label;
-  if (
-    tileLayout === "leftAndRight" &&
-    showPercentage &&
-    percentage !== null &&
-    percentage !== undefined
-  ) {
-    inlineLabelText = `${label} (${formatLegendPercentageDisplay(percentage)}%)`;
-  }
+  shapeNode.name = "Color";
+  const shapeSize = legendShapeConfig.size.value;
+  shapeNode.resize(shapeSize, shapeSize);
 
   const valueTextInline = formatLegendValue(value, valuePrefix, valueSuffix);
   const percentText =
@@ -65,9 +59,9 @@ export async function createLegend(
   const isStacked = tileLayout === "topAndBottom";
 
   legend.fills = [];
-  legend.resize(390, isStacked ? 56 : 44);
+  legend.resize(frameWidth, isStacked ? 56 : 44);
   Object.assign(legend, {
-    name: "legend 1",
+    name: legendLabel,
     layoutMode: "HORIZONTAL",
     primaryAxisSizingMode: "FIXED",
     counterAxisSizingMode: "AUTO",
@@ -90,14 +84,14 @@ export async function createLegend(
     Object.assign(shapeNode, { layoutAlign: "MIN" });
 
     const labelNode = figma.createText();
-    labelNode.name = label;
+    labelNode.name = legendLabel;
     await applyTypographyTokenToText(labelNode, typography.legend.label);
-    labelNode.characters = label;
+    labelNode.characters = legendLabel;
     Object.assign(labelNode, { layoutAlign: "STRETCH" });
     textNodes.push(labelNode);
 
     const valueNode = figma.createText();
-    valueNode.name = "Legend value";
+    valueNode.name = "Value";
     await applyTypographyTokenToText(valueNode, typography.legend.value);
     valueNode.characters = valueTextInline;
     Object.assign(valueNode, { layoutAlign: "MIN" });
@@ -110,15 +104,18 @@ export async function createLegend(
       layoutMode: "HORIZONTAL",
       primaryAxisSizingMode: "AUTO",
       counterAxisSizingMode: "AUTO",
-      itemSpacing: 4,
+      itemSpacing: 0,
       counterAxisAlignItems: "CENTER",
       layoutAlign: "STRETCH",
     });
     valueRow.appendChild(valueNode);
     if (percentText !== null) {
       const percentNode = figma.createText();
-      percentNode.name = "Legend percent";
-      await applyTypographyTokenToText(percentNode, typography.legend.percentage);
+      percentNode.name = percentText;
+      await applyTypographyTokenToText(
+        percentNode,
+        typography.legend.percentage,
+      );
       percentNode.characters = percentText;
       Object.assign(percentNode, { layoutAlign: "MIN" });
       textNodes.push(percentNode);
@@ -144,20 +141,46 @@ export async function createLegend(
     legend.appendChild(textStack);
   } else {
     const labelNode = figma.createText();
-    labelNode.name = inlineLabelText;
+    labelNode.name = legendLabel;
     await applyTypographyTokenToText(labelNode, typography.legend.label);
-    labelNode.characters = inlineLabelText;
-    labelNode.layoutGrow = 1;
+    labelNode.characters = legendLabel;
     textNodes.push(labelNode);
 
+    const labelRow = figma.createFrame();
+    labelRow.fills = [];
+    Object.assign(labelRow, {
+      name: "Label",
+      layoutMode: "HORIZONTAL",
+      primaryAxisSizingMode: "AUTO",
+      counterAxisSizingMode: "AUTO",
+      itemSpacing: legendSpacingConfig.leftRightItemSpacing.value,
+      counterAxisAlignItems: "CENTER",
+      layoutGrow: 1,
+      layoutAlign: "STRETCH",
+    });
+    labelRow.appendChild(labelNode);
+
+    if (percentText !== null) {
+      const percentNode = figma.createText();
+      percentNode.name = percentText;
+      await applyTypographyTokenToText(
+        percentNode,
+        typography.legend.percentage,
+      );
+      percentNode.characters = percentText;
+      textNodes.push(percentNode);
+      labelRow.appendChild(percentNode);
+    }
+    await applyItemSpacing(labelRow, legendSpacingConfig.leftRightItemSpacing);
+
     const valueNode = figma.createText();
-    valueNode.name = "Legend value";
+    valueNode.name = "Value";
     await applyTypographyTokenToText(valueNode, typography.legend.value);
     valueNode.characters = valueTextInline;
     textNodes.push(valueNode);
 
     legend.appendChild(shapeNode);
-    legend.appendChild(labelNode);
+    legend.appendChild(labelRow);
     legend.appendChild(valueNode);
   }
 
@@ -170,11 +193,11 @@ export async function createLegend(
   return legend;
 }
 
-export function createLegendList() {
+export function createLegendList(name: string = "Legends") {
   const legendList = figma.createFrame();
   legendList.fills = [];
   Object.assign(legendList, {
-    name: "Legends",
+    name,
     layoutMode: "VERTICAL",
     primaryAxisSizingMode: "AUTO",
     layoutAlign: "STRETCH",

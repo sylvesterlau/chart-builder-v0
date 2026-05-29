@@ -1,11 +1,12 @@
 import { h } from "preact";
 import {
   dividerColor,
-  dataVisAt,
+  legendShapeConfig,
   legendSpacingConfig,
   textColor,
   typography,
 } from "../config";
+import { dataVisAt } from "../utils/dataVisAt";
 import { useColorTokenResolved } from "./ColorChips/colorTokenSwatchContext";
 import { useNumberTokenResolved } from "./NumChips/numberTokenValueContext";
 import { useTypographyTokenResolved } from "./TypographyChips/typographyTokenValueContext";
@@ -75,6 +76,10 @@ function LegendPreview({
     resolvedNumbers,
   );
   const gap = numberTokenResolvedValue(legendSpacingConfig.gap, resolvedNumbers);
+  const shapeSize = numberTokenResolvedValue(
+    legendShapeConfig.size,
+    resolvedNumbers,
+  );
   const rowPadding = `${verticalPadding}px ${horizontalPadding}px`;
   const rowGap = `${gap}px`;
   const labelCss = typographyTokenToPreviewCss(
@@ -114,8 +119,8 @@ function LegendPreview({
                 style={{
                   backgroundColor: color,
                   flexShrink: 0,
-                  height: "14px",
-                  width: "14px",
+                  height: `${shapeSize}px`,
+                  width: `${shapeSize}px`,
                 }}
               />
               <div
@@ -187,8 +192,8 @@ function LegendPreview({
               style={{
                 backgroundColor: color,
                 flexShrink: 0,
-                height: "14px",
-                width: "14px",
+                height: `${shapeSize}px`,
+                width: `${shapeSize}px`,
               }}
             />
             <div

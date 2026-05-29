@@ -51,7 +51,11 @@ async function applyNumberTokenToField(
   try {
     node.setBoundVariable(field, variable);
   } catch (err) {
-    console.error("applyNumberTokenToField: setBoundVariable failed", field, err);
+    console.error(
+      "applyNumberTokenToField: setBoundVariable failed",
+      field,
+      err,
+    );
   }
 }
 
@@ -70,6 +74,22 @@ export async function applyVerticalPadding(
   token: NumberToken,
 ): Promise<void> {
   await applyNumberTokenToField(node, "paddingTop", token);
+  await applyNumberTokenToField(node, "paddingBottom", token);
+}
+
+/** Bind top padding on a layout frame. */
+export async function applyPaddingTop(
+  node: LayoutBindableNode,
+  token: NumberToken,
+): Promise<void> {
+  await applyNumberTokenToField(node, "paddingTop", token);
+}
+
+/** Bind bottom padding on a layout frame. */
+export async function applyPaddingBottom(
+  node: LayoutBindableNode,
+  token: NumberToken,
+): Promise<void> {
   await applyNumberTokenToField(node, "paddingBottom", token);
 }
 
@@ -100,6 +120,19 @@ export async function applyLegendSpacing(
   await applyHorizontalPadding(node, spacing.horizontalPadding);
   await applyVerticalPadding(node, spacing.verticalPadding);
   await applyItemSpacing(node, spacing.gap);
+}
+
+export async function applyKeyInfoSpacing(
+  node: LayoutBindableNode,
+  spacing: {
+    horizontalPadding: NumberToken;
+    topPadding: NumberToken;
+    bottomPadding: NumberToken;
+  },
+): Promise<void> {
+  await applyHorizontalPadding(node, spacing.horizontalPadding);
+  await applyPaddingTop(node, spacing.topPadding);
+  await applyPaddingBottom(node, spacing.bottomPadding);
 }
 
 /** Bind `strokeWeight` on geometry nodes (ellipse, vector, line, etc.). */

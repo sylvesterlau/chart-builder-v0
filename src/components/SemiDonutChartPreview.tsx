@@ -1,11 +1,10 @@
 import { h } from "preact";
+import { chartBackground, textColor, typography } from "../config";
 import {
-  chartBackground,
-  dataVisAt,
-  semiDonutChartConfig,
-  textColor,
-  typography,
-} from "../config";
+  semiDonutGapPxToPercent,
+  semiDonutRingWidthPxToRatio,
+} from "../utils/chart/semiDonutCalculate";
+import { dataVisAt } from "../utils/dataVisAt";
 import { LegendStyle } from "../types";
 import { ChartItem } from "./ChartItemInput";
 import ChartTitlePreview from "./ChartTitlePreview";
@@ -18,10 +17,16 @@ import {
 } from "../utils/colorTokenDisplay";
 import { typographyTokenToPreviewCss } from "../utils/typographyTokenDisplay";
 
+const PREVIEW_SCALE = 0.85;
+
 interface SemiDonutChartPreviewProps {
+  frameWidth: number;
+  chartSize: number;
   chartTitle: string;
   items: ChartItem[];
   legendStyle: LegendStyle;
+  ringWidth: number;
+  sliceGap: number;
   showPercentage: boolean;
   valuePrefix: string;
   valueSuffix: string;
@@ -63,9 +68,13 @@ function formatValueText(value: number, prefix: string, suffix: string) {
 }
 
 function SemiDonutChartPreview({
+  frameWidth,
+  chartSize,
   chartTitle,
   items,
   legendStyle,
+  ringWidth,
+  sliceGap,
   showPercentage,
   valuePrefix,
   valueSuffix,
@@ -90,117 +99,161 @@ function SemiDonutChartPreview({
     return null;
   }
 
-  const outerRadius = semiDonutChartConfig.size / 2;
-  const innerRadius = outerRadius * semiDonutChartConfig.ratio;
-  const ringWidth = outerRadius - innerRadius;
+  const outerRadius = chartSize / 2;
+  const innerRadiusRatio = semiDonutRingWidthPxToRatio(ringWidth, chartSize);
+  const innerRadius = outerRadius * innerRadiusRatio;
+  const ringWidthPx = outerRadius - innerRadius;
   const strokeRadius = (outerRadius + innerRadius) / 2;
+  const gapPercent = semiDonutGapPxToPercent(
+    sliceGap,
+    chartSize,
+    innerRadiusRatio,
+  );
   let startPercent = 0;
   const totalValueText = formatValueText(
     totalOfLegends,
     valuePrefix,
     valueSuffix,
   );
+  const chartAreaHeight = chartSize / 2;
+  const chartCenterX = frameWidth / 2;
+  const chartCenterY = chartSize / 2;
+  const totalValueBottom = Math.round(chartSize * (30 / 318));
+  const previewLayoutWidth = Math.round(frameWidth * PREVIEW_SCALE);
 
   return (
     <div
       style={{
-        alignItems: "center",
-        backgroundColor: colorTokenPreviewBackground(
-          chartBackground,
-          resolvedColors,
-        ),
         boxSizing: "border-box",
         display: "flex",
-        flexDirection: "column",
-        gap: "16px",
-        padding: "16px 0",
-        transform: "scale(0.9)",
-        transformOrigin: "top center",
-        width: "100%",
+        flexShrink: 0,
+        justifyContent: "center",
+        width: `max(100%, ${previewLayoutWidth}px)`,
       }}
     >
-      <ChartTitlePreview title={chartTitle} />
-      <div style={{ maxWidth: "390px", position: "relative", width: "100%" }}>
-        <svg
-          viewBox="0 0 390 180"
-          width="100%"
-          style={{ display: "block", maxWidth: "390px" }}
+      <div
+        style={{
+          flexShrink: 0,
+          width: `${previewLayoutWidth}px`,
+        }}
+      >
+        <div
+          style={{
+            alignItems: "center",
+            backgroundColor: colorTokenPreviewBackground(
+              chartBackground,
+              resolvedColors,
+            ),
+            boxSizing: "border-box",
+            display: "flex",
+            flexDirection: "column",
+            gap: "16px",
+            maxWidth: `${frameWidth}px`,
+            padding: "16px 0",
+            transform: `scale(${PREVIEW_SCALE})`,
+            transformOrigin: "top left",
+            width: `${frameWidth}px`,
+          }}
         >
-          {chartItems.map((item, arcIndex) => {
-            const color = colorTokenSwatchHex(dataVisAt(item.index), resolvedColors);
-            const exactPercent = (item.value / total) * 100;
-            const adjustedStartPercent =
-              arcIndex === 0 ? startPercent : startPercent + 0.5;
-            const endPercent = startPercent + exactPercent;
-            startPercent = endPercent;
-            if (endPercent - adjustedStartPercent <= 0) {
-              return null;
-            }
-
-            const startAngle = 180 + adjustedStartPercent * 1.8;
-            const endAngle = 180 + endPercent * 1.8;
-            return (
-              <path
-                key={`${item.label}-${item.index}`}
-                d={describeArc(195, 159, strokeRadius, startAngle, endAngle)}
-                fill="none"
-                stroke={color}
-                strokeWidth={ringWidth}
-                strokeLinecap="butt"
-              />
-            );
-          })}
-        </svg>
-        {showTotalValue ? (
+          <ChartTitlePreview title={chartTitle} />
           <div
             style={{
-              alignItems: "center",
-              bottom: "30px",
-              display: "flex",
-              flexDirection: "column",
-              left: 0,
-              position: "absolute",
-              right: 0,
+              maxWidth: `${frameWidth}px`,
+              position: "relative",
+              width: "100%",
             }}
           >
-            <div
-              style={{
-                color: chartTextPrimary,
-                textAlign: "center",
-                ...typographyTokenToPreviewCss(
-                  typography.totalValue.title,
-                  resolvedTypography,
-                ),
-              }}
+            <svg
+              viewBox={`0 0 ${frameWidth} ${chartAreaHeight}`}
+              width="100%"
+              style={{ display: "block", maxWidth: `${frameWidth}px` }}
             >
-              {totalValueTitle}
-            </div>
-            <div
-              style={{
-                color: chartTextPrimary,
-                letterSpacing: "0px",
-                marginTop: "2px",
-                textAlign: "center",
-                whiteSpace: "nowrap",
-                ...typographyTokenToPreviewCss(
-                  typography.totalValue.value,
-                  resolvedTypography,
-                ),
-              }}
-            >
-              {totalValueText}
-            </div>
+              {chartItems.map((item, arcIndex) => {
+                const color = colorTokenSwatchHex(
+                  dataVisAt(item.index),
+                  resolvedColors,
+                );
+                const exactPercent = (item.value / total) * 100;
+                const adjustedStartPercent =
+                  arcIndex === 0 ? startPercent : startPercent + gapPercent;
+                const endPercent = startPercent + exactPercent;
+                startPercent = endPercent;
+                if (endPercent - adjustedStartPercent <= 0) {
+                  return null;
+                }
+
+                const startAngle = 180 + adjustedStartPercent * 1.8;
+                const endAngle = 180 + endPercent * 1.8;
+                return (
+                  <path
+                    key={`${item.label}-${item.index}`}
+                    d={describeArc(
+                      chartCenterX,
+                      chartCenterY,
+                      strokeRadius,
+                      startAngle,
+                      endAngle,
+                    )}
+                    fill="none"
+                    stroke={color}
+                    strokeWidth={ringWidthPx}
+                    strokeLinecap="butt"
+                  />
+                );
+              })}
+            </svg>
+            {showTotalValue ? (
+              <div
+                style={{
+                  alignItems: "center",
+                  bottom: `${totalValueBottom}px`,
+                  display: "flex",
+                  flexDirection: "column",
+                  left: 0,
+                  position: "absolute",
+                  right: 0,
+                }}
+              >
+                <div
+                  style={{
+                    color: chartTextPrimary,
+                    textAlign: "center",
+                    ...typographyTokenToPreviewCss(
+                      typography.totalValue.title,
+                      resolvedTypography,
+                    ),
+                  }}
+                >
+                  {totalValueTitle}
+                </div>
+                <div
+                  style={{
+                    color: chartTextPrimary,
+                    letterSpacing: "0px",
+                    marginTop: "2px",
+                    textAlign: "center",
+                    whiteSpace: "nowrap",
+                    ...typographyTokenToPreviewCss(
+                      typography.totalValue.value,
+                      resolvedTypography,
+                    ),
+                  }}
+                >
+                  {totalValueText}
+                </div>
+              </div>
+            ) : null}
           </div>
-        ) : null}
+          <LegendPreview
+            items={legendItems}
+            legendStyle={legendStyle}
+            total={total}
+            showPercentage={showPercentage}
+            valuePrefix={valuePrefix}
+            valueSuffix={valueSuffix}
+          />
+        </div>
       </div>
-      <LegendPreview
-        items={legendItems}
-        legendStyle={legendStyle}
-        total={total}
-        showPercentage={showPercentage}
-        valuePrefix={valuePrefix}
-        valueSuffix={valueSuffix}
-      />
     </div>
   );
 }

@@ -1,5 +1,5 @@
 // Figma operations
-import { chartBackground } from "../config";
+import { chartBackground, chartGeneralConfig } from "../config";
 import { applyColorTokenToFills } from "./applyColorToken";
 
 // check Theme collection by ID
@@ -18,11 +18,14 @@ export async function checkThemeCol(colID: string) {
 }
 
 // Draw final frame
-export async function createFinalFrame(): Promise<FrameNode> {
+export async function createFinalFrame(
+  frameWidth: number = chartGeneralConfig.frameWidth,
+  name: string = "Chart + legend",
+): Promise<FrameNode> {
   const finalFrame = figma.createFrame();
-  finalFrame.resize(390, 0);
+  finalFrame.resize(frameWidth, 0);
   Object.assign(finalFrame, {
-    name: "Chart + legend",
+    name,
     x: figma.viewport.center.x,
     y: figma.viewport.center.y,
     layoutMode: "VERTICAL",
@@ -30,8 +33,8 @@ export async function createFinalFrame(): Promise<FrameNode> {
     counterAxisSizingMode: "FIXED", // width : hug
     counterAxisAlignItems: "CENTER",
     itemSpacing: 0,
-    paddingTop: 16,
-    paddingBottom: 16,
+    paddingTop: 0,
+    paddingBottom: 0,
   });
   await applyColorTokenToFills(finalFrame, chartBackground);
   return finalFrame;

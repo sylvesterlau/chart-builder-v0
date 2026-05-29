@@ -1,15 +1,20 @@
 import { h } from "preact";
-import { chartBackground, dataVisAt } from "../config";
+import { chartBackground, horizontalBarChartLayout } from "../config";
+import { dataVisAt } from "../utils/dataVisAt";
 import { LegendStyle } from "../types";
 import { ChartItem } from "./ChartItemInput";
 import ChartTitlePreview from "./ChartTitlePreview";
 import LegendPreview from "./LegendPreview";
 import { useColorTokenResolved } from "./ColorChips/colorTokenSwatchContext";
+import { useNumberTokenResolved } from "./NumChips/numberTokenValueContext";
 import { colorTokenPreviewBackground, colorTokenSwatchHex } from "../utils/colorTokenDisplay";
+import { numberTokenResolvedValue } from "../utils/numberTokenDisplay";
 
 interface HorizontalBarChartPreviewProps {
   chartTitle: string;
+  frameWidth: number;
   items: ChartItem[];
+  sliceGap: number;
   legendStyle: LegendStyle;
   showPercentage: boolean;
   valuePrefix: string;
@@ -22,13 +27,24 @@ function formatPercent(value: number) {
 
 function HorizontalBarChartPreview({
   chartTitle,
+  frameWidth,
   items,
+  sliceGap,
   legendStyle,
   showPercentage,
   valuePrefix,
   valueSuffix,
 }: HorizontalBarChartPreviewProps) {
   const { values: resolvedColors } = useColorTokenResolved();
+  const { values: resolvedNumbers } = useNumberTokenResolved();
+  const horizontalPadding = numberTokenResolvedValue(
+    horizontalBarChartLayout.horizontalPadding,
+    resolvedNumbers,
+  );
+  const verticalPadding = numberTokenResolvedValue(
+    horizontalBarChartLayout.verticalPadding,
+    resolvedNumbers,
+  );
 
   const legendItems = items
     .map((item, index) => ({ ...item, index }))
@@ -52,10 +68,11 @@ function HorizontalBarChartPreview({
         display: "flex",
         flexDirection: "column",
         gap: "16px",
-        padding: "16px 0",
-        width: "100%",
+        maxWidth: `${frameWidth}px`,
+        padding: 0,
         transform: "scale(0.9)",
         transformOrigin: "top center",
+        width: `${frameWidth}px`,
       }}
     >
       <ChartTitlePreview title={chartTitle} />
@@ -63,9 +80,9 @@ function HorizontalBarChartPreview({
         style={{
           boxSizing: "border-box",
           display: "flex",
-          gap: "2px",
+          gap: `${sliceGap}px`,
           height: "12px",
-          padding: "0 16px",
+          padding: `${verticalPadding}px ${horizontalPadding}px`,
           overflow: "hidden",
           width: "100%",
         }}
