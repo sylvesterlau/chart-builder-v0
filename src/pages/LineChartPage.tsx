@@ -2,15 +2,17 @@ import {
   Button,
   Dropdown,
   DropdownOption,
+  RangeSlider,
   Stack,
   Text,
   Textbox,
   TextboxNumeric,
+  Toggle,
   VerticalSpace,
 } from "@create-figma-plugin/ui";
 import { emit } from "@create-figma-plugin/utilities";
 import { h } from "preact";
-import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
+import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
 import LineChartPreview from "../components/LineChartPreview";
 import { dataVisColor, lineChartConfig, pluginUISize } from "../config";
 import {
@@ -28,7 +30,6 @@ interface LineChartPageProps {
   onBack: () => void;
 }
 
-type LineSelectedMode = "none" | "half" | "threeQuarter" | "last";
 type XAxisMode = "time" | "date";
 
 const LINE_MODE_OPTIONS: Array<DropdownOption> = [
@@ -44,12 +45,6 @@ const AXIS_LINE_VISIBILITY_OPTIONS: Array<DropdownOption> = [
   { text: "Y-axis only", value: "y" },
   { text: "X-axis only", value: "x" },
   { text: "Hide both", value: "none" },
-];
-const SELECTED_OPTIONS: Array<DropdownOption> = [
-  { text: "No selection", value: "none" },
-  { text: "50% position", value: "half" },
-  { text: "75% position", value: "threeQuarter" },
-  { text: "100% position", value: "last" },
 ];
 const X_AXIS_MODE_OPTIONS: Array<DropdownOption> = [
   { text: "Time range", value: "time" },
@@ -68,6 +63,7 @@ const DEFAULT_END_TIME = "16:00";
 const DATE_INPUT_PATTERN = /^\d{4}-\d{2}$/;
 const TIME_INPUT_PATTERN = /^\d{2}:\d{2}$/;
 const PARTIAL_LINE_RANGE_RATIO = 0.788;
+const DEFAULT_SELECTED_PERCENT = 75;
 
 function clampPointCount(value: number): number {
   return Math.max(MIN_POINTS, Math.min(MAX_POINTS, Math.round(value)));
@@ -111,11 +107,35 @@ function sanitizeNumberInput(value: string): string {
     .join("");
 }
 
-function selectedIndexFromMode(mode: LineSelectedMode, pointCount: number): number {
-  if (mode === "none") return -1;
-  if (mode === "last") return pointCount - 1;
-  if (mode === "half") return Math.round((pointCount - 1) * 0.5);
-  return Math.round((pointCount - 1) * 0.75);
+function selectedIndexFromPercent(percent: number, pointCount: number): number {
+  const boundedPercent = Math.max(0, Math.min(100, Math.round(percent)));
+  return Math.round(((pointCount - 1) * boundedPercent) / 100);
+}
+
+function clampSelectedPercent(value: number | null): number {
+  if (value === null) return 0;
+  return Math.max(0, Math.min(100, Math.round(value)));
+}
+
+function syncSelectedRangeProgress(
+  inputElement: HTMLInputElement | null,
+  percent: number,
+  showSelection: boolean,
+) {
+  if (inputElement === null) return;
+  if (showSelection === false) {
+    inputElement.style.background = "";
+    return;
+  }
+  const sliderThumbWidth = inputElement.offsetHeight;
+  const progressX =
+    inputElement.offsetWidth > 0
+      ? (percent / 100) * (inputElement.offsetWidth - sliderThumbWidth) +
+        sliderThumbWidth / 2
+      : percent;
+  const progressStop =
+    inputElement.offsetWidth > 0 ? `${progressX}px` : `${percent}%`;
+  inputElement.style.background = `linear-gradient(to right, var(--figma-color-bg-brand) ${progressStop}, transparent ${progressStop})`;
 }
 
 function lineRangeRatio(lineRange: LineChartRange): number {
@@ -404,8 +424,10 @@ function LineChartPage({ onBack }: LineChartPageProps) {
     useState<CartesianAxisLineVisibility>(
       sample.axisLineVisibility ?? "y",
     );
-  const [selectedMode, setSelectedMode] =
-    useState<LineSelectedMode>("threeQuarter");
+  const [selectedPercent, setSelectedPercent] =
+    useState<number>(DEFAULT_SELECTED_PERCENT);
+  const [showSelection, setShowSelection] = useState<boolean>(true);
+  const selectedRangeInputRef = useRef<HTMLInputElement>(null);
   const [lineRange, setLineRange] =
     useState<LineChartRange>(sample.lineRange);
   const [pointCountInput, setPointCountInput] = useState<string>(
@@ -447,6 +469,18 @@ function LineChartPage({ onBack }: LineChartPageProps) {
       });
     };
   }, []);
+
+  useEffect(() => {
+    const syncProgress = () =>
+      syncSelectedRangeProgress(
+        selectedRangeInputRef.current,
+        selectedPercent,
+        showSelection,
+      );
+    syncProgress();
+    const animationFrame = window.requestAnimationFrame(syncProgress);
+    return () => window.cancelAnimationFrame(animationFrame);
+  }, [selectedPercent, showSelection]);
 
   const parsedPointCount = parseInputNumber(pointCountInput);
   const parsedMinValue = parseInputNumber(minValueInput);
@@ -535,7 +569,9 @@ function LineChartPage({ onBack }: LineChartPageProps) {
       axisLineVisibility,
       color: sample.color,
       pointCount: boundedPointCount,
-      selectedIndex: selectedIndexFromMode(selectedMode, boundedPointCount),
+      selectedIndex: showSelection
+        ? selectedIndexFromPercent(selectedPercent, boundedPointCount)
+        : -1,
       width,
       height,
       minValue: effectiveMinValue,
@@ -584,7 +620,8 @@ function LineChartPage({ onBack }: LineChartPageProps) {
     height,
     lineMode,
     lineRange,
-    selectedMode,
+    showSelection,
+    selectedPercent,
     series,
     width,
     yAxisPosition,
@@ -748,15 +785,51 @@ function LineChartPage({ onBack }: LineChartPageProps) {
                 {chartConfig.pointCount} data points
               </Text>
             </div>
-            <div className={styles.fieldRow}>
-              <Text className={styles.fieldLabel}>Selected</Text>
-              <Dropdown
-                onValueChange={(value) =>
-                  setSelectedMode(value as LineSelectedMode)
-                }
-                options={SELECTED_OPTIONS}
-                value={selectedMode}
-              />
+            <Text className={styles.fieldGroupLabel}>Selection</Text>
+            <div className={styles.selectedControlStack}>
+              <div className={styles.selectedOptionRow}>
+                <Text className={styles.fieldLabel}>Selected</Text>
+                <div className={styles.selectedSwitchCell}>
+                  <Toggle
+                    aria-label="Show selection"
+                    onValueChange={setShowSelection}
+                    value={showSelection}
+                  >
+                    {""}
+                  </Toggle>
+                </div>
+              </div>
+              <div className={styles.selectedPositionRow}>
+                <Text className={styles.fieldLabel}>Position</Text>
+                <RangeSlider
+                  aria-label="Selected position"
+                  disabled={!showSelection}
+                  increment={1}
+                  maximum={100}
+                  minimum={0}
+                  onNumericValueInput={(value) =>
+                    setSelectedPercent(clampSelectedPercent(value))
+                  }
+                  ref={selectedRangeInputRef}
+                  value={String(selectedPercent)}
+                />
+              </div>
+              <div className={styles.selectedPercentInputRow}>
+                <span />
+                <div className={styles.selectedPercentInputWrap}>
+                  <TextboxNumeric
+                    disabled={!showSelection}
+                    integer
+                    maximum={100}
+                    minimum={0}
+                    onNumericValueInput={(value) =>
+                      setSelectedPercent(clampSelectedPercent(value))
+                    }
+                    value={String(selectedPercent)}
+                  />
+                  <span className={styles.selectedPercentSuffix}>%</span>
+                </div>
+              </div>
             </div>
             <Text className={styles.fieldGroupLabel}>Y-axis</Text>
             <div className={styles.fieldRow}>

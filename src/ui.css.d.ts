@@ -31,6 +31,13 @@ declare const styles: {
   readonly "navTitle": string;
   readonly "section-title": string;
   readonly "sectionTitle": string;
+  readonly "selectedControlStack": string;
+  readonly "selectedOptionRow": string;
+  readonly "selectedPercentInputRow": string;
+  readonly "selectedPercentInputWrap": string;
+  readonly "selectedPercentSuffix": string;
+  readonly "selectedPositionRow": string;
+  readonly "selectedSwitchCell": string;
   readonly "tokenLookupCopiedFeedback": string;
   readonly "tokenLookupCopyActions": string;
   readonly "tokenLookupCopyActionsVisible": string;
