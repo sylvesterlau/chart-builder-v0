@@ -4,6 +4,9 @@ import {
   createSeededLineValues,
 } from "./utils/chart/lineChartCalculate";
 
+// Show design system entry
+export const showDesignSystemEntry = true;
+
 // chart sample data — demo inputs, not visual tokens
 export const sampleData = {
   spending: {

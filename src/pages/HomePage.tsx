@@ -3,6 +3,7 @@ import { h } from "preact";
 import ChartTypeIcon from "../components/ChartTypeIcon";
 import List from "../components/List";
 import styles from "./HomePage.module.css";
+import { showDesignSystemEntry } from "../config";
 
 interface HomePageProps {
   onNavigate: (
@@ -33,22 +34,10 @@ function HomePage({ onNavigate }: HomePageProps) {
             onClick={() => onNavigate("pieDonutChart")}
           />
           <List
-            preview={<ChartTypeIcon variant="semiDonut" />}
-            title="Semi-donut"
-            subtitle="Half-circle progress breakdown"
-            onClick={() => onNavigate("semiDonutChart")}
-          />
-          <List
             preview={<ChartTypeIcon variant="verticalBar" />}
             title="Vertical bar"
             subtitle="Time series or grouped values"
             onClick={() => onNavigate("verticalBar")}
-          />
-          <List
-            preview={<ChartTypeIcon variant="horizontalBar" />}
-            title="Horizontal stack bar"
-            subtitle="Stacked horizontal bar chart"
-            onClick={() => onNavigate("horizontalBar")}
           />
           <List
             preview={<ChartTypeIcon variant="line" />}
@@ -56,21 +45,36 @@ function HomePage({ onNavigate }: HomePageProps) {
             subtitle="Trends over time or date ranges"
             onClick={() => onNavigate("lineChart")}
           />
+          <List
+            preview={<ChartTypeIcon variant="semiDonut" />}
+            title="Semi-donut"
+            subtitle="Half-circle progress breakdown"
+            onClick={() => onNavigate("semiDonutChart")}
+          />
+          <List
+            preview={<ChartTypeIcon variant="horizontalBar" />}
+            title="Horizontal stack bar"
+            subtitle="Stacked horizontal bar chart"
+            onClick={() => onNavigate("horizontalBar")}
+          />
         </div>
 
         <VerticalSpace space="medium" />
-
-        <Text className={styles.sectionTitle}>Settings</Text>
-        <VerticalSpace space="small" />
-        <div className={styles.listGroup}>
-          <List
-            preview={<ChartTypeIcon variant="designSystem" />}
-            title="Design system"
-            subtitle="Colors, typography, spacing"
-            variant="settings"
-            onClick={() => onNavigate("designSystemConfig")}
-          />
-        </div>
+        {showDesignSystemEntry ? (
+          <div>
+            <Text className={styles.sectionTitle}>Settings</Text>
+            <VerticalSpace space="small" />
+            <div className={styles.listGroup}>
+              <List
+                preview={<ChartTypeIcon variant="designSystem" />}
+                title="Design system"
+                subtitle="Colors, typography, spacing"
+                variant="settings"
+                onClick={() => onNavigate("designSystemConfig")}
+              />
+            </div>
+          </div>
+        ) : null}
       </div>
     </Container>
   );
