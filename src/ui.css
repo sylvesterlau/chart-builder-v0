@@ -32,6 +32,13 @@
   width: 100%;
 }
 
+.chartDimensionInputs {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 1fr 1fr;
+  min-width: 0;
+}
+
 .fieldRowAlignStart {
   align-items: start;
 }
@@ -43,6 +50,54 @@
 .fieldRowSegmentControl {
   justify-self: start;
   width: fit-content;
+}
+
+.gridLineCheckboxGroup {
+  display: flex;
+  gap: 16px;
+  justify-self: start;
+}
+
+.yAxisSection,
+.xAxisSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.yAxisSectionHeader,
+.xAxisSectionHeader {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.yAxisValueInputWrap {
+  position: relative;
+  width: 100%;
+}
+
+.yAxisValueInputWrap > *:first-child {
+  width: 100%;
+}
+
+.yAxisValueInputWrap input {
+  padding-right: 40px;
+}
+
+.selectedPercentSuffix,
+.yAxisValueInputSuffix {
+  color: var(--figma-color-text-secondary);
+  font-size: 12px;
+  line-height: 16px;
+  pointer-events: none;
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: var(--z-index-3, 3);
 }
 
 .editSectionHeader {
@@ -57,6 +112,10 @@
   font-size: 11px;
   line-height: 16px;
   margin-left: 116px;
+}
+
+.fieldHintErrorFullWidth {
+  margin-left: 0;
 }
 
 .selectedControlStack {
@@ -104,18 +163,6 @@
 
 .selectedPercentInputWrap input {
   padding-right: 24px;
-}
-
-.selectedPercentSuffix {
-  color: var(--figma-color-text-secondary);
-  font-size: 12px;
-  line-height: 16px;
-  pointer-events: none;
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: var(--z-index-3, 3);
 }
 
 .fieldGroupLabel {

@@ -1,5 +1,6 @@
 import {
   formatAxisNumber,
+  formatAxisTickLabel,
   isCartesianXAxisLineVisible,
   isCartesianYAxisLineVisible,
 } from "../helpers";
@@ -9,6 +10,7 @@ import type {
   CartesianYAxisPosition,
   ColorToken,
   TypographyToken,
+  YAxisDataType,
 } from "../types";
 import { applyColorTokenToFills, applyColorTokenToStrokes } from "./applyColorToken";
 import { applyTypographyTokenToText } from "./applyTypographyToken";
@@ -145,6 +147,7 @@ export interface CartesianYAxisOptions {
   color: CartesianChartColorConfig;
   textColor: ColorToken;
   ticks: number[];
+  yAxisDataType?: YAxisDataType;
   yAxisPosition?: CartesianYAxisPosition;
 }
 
@@ -159,6 +162,7 @@ export async function drawCartesianYAxis(
   const axis = await createCartesianFrameNode(parent, "Y-axis", x, y, width, height);
   const yAxisPosition = options.yAxisPosition ?? "right";
   const yLabelStyle = options.color.yAxisLabel;
+  const yAxisDataType = options.yAxisDataType ?? "number";
   Object.assign(axis, {
     layoutMode: "VERTICAL",
     primaryAxisSizingMode: "FIXED",
@@ -193,7 +197,7 @@ export async function drawCartesianYAxis(
       : 0;
 
     const label = await createCartesianText(
-      formatAxisNumber(tick),
+      formatAxisTickLabel(tick, yAxisDataType),
       yLabelStyle,
       options.textColor,
     );

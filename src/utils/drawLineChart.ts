@@ -5,17 +5,17 @@ import {
   textColor,
 } from "../config";
 import { dataVisAt } from "./dataVisAt";
-import {
-  clamp,
-  normalizeLineChartConfig,
-} from "../helpers";
+import { clamp, normalizeLineChartConfig } from "../helpers";
 import {
   ColorToken,
   LineChartConfig,
   NormalizedLineChartConfig,
   TypographyToken,
 } from "../types";
-import { applyColorTokenToFills, applyColorTokenToStrokes } from "./applyColorToken";
+import {
+  applyColorTokenToFills,
+  applyColorTokenToStrokes,
+} from "./applyColorToken";
 import {
   applyHorizontalPadding,
   applyItemSpacing,
@@ -255,7 +255,10 @@ async function applyMarkerStroke(
   strokeToken: ColorToken,
 ) {
   node.strokes = [];
-  await applyColorTokenToStrokes(node as SceneNode & MinimalStrokesMixin, strokeToken);
+  await applyColorTokenToStrokes(
+    node as SceneNode & MinimalStrokesMixin,
+    strokeToken,
+  );
   node.strokeWeight = 1.5;
   node.strokeAlign = "OUTSIDE";
 }
@@ -270,7 +273,15 @@ async function drawMarker(
   const marker = await createFrameNode(parent, ".Marker", x - 7, y - 7, 14, 14);
 
   if (seriesIndex === 1) {
-    const shape = await createRect(marker, "Shape", 2.25, 2.25, 9.5, 9.5, fillToken);
+    const shape = await createRect(
+      marker,
+      "Shape",
+      2.25,
+      2.25,
+      9.5,
+      9.5,
+      fillToken,
+    );
     await applyMarkerStroke(shape, chartBackground);
     shape.cornerRadius = 1;
     return;
@@ -309,15 +320,19 @@ async function drawLines(
 ) {
   const outerName = config.lineMode === "single" ? "Line" : "Frame 1";
   const outerHeight = config.lineMode === "single" ? height : height + 22;
-  const outer = await createFrameNode(parent, outerName, x, y, width, outerHeight);
+  const outer = await createFrameNode(
+    parent,
+    outerName,
+    x,
+    y,
+    width,
+    outerHeight,
+  );
   const lineFrame =
     config.lineMode === "single"
       ? outer
       : await createFrameNode(outer, "Line", 0, 0, width, height);
-  const visibleSeries =
-    config.lineMode === "single"
-      ? config.series.slice(0, 1)
-      : config.series.slice(0, 3);
+  const visibleSeries = config.series;
 
   for (let index = 0; index < visibleSeries.length; index++) {
     const series = visibleSeries[index];
@@ -336,14 +351,15 @@ async function drawLines(
   }
 
   const hasSelection = config.selectedIndex >= 0;
-  const markerIndex = hasSelection ? config.selectedIndex : config.pointCount - 1;
+  const markerIndex = hasSelection
+    ? config.selectedIndex
+    : config.pointCount - 1;
   const markerRatio =
     config.pointCount <= 1 ? 0 : markerIndex / (config.pointCount - 1);
   const markerX = markerRatio * width;
 
   if (hasSelection) {
-    const labelText =
-      config.pointLabels[markerIndex] || `P${markerIndex + 1}`;
+    const labelText = config.pointLabels[markerIndex] || `P${markerIndex + 1}`;
 
     await drawDashedIndicator(
       lineFrame,
@@ -377,7 +393,12 @@ async function drawLines(
 }
 
 async function drawChart(parent: FrameNode, config: NormalizedLineChartConfig) {
-  const yTitleRowHeight = config.color.typography.yAxisTitle.lineHeight;
+  const yAxisDataType = config.yAxisDataType ?? "number";
+  const showYAxisTitle =
+    yAxisDataType !== "percentage" && config.yAxisTitle.trim().length > 0;
+  const yTitleRowHeight = showYAxisTitle
+    ? config.color.typography.yAxisTitle.lineHeight
+    : 0;
   const contentStackOffset = 24 + yTitleRowHeight;
 
   const chart = await createFrameNode(
@@ -406,29 +427,31 @@ async function drawChart(parent: FrameNode, config: NormalizedLineChartConfig) {
   chart.layoutSizingHorizontal = "FILL";
   chart.layoutSizingVertical = "FILL";
 
-  const titleFrame = await createFrameNode(
-    chart,
-    "Y-axis title",
-    0,
-    0,
-    parent.width - 32,
-    yTitleRowHeight,
-    chartBackground,
-  );
-  Object.assign(titleFrame, {
-    layoutMode: "HORIZONTAL",
-    primaryAxisSizingMode: "FIXED",
-    counterAxisSizingMode: "AUTO",
-    itemSpacing: numberTokenValue(spacing.gap.s),
-  });
-  await applyItemSpacing(titleFrame, spacing.gap.s);
-  titleFrame.layoutSizingHorizontal = "FILL";
-  await drawCartesianYAxisTitle(titleFrame, {
-    color: config.color,
-    textColor: textColor.primary,
-    yAxisPosition: config.yAxisPosition,
-    yAxisTitle: config.yAxisTitle,
-  });
+  if (showYAxisTitle) {
+    const titleFrame = await createFrameNode(
+      chart,
+      "Y-axis title",
+      0,
+      0,
+      parent.width - 32,
+      yTitleRowHeight,
+      chartBackground,
+    );
+    Object.assign(titleFrame, {
+      layoutMode: "HORIZONTAL",
+      primaryAxisSizingMode: "FIXED",
+      counterAxisSizingMode: "AUTO",
+      itemSpacing: numberTokenValue(spacing.gap.s),
+    });
+    await applyItemSpacing(titleFrame, spacing.gap.s);
+    titleFrame.layoutSizingHorizontal = "FILL";
+    await drawCartesianYAxisTitle(titleFrame, {
+      color: config.color,
+      textColor: textColor.primary,
+      yAxisPosition: config.yAxisPosition,
+      yAxisTitle: config.yAxisTitle,
+    });
+  }
 
   const contentFrame = await createFrameNode(
     chart,
@@ -470,6 +493,7 @@ async function drawChart(parent: FrameNode, config: NormalizedLineChartConfig) {
       color: config.color,
       textColor: textColor.primary,
       ticks: config.yTicks,
+      yAxisDataType: config.yAxisDataType,
       yAxisPosition: config.yAxisPosition,
     },
     plotX,

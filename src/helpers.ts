@@ -104,7 +104,9 @@ export function parseTokenPathLines(input: string): string[] {
 
 type LibraryVariableIndexEntry = TokenVarKeyLookupMatch & { name: string };
 
-async function buildLibraryVariableIndex(): Promise<LibraryVariableIndexEntry[]> {
+async function buildLibraryVariableIndex(): Promise<
+  LibraryVariableIndexEntry[]
+> {
   const collections =
     await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync();
   const index: LibraryVariableIndexEntry[] = [];
@@ -177,8 +179,7 @@ export async function lookupTokenVarKeys(
       };
     });
   } catch (err) {
-    const message =
-      err instanceof Error ? err.message : "Token lookup failed";
+    const message = err instanceof Error ? err.message : "Token lookup failed";
     return paths.map(function (path): TokenVarKeyLookupResult {
       return {
         path,
@@ -343,12 +344,7 @@ export function mergeColorToken(
   if (key !== undefined) next.key = key;
   const opacity =
     input?.opacity !== undefined
-      ? clampNumber(
-          input.opacity,
-          0,
-          1,
-          fallback.opacity ?? 0,
-        )
+      ? clampNumber(input.opacity, 0, 1, fallback.opacity ?? 0)
       : fallback.opacity;
   if (opacity !== undefined) next.opacity = opacity;
   return next;
@@ -373,7 +369,9 @@ export function mergeCartesianTextStyle(
   const family = String(input?.fontFamily ?? "").trim();
   const merged: TypographyToken = {
     fontFamily: family || fallback.fontFamily,
-    fontSize: Math.round(clampNumber(input?.fontSize, 6, 96, fallback.fontSize)),
+    fontSize: Math.round(
+      clampNumber(input?.fontSize, 6, 96, fallback.fontSize),
+    ),
     fontWeight: Math.round(
       clampNumber(input?.fontWeight, 100, 900, fallback.fontWeight),
     ),
@@ -405,6 +403,18 @@ export function formatAxisNumber(value: number): string {
   const sign = roundedValue < 0 ? "-" : "";
   const absoluteValue = String(Math.abs(roundedValue));
   return `${sign}${absoluteValue.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+}
+
+export function formatAxisTickLabel(
+  value: number,
+  dataType: "number" | "percentage" = "number",
+): string {
+  const formatted = formatAxisNumber(value);
+  return dataType === "percentage" ? `${formatted}%` : formatted;
+}
+
+function normalizeYAxisDataType(value: unknown): "number" | "percentage" {
+  return value === "percentage" ? "percentage" : "number";
 }
 
 export function normalizeCartesianAxisLineVisibility(
@@ -568,8 +578,19 @@ export function normalizeLineChartConfig(
   const pointCount = Math.round(
     clampNumber(input.pointCount, 2, 180, fallback.pointCount),
   );
-  const lineMode = normalizeLineChartMode(input.lineMode);
-  const seriesCount = lineMode === "single" ? 1 : 3;
+  const inputSeriesArray = Array.isArray(input.series) ? input.series : [];
+  const defaultSeriesCount =
+    normalizeLineChartMode(input.lineMode) === "single" ? 1 : 3;
+  const seriesCount = Math.max(
+    1,
+    Math.min(
+      3,
+      inputSeriesArray.length > 0
+        ? inputSeriesArray.length
+        : defaultSeriesCount,
+    ),
+  );
+  const lineMode = seriesCount === 1 ? "single" : "multi";
   const pointLabels: string[] = [];
   const inputPointLabels = Array.isArray(input.pointLabels)
     ? input.pointLabels
@@ -578,19 +599,22 @@ export function normalizeLineChartConfig(
   for (let index = 0; index < pointCount; index += 1) {
     pointLabels.push(
       String(
-        inputPointLabels[index] || fallback.pointLabels[index] || `P${index + 1}`,
+        inputPointLabels[index] ||
+          fallback.pointLabels[index] ||
+          `P${index + 1}`,
       ).trim(),
     );
   }
 
-  const xAxisLabels = Array.isArray(input.xAxisLabels) && input.xAxisLabels.length > 0
-    ? input.xAxisLabels.map((label) => String(label ?? ""))
-    : [...fallback.xAxisLabels];
+  const xAxisLabels =
+    Array.isArray(input.xAxisLabels) && input.xAxisLabels.length > 0
+      ? input.xAxisLabels.map((label) => String(label ?? ""))
+      : [...fallback.xAxisLabels];
 
   const series = [];
   for (let index = 0; index < seriesCount; index += 1) {
     const fallbackSeries = fallback.series[index] || fallback.series[0];
-    const inputSeries = Array.isArray(input.series) ? input.series[index] : null;
+    const inputSeries = inputSeriesArray[index] ?? null;
     const inputValues =
       inputSeries && Array.isArray(inputSeries.values)
         ? inputSeries.values
@@ -641,6 +665,12 @@ export function normalizeLineChartConfig(
   );
   const fallbackColor = fallback.color;
   const inputColor = input.color;
+  const yAxisDataType = normalizeYAxisDataType(input.yAxisDataType);
+  const inputYAxisTitle = String(input.yAxisTitle ?? "").trim();
+  const yAxisTitle =
+    yAxisDataType === "percentage"
+      ? ""
+      : inputYAxisTitle || fallback.yAxisTitle;
 
   return {
     chartType: "lineChart",
@@ -689,7 +719,8 @@ export function normalizeLineChartConfig(
     height: Math.round(clampNumber(input.height, 260, 900, fallback.height)),
     minValue,
     maxValue,
-    yAxisTitle: String(input.yAxisTitle || "").trim() || fallback.yAxisTitle,
+    yAxisDataType,
+    yAxisTitle,
     xAxisLabels,
     pointLabels,
     series,

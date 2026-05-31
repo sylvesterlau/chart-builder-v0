@@ -54,7 +54,9 @@ function yearFromAxisTitle(axisTitle: string): string {
   return match ? match[0] : "";
 }
 
-export function buildBarKeyInfo(config: VerticalBarChartConfig): CartesianKeyInfoData {
+export function buildBarKeyInfo(
+  config: VerticalBarChartConfig,
+): CartesianKeyInfoData {
   const visibleSeries =
     config.barMode === "single"
       ? config.series.slice(0, 1)
@@ -67,10 +69,15 @@ export function buildBarKeyInfo(config: VerticalBarChartConfig): CartesianKeyInf
 
   return {
     kind: "bar",
-    rangeLabel: startLabel && endLabel ? `${startLabel}${suffix} - ${endLabel}${suffix}` : "",
+    rangeLabel:
+      startLabel && endLabel
+        ? `${startLabel}${suffix} - ${endLabel}${suffix}`
+        : "",
     layout: visibleSeries.length <= 2 ? "inline" : "rows",
     items: visibleSeries.map((series, index) => {
-      const values = series.values.slice(0, config.periodCount).map((value) => Number(value) || 0);
+      const values = series.values
+        .slice(0, config.periodCount)
+        .map((value) => Number(value) || 0);
       const min = values.length ? Math.min(...values) : 0;
       const max = values.length ? Math.max(...values) : 0;
       return {
@@ -84,12 +91,13 @@ export function buildBarKeyInfo(config: VerticalBarChartConfig): CartesianKeyInf
   };
 }
 
-export function buildLineKeyInfo(config: LineChartConfig): CartesianKeyInfoData {
-  const visibleSeries =
-    config.lineMode === "single"
-      ? config.series.slice(0, 1)
-      : config.series.slice(0, 3);
-  const firstLabel = config.pointLabels[0] || config.xAxisLabels.find(Boolean) || "";
+export function buildLineKeyInfo(
+  config: LineChartConfig,
+): CartesianKeyInfoData {
+  const visibleSeries = config.series;
+  const yAxisDataType = config.yAxisDataType ?? "number";
+  const firstLabel =
+    config.pointLabels[0] || config.xAxisLabels.find(Boolean) || "";
   const lastLabel =
     config.pointLabels[config.pointCount - 1] ||
     [...config.xAxisLabels].reverse().find(Boolean) ||
@@ -110,7 +118,7 @@ export function buildLineKeyInfo(config: LineChartConfig): CartesianKeyInfoData 
       return {
         label: seriesName(series, index),
         value: formatKeyInfoNumber(last),
-        unit: config.yAxisTitle,
+        unit: yAxisDataType === "percentage" ? "%" : config.yAxisTitle,
         color: colorForSeries(series, index),
         colorTokenIndex: index,
         percentageChange,

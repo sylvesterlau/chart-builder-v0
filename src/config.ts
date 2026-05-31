@@ -402,7 +402,7 @@ export const lineChartConfig = {
   chartTitle: "Chart title",
   lineMode: "single" as const,
   lineRange: "partial" as const,
-  yAxisPosition: cartesianChartConfig.yAxisPosition,
+  yAxisPosition: "left" as const,
   axisLineVisibility: cartesianChartConfig.axisLineVisibility,
   color: cartesianChartConfig.color,
   pointCount: 100,

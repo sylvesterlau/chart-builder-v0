@@ -1,27 +1,45 @@
 import {
   Button,
-  Dropdown,
-  DropdownOption,
+  Checkbox,
+  IconPlus16,
+  IconBorderLeftSmall24,
+  IconBorderRightSmall24,
   RangeSlider,
+  SegmentedControl,
+  SegmentedControlOption,
   Stack,
   Text,
   Textbox,
   TextboxNumeric,
-  Toggle,
   VerticalSpace,
+  Divider,
 } from "@create-figma-plugin/ui";
 import { emit } from "@create-figma-plugin/utilities";
 import { h } from "preact";
-import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "preact/hooks";
 import LineChartPreview from "../components/LineChartPreview";
+import ChartTitleControl, {
+  getEffectiveChartTitle,
+} from "../components/editControl/ChartTitleControl";
+import EditSectionHeader from "../components/editControl/EditSectionHeader";
 import { dataVisColor, lineChartConfig, pluginUISize } from "../config";
 import {
+  isCartesianXAxisLineVisible,
+  isCartesianYAxisLineVisible,
+} from "../helpers";
+import {
   LineChartConfig,
-  LineChartMode,
   LineChartRange,
   LineChartSeries,
   CartesianAxisLineVisibility,
   CartesianYAxisPosition,
+  YAxisDataType,
 } from "../types";
 import styles from "../ui.css";
 import { useRefreshDesignTokensOnMount } from "../utils/useRefreshDesignTokens";
@@ -32,27 +50,21 @@ interface LineChartPageProps {
 
 type XAxisMode = "time" | "date";
 
-const LINE_MODE_OPTIONS: Array<DropdownOption> = [
-  { text: "Single", value: "single" },
-  { text: "Multi", value: "multi" },
+const Y_AXIS_POSITION_OPTIONS: Array<SegmentedControlOption> = [
+  { children: <IconBorderLeftSmall24 />, value: "left" },
+  { children: <IconBorderRightSmall24 />, value: "right" },
 ];
-const Y_AXIS_POSITION_OPTIONS: Array<DropdownOption> = [
-  { text: "Right", value: "right" },
-  { text: "Left", value: "left" },
+const X_AXIS_MODE_OPTIONS: Array<SegmentedControlOption> = [
+  { children: "Date", value: "date" },
+  { children: "Time", value: "time" },
 ];
-const AXIS_LINE_VISIBILITY_OPTIONS: Array<DropdownOption> = [
-  { text: "Show both", value: "both" },
-  { text: "Y-axis only", value: "y" },
-  { text: "X-axis only", value: "x" },
-  { text: "Hide both", value: "none" },
+const Y_AXIS_DATA_TYPE_OPTIONS: Array<SegmentedControlOption> = [
+  { children: "Num", value: "number" },
+  { children: "Percent", value: "percentage" },
 ];
-const X_AXIS_MODE_OPTIONS: Array<DropdownOption> = [
-  { text: "Time range", value: "time" },
-  { text: "Date range", value: "date" },
-];
-const LINE_RANGE_OPTIONS: Array<DropdownOption> = [
-  { text: "Partial line", value: "partial" },
-  { text: "Full line", value: "full" },
+const LINE_RANGE_OPTIONS: Array<SegmentedControlOption> = [
+  { children: "Partial", value: "partial" },
+  { children: "Full", value: "full" },
 ];
 const MIN_POINTS = 2;
 const MAX_POINTS = 180;
@@ -60,10 +72,24 @@ const DEFAULT_START_DATE = "2026-01";
 const DEFAULT_END_DATE = "2026-03";
 const DEFAULT_START_TIME = "09:30";
 const DEFAULT_END_TIME = "16:00";
+const DEFAULT_PERCENT_MIN_VALUE = 0;
+const DEFAULT_PERCENT_MAX_VALUE = 100;
 const DATE_INPUT_PATTERN = /^\d{4}-\d{2}$/;
 const TIME_INPUT_PATTERN = /^\d{2}:\d{2}$/;
 const PARTIAL_LINE_RANGE_RATIO = 0.788;
-const DEFAULT_SELECTED_PERCENT = 75;
+const DEFAULT_TOOLTIP_PERCENT = 75;
+const MIN_DATASETS = 1;
+const MAX_DATASETS = 3;
+
+function cartesianAxisLineVisibilityFromGridToggles(
+  showXGridLine: boolean,
+  showYGridLine: boolean,
+): CartesianAxisLineVisibility {
+  if (showXGridLine && showYGridLine) return "both";
+  if (showXGridLine) return "x";
+  if (showYGridLine) return "y";
+  return "none";
+}
 
 function clampPointCount(value: number): number {
   return Math.max(MIN_POINTS, Math.min(MAX_POINTS, Math.round(value)));
@@ -107,23 +133,23 @@ function sanitizeNumberInput(value: string): string {
     .join("");
 }
 
-function selectedIndexFromPercent(percent: number, pointCount: number): number {
+function tooltipIndexFromPercent(percent: number, pointCount: number): number {
   const boundedPercent = Math.max(0, Math.min(100, Math.round(percent)));
   return Math.round(((pointCount - 1) * boundedPercent) / 100);
 }
 
-function clampSelectedPercent(value: number | null): number {
+function clampTooltipPercent(value: number | null): number {
   if (value === null) return 0;
   return Math.max(0, Math.min(100, Math.round(value)));
 }
 
-function syncSelectedRangeProgress(
+function syncTooltipRangeProgress(
   inputElement: HTMLInputElement | null,
   percent: number,
-  showSelection: boolean,
+  showTooltip: boolean,
 ) {
   if (inputElement === null) return;
-  if (showSelection === false) {
+  if (showTooltip === false) {
     inputElement.style.background = "";
     return;
   }
@@ -171,12 +197,17 @@ function createTimePointLabels(
   if (pointCount <= 1) return [formatAxisTime(startMinutes)];
   const range = endMinutes - startMinutes;
   return Array.from({ length: pointCount }, (_, index) => {
-    const minutes = Math.round(startMinutes + (range * index) / (pointCount - 1));
+    const minutes = Math.round(
+      startMinutes + (range * index) / (pointCount - 1),
+    );
     return formatAxisTime(minutes);
   });
 }
 
-function createTimeAxisLabels(startMinutes: number, endMinutes: number): string[] {
+function createTimeAxisLabels(
+  startMinutes: number,
+  endMinutes: number,
+): string[] {
   const midpoint = Math.round((startMinutes + endMinutes) / 2);
   return [
     formatAxisTime(startMinutes),
@@ -201,10 +232,7 @@ function parseDateInput(value: string): Date | null {
   if (!DATE_INPUT_PATTERN.test(value)) return null;
   const [year, month] = value.split("-").map(Number);
   const date = new Date(Date.UTC(year, month - 1, 1));
-  if (
-    date.getUTCFullYear() !== year ||
-    date.getUTCMonth() !== month - 1
-  ) {
+  if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1) {
     return null;
   }
   return date;
@@ -241,7 +269,9 @@ function sampleDates(dates: Date[], pointCount: number): Date[] {
   if (dates.length === 0) return [];
   if (pointCount <= 1) return [dates[0]];
   return Array.from({ length: pointCount }, (_, index) => {
-    const dateIndex = Math.round((index / (pointCount - 1)) * (dates.length - 1));
+    const dateIndex = Math.round(
+      (index / (pointCount - 1)) * (dates.length - 1),
+    );
     return dates[dateIndex];
   });
 }
@@ -290,9 +320,15 @@ function createTradingPointLabels(
   return createDateRange(pointCount, startDate, endDate).map(formatPointDate);
 }
 
-function interpolateEndDate(startDate: Date, endDate: Date, ratio: number): Date {
+function interpolateEndDate(
+  startDate: Date,
+  endDate: Date,
+  ratio: number,
+): Date {
   return new Date(
-    Math.round(startDate.getTime() + (endDate.getTime() - startDate.getTime()) * ratio),
+    Math.round(
+      startDate.getTime() + (endDate.getTime() - startDate.getTime()) * ratio,
+    ),
   );
 }
 
@@ -334,19 +370,18 @@ function createLineValues(
     state = (state * 1664525 + 1013904223) % 4294967296;
     const random = state / 4294967296 - 0.5;
     const wave = Math.sin(index / 6) * volatility * 0.35;
-    value = Math.max(min, Math.min(max, value + random * volatility + drift + wave));
+    value = Math.max(
+      min,
+      Math.min(max, value + random * volatility + drift + wave),
+    );
     values.push(Math.round(value));
   }
   return values;
 }
 
-function createRandomSeries(pointCount: number, lineMode: LineChartMode): LineChartSeries[] {
-  return createRandomSeriesInRange(pointCount, lineMode, 100, 250);
-}
-
 function createSeriesInRange(
   pointCount: number,
-  lineMode: LineChartMode,
+  datasetCount: number,
   minValue: number,
   maxValue: number,
   seed: number,
@@ -396,18 +431,22 @@ function createSeriesInRange(
       ),
     },
   ];
-  return lineMode === "single" ? series.slice(0, 1) : series;
+  const boundedDatasetCount = Math.max(
+    MIN_DATASETS,
+    Math.min(MAX_DATASETS, Math.round(datasetCount)),
+  );
+  return series.slice(0, boundedDatasetCount);
 }
 
 function createRandomSeriesInRange(
   pointCount: number,
-  lineMode: LineChartMode,
+  datasetCount: number,
   minValue: number,
   maxValue: number,
 ): LineChartSeries[] {
   return createSeriesInRange(
     pointCount,
-    lineMode,
+    datasetCount,
     minValue,
     maxValue,
     Date.now() % 100000,
@@ -416,20 +455,19 @@ function createRandomSeriesInRange(
 
 function LineChartPage({ onBack }: LineChartPageProps) {
   const sample = lineChartConfig;
+  const initialDatasetCount = sample.lineMode === "single" ? 1 : MAX_DATASETS;
   useRefreshDesignTokensOnMount();
-  const [lineMode, setLineMode] = useState<LineChartMode>(sample.lineMode);
-  const [yAxisPosition, setYAxisPosition] =
-    useState<CartesianYAxisPosition>(sample.yAxisPosition);
+  const [yAxisPosition, setYAxisPosition] = useState<CartesianYAxisPosition>(
+    sample.yAxisPosition,
+  );
   const [axisLineVisibility, setAxisLineVisibility] =
-    useState<CartesianAxisLineVisibility>(
-      sample.axisLineVisibility ?? "y",
-    );
-  const [selectedPercent, setSelectedPercent] =
-    useState<number>(DEFAULT_SELECTED_PERCENT);
-  const [showSelection, setShowSelection] = useState<boolean>(true);
-  const selectedRangeInputRef = useRef<HTMLInputElement>(null);
-  const [lineRange, setLineRange] =
-    useState<LineChartRange>(sample.lineRange);
+    useState<CartesianAxisLineVisibility>(sample.axisLineVisibility ?? "y");
+  const [tooltipPercent, setTooltipPercent] = useState<number>(
+    DEFAULT_TOOLTIP_PERCENT,
+  );
+  const [showTooltip, setShowTooltip] = useState<boolean>(false);
+  const tooltipRangeInputRef = useRef<HTMLInputElement>(null);
+  const [lineRange, setLineRange] = useState<LineChartRange>(sample.lineRange);
   const [pointCountInput, setPointCountInput] = useState<string>(
     String(sample.pointCount),
   );
@@ -439,23 +477,41 @@ function LineChartPage({ onBack }: LineChartPageProps) {
   const [maxValueInput, setMaxValueInput] = useState<string>(
     String(sample.maxValue),
   );
-  const [xAxisMode, setXAxisMode] =
-    useState<XAxisMode>("date");
+  const [xAxisMode, setXAxisMode] = useState<XAxisMode>("date");
   const [xAxisStartInput, setXAxisStartInput] =
     useState<string>(DEFAULT_START_DATE);
-  const [xAxisEndInput, setXAxisEndInput] =
-    useState<string>(DEFAULT_END_DATE);
+  const [xAxisEndInput, setXAxisEndInput] = useState<string>(DEFAULT_END_DATE);
   const [width, setWidth] = useState<number>(sample.width);
   const [height, setHeight] = useState<number>(sample.height);
   const [chartTitle, setChartTitle] = useState<string>(sample.chartTitle);
-  const [yAxisTitle, setYAxisTitle] = useState<string>(sample.yAxisTitle);
-  const [series, setSeries] = useState<LineChartSeries[]>(
-    sample.series.map((item) => ({
-      name: item.name,
-      color: item.color,
-      values: [...item.values],
-    })),
+  const [showChartTitle, setShowChartTitle] = useState<boolean>(false);
+  const effectiveChartTitle = getEffectiveChartTitle(
+    showChartTitle,
+    chartTitle,
   );
+  const [yAxisDataType, setYAxisDataType] = useState<YAxisDataType>("number");
+  const [yAxisUnit, setYAxisUnit] = useState<string>(sample.yAxisTitle);
+  const effectiveYAxisTitle = yAxisDataType === "number" ? yAxisUnit : "";
+  const yAxisValueSuffix = yAxisDataType === "percentage" ? "%" : yAxisUnit;
+  const [series, setSeries] = useState<LineChartSeries[]>(() => {
+    const initialSeries = sample.series
+      .slice(0, initialDatasetCount)
+      .map((item, index) => ({
+        name: item.name || `Product ${String.fromCharCode(65 + index)}`,
+        color: item.color,
+        values: [...item.values],
+      }));
+    if (initialSeries.length > 0) {
+      return initialSeries;
+    }
+    return createSeriesInRange(
+      sample.pointCount,
+      MIN_DATASETS,
+      sample.minValue,
+      sample.maxValue,
+      20260516,
+    );
+  });
 
   useEffect(() => {
     emit("RESIZE_PLUGIN_UI_WINDOW", {
@@ -472,15 +528,15 @@ function LineChartPage({ onBack }: LineChartPageProps) {
 
   useEffect(() => {
     const syncProgress = () =>
-      syncSelectedRangeProgress(
-        selectedRangeInputRef.current,
-        selectedPercent,
-        showSelection,
+      syncTooltipRangeProgress(
+        tooltipRangeInputRef.current,
+        tooltipPercent,
+        showTooltip,
       );
     syncProgress();
     const animationFrame = window.requestAnimationFrame(syncProgress);
     return () => window.cancelAnimationFrame(animationFrame);
-  }, [selectedPercent, showSelection]);
+  }, [tooltipPercent, showTooltip]);
 
   const parsedPointCount = parseInputNumber(pointCountInput);
   const parsedMinValue = parseInputNumber(minValueInput);
@@ -519,21 +575,26 @@ function LineChartPage({ onBack }: LineChartPageProps) {
     : sample.maxValue;
   const effectiveXAxisStartDate = isDateRangeValid
     ? parsedXAxisStartDate
-    : parseDateInput(DEFAULT_START_DATE) as Date;
+    : (parseDateInput(DEFAULT_START_DATE) as Date);
   const effectiveXAxisEndDate = isDateRangeValid
     ? parsedXAxisEndDate
-    : parseDateInput(DEFAULT_END_DATE) as Date;
+    : (parseDateInput(DEFAULT_END_DATE) as Date);
   const effectiveXAxisStartTime = isTimeRangeValid
     ? parsedXAxisStartTime
-    : parseTimeInput(DEFAULT_START_TIME) as number;
+    : (parseTimeInput(DEFAULT_START_TIME) as number);
   const effectiveXAxisEndTime = isTimeRangeValid
     ? parsedXAxisEndTime
-    : parseTimeInput(DEFAULT_END_TIME) as number;
+    : (parseTimeInput(DEFAULT_END_TIME) as number);
   const isDataConfigValid =
     isPointCountValid && isValueRangeValid && isXAxisRangeValid;
 
   const chartConfig = useMemo<LineChartConfig>(() => {
     const boundedPointCount = clampPointCount(effectivePointCount);
+    const datasetCount = Math.max(
+      MIN_DATASETS,
+      Math.min(MAX_DATASETS, series.length),
+    );
+    const lineMode = datasetCount === 1 ? "single" : "multi";
     const selectedLabelRangeRatio = lineRangeRatio(lineRange);
     const pointLabelEndTime = interpolateEndMinutes(
       effectiveXAxisStartTime,
@@ -547,46 +608,36 @@ function LineChartPage({ onBack }: LineChartPageProps) {
     );
     const fallbackSeries = createSeriesInRange(
       boundedPointCount,
-      lineMode,
+      datasetCount,
       effectiveMinValue,
       effectiveMaxValue,
       20260516,
     );
-    const visibleSeries =
-      lineMode === "single"
-        ? [series[0] || fallbackSeries[0]]
-        : [
-            series[0] || fallbackSeries[0],
-            series[1] || fallbackSeries[1],
-            series[2] || fallbackSeries[2],
-          ];
+    const visibleSeries = Array.from({ length: datasetCount }, (_, index) => {
+      return series[index] || fallbackSeries[index];
+    });
     return {
       chartType: "lineChart",
-      chartTitle,
+      chartTitle: effectiveChartTitle,
       lineMode,
       lineRange,
       yAxisPosition,
       axisLineVisibility,
       color: sample.color,
       pointCount: boundedPointCount,
-      selectedIndex: showSelection
-        ? selectedIndexFromPercent(selectedPercent, boundedPointCount)
+      selectedIndex: showTooltip
+        ? tooltipIndexFromPercent(tooltipPercent, boundedPointCount)
         : -1,
       width,
       height,
       minValue: effectiveMinValue,
       maxValue: effectiveMaxValue,
-      yAxisTitle,
+      yAxisDataType,
+      yAxisTitle: effectiveYAxisTitle,
       xAxisLabels:
         xAxisMode === "time"
-          ? createTimeAxisLabels(
-              effectiveXAxisStartTime,
-              effectiveXAxisEndTime,
-            )
-          : createXAxisLabels(
-              effectiveXAxisStartDate,
-              effectiveXAxisEndDate,
-            ),
+          ? createTimeAxisLabels(effectiveXAxisStartTime, effectiveXAxisEndTime)
+          : createXAxisLabels(effectiveXAxisStartDate, effectiveXAxisEndDate),
       pointLabels:
         xAxisMode === "time"
           ? createTimePointLabels(
@@ -609,7 +660,7 @@ function LineChartPage({ onBack }: LineChartPageProps) {
     };
   }, [
     axisLineVisibility,
-    chartTitle,
+    effectiveChartTitle,
     effectiveMaxValue,
     effectiveMinValue,
     effectivePointCount,
@@ -618,14 +669,15 @@ function LineChartPage({ onBack }: LineChartPageProps) {
     effectiveXAxisStartDate,
     effectiveXAxisStartTime,
     height,
-    lineMode,
     lineRange,
-    showSelection,
-    selectedPercent,
+    showTooltip,
+    tooltipPercent,
     series,
     width,
     yAxisPosition,
-    yAxisTitle,
+    effectiveYAxisTitle,
+    yAxisDataType,
+    yAxisUnit,
     xAxisMode,
   ]);
 
@@ -633,19 +685,40 @@ function LineChartPage({ onBack }: LineChartPageProps) {
     setPointCountInput(sanitizeIntegerInput(value));
   }, []);
 
-  const handleLineModeChange = useCallback((value: string) => {
-    const nextLineMode = value as LineChartMode;
-    setLineMode(nextLineMode);
+  const handleDatasetNameInput = useCallback((index: number, name: string) => {
+    setSeries((currentSeries) =>
+      currentSeries.map((item, itemIndex) =>
+        itemIndex === index ? { ...item, name } : item,
+      ),
+    );
+  }, []);
+
+  const handleAddDataset = useCallback(() => {
     setSeries((currentSeries) => {
+      if (currentSeries.length >= MAX_DATASETS) {
+        return currentSeries;
+      }
       const nextSeries = createRandomSeriesInRange(
         effectivePointCount,
-        nextLineMode,
+        currentSeries.length + 1,
         effectiveMinValue,
         effectiveMaxValue,
       );
-      return nextSeries.map((item, index) => currentSeries[index] || item);
+      const nextItem = nextSeries[currentSeries.length];
+      if (!nextItem) {
+        return currentSeries;
+      }
+      return [...currentSeries, nextItem];
     });
   }, [effectiveMaxValue, effectiveMinValue, effectivePointCount]);
+
+  const handleDeleteDataset = useCallback((index: number) => {
+    setSeries((currentSeries) =>
+      currentSeries.length <= MIN_DATASETS
+        ? currentSeries
+        : currentSeries.filter((_, itemIndex) => itemIndex !== index),
+    );
+  }, []);
 
   const handleXAxisModeChange = useCallback((value: string) => {
     const nextMode = value as XAxisMode;
@@ -653,28 +726,69 @@ function LineChartPage({ onBack }: LineChartPageProps) {
     setXAxisStartInput(
       nextMode === "time" ? DEFAULT_START_TIME : DEFAULT_START_DATE,
     );
-    setXAxisEndInput(
-      nextMode === "time" ? DEFAULT_END_TIME : DEFAULT_END_DATE,
-    );
+    setXAxisEndInput(nextMode === "time" ? DEFAULT_END_TIME : DEFAULT_END_DATE);
   }, []);
 
-  const handleGenerateSampleData = useCallback(function () {
-    if (!isDataConfigValid) return;
-    setSeries(
-      createRandomSeriesInRange(
-        effectivePointCount,
-        lineMode,
-        effectiveMinValue,
-        effectiveMaxValue,
-      ),
-    );
-  }, [
-    effectiveMaxValue,
-    effectiveMinValue,
-    effectivePointCount,
-    isDataConfigValid,
-    lineMode,
-  ]);
+  const handleYAxisDataTypeChange = useCallback(
+    (value: string) => {
+      const nextType = value as YAxisDataType;
+      const nextMinValue =
+        nextType === "percentage"
+          ? DEFAULT_PERCENT_MIN_VALUE
+          : lineChartConfig.minValue;
+      const nextMaxValue =
+        nextType === "percentage"
+          ? DEFAULT_PERCENT_MAX_VALUE
+          : lineChartConfig.maxValue;
+
+      setYAxisDataType(nextType);
+      setMinValueInput(String(nextMinValue));
+      setMaxValueInput(String(nextMaxValue));
+
+      setSeries((currentSeries) => {
+        const pointCount =
+          isPointCountValid && parsedPointCount !== null
+            ? parsedPointCount
+            : sample.pointCount;
+        if (nextMaxValue <= nextMinValue) return currentSeries;
+
+        return createRandomSeriesInRange(
+          pointCount,
+          currentSeries.length,
+          nextMinValue,
+          nextMaxValue,
+        ).map((item, index) => ({
+          ...item,
+          name: currentSeries[index]?.name || item.name,
+        }));
+      });
+    },
+    [isPointCountValid, parsedPointCount, sample.pointCount],
+  );
+
+  const handleGenerateSampleData = useCallback(
+    function () {
+      if (!isDataConfigValid) return;
+      setSeries(
+        createRandomSeriesInRange(
+          effectivePointCount,
+          series.length,
+          effectiveMinValue,
+          effectiveMaxValue,
+        ).map((item, index) => ({
+          ...item,
+          name: series[index]?.name || item.name,
+        })),
+      );
+    },
+    [
+      effectiveMaxValue,
+      effectiveMinValue,
+      effectivePointCount,
+      isDataConfigValid,
+      series,
+    ],
+  );
 
   const handleGenerateButtonClick = useCallback(
     function () {
@@ -704,76 +818,137 @@ function LineChartPage({ onBack }: LineChartPageProps) {
       </div>
       <div className={styles.horizontalBarRightPanel}>
         <div className={styles.horizontalBarControls}>
+          <ChartTitleControl
+            onTitleChange={setChartTitle}
+            onVisibleChange={setShowChartTitle}
+            title={chartTitle}
+            visible={showChartTitle}
+          />
+          <VerticalSpace space="medium" />
+          <div className={styles.divider} />
+          <VerticalSpace space="medium" />
           <Stack space="small">
             <Text className={styles.sectionTitle}>Chart</Text>
+
             <div className={styles.fieldRow}>
-              <Text className={styles.fieldLabel}>Title</Text>
-              <Textbox onValueInput={setChartTitle} value={chartTitle} />
+              <Text className={styles.fieldLabel}>Size</Text>
+              <div className={styles.chartDimensionInputs}>
+                <TextboxNumeric
+                  icon="W"
+                  onNumericValueInput={(value) =>
+                    setWidth(value ?? sample.width)
+                  }
+                  value={String(width)}
+                />
+                <TextboxNumeric
+                  icon="H"
+                  onNumericValueInput={(value) =>
+                    setHeight(value ?? sample.height)
+                  }
+                  value={String(height)}
+                />
+              </div>
             </div>
             <div className={styles.fieldRow}>
-              <Text className={styles.fieldLabel}>Lines</Text>
-              <Dropdown
-                onValueChange={handleLineModeChange}
-                options={LINE_MODE_OPTIONS}
-                value={lineMode}
-              />
+              <Text className={styles.fieldLabel}>Grid line</Text>
+              <div className={styles.gridLineCheckboxGroup}>
+                <Checkbox
+                  onValueChange={(value) =>
+                    setAxisLineVisibility(
+                      cartesianAxisLineVisibilityFromGridToggles(
+                        value,
+                        isCartesianYAxisLineVisible(axisLineVisibility),
+                      ),
+                    )
+                  }
+                  value={isCartesianXAxisLineVisible(axisLineVisibility)}
+                >
+                  <Text>X</Text>
+                </Checkbox>
+                <Checkbox
+                  onValueChange={(value) =>
+                    setAxisLineVisibility(
+                      cartesianAxisLineVisibilityFromGridToggles(
+                        isCartesianXAxisLineVisible(axisLineVisibility),
+                        value,
+                      ),
+                    )
+                  }
+                  value={isCartesianYAxisLineVisible(axisLineVisibility)}
+                >
+                  <Text>Y</Text>
+                </Checkbox>
+              </div>
             </div>
             <div className={styles.fieldRow}>
               <Text className={styles.fieldLabel}>Line range</Text>
-              <Dropdown
-                onValueChange={(value) =>
-                  setLineRange(value as LineChartRange)
-                }
-                options={LINE_RANGE_OPTIONS}
-                value={lineRange}
-              />
+              <div className={styles.fieldRowSegmentControl}>
+                <SegmentedControl
+                  onValueChange={(value) =>
+                    setLineRange(value as LineChartRange)
+                  }
+                  options={LINE_RANGE_OPTIONS}
+                  value={lineRange}
+                />
+              </div>
             </div>
             <div className={styles.fieldRow}>
-              <Text className={styles.fieldLabel}>Width</Text>
-              <TextboxNumeric
-                onNumericValueInput={(value) => setWidth(value ?? sample.width)}
-                value={String(width)}
-              />
-            </div>
-            <div className={styles.fieldRow}>
-              <Text className={styles.fieldLabel}>Height</Text>
-              <TextboxNumeric
-                onNumericValueInput={(value) => setHeight(value ?? sample.height)}
-                value={String(height)}
-              />
+              <Text className={styles.fieldLabel}>Y axis position</Text>
+              <div className={styles.fieldRowSegmentControl}>
+                <SegmentedControl
+                  onValueChange={(value) =>
+                    setYAxisPosition(value as CartesianYAxisPosition)
+                  }
+                  options={Y_AXIS_POSITION_OPTIONS}
+                  value={yAxisPosition}
+                />
+              </div>
             </div>
           </Stack>
           <VerticalSpace space="medium" />
           <div className={styles.divider} />
           <VerticalSpace space="medium" />
           <Stack space="small">
-            <Text className={styles.sectionTitle}>Axes</Text>
-            <div className={styles.fieldRow}>
-              <Text className={styles.fieldLabel}>Y side</Text>
-              <Dropdown
-                onValueChange={(value) =>
-                  setYAxisPosition(value as CartesianYAxisPosition)
-                }
-                options={Y_AXIS_POSITION_OPTIONS}
-                value={yAxisPosition}
-              />
-            </div>
-            <div className={styles.fieldRow}>
-              <Text className={styles.fieldLabel}>Axis line</Text>
-              <Dropdown
-                onValueChange={(value) =>
-                  setAxisLineVisibility(
-                    value as CartesianAxisLineVisibility,
-                  )
-                }
-                options={AXIS_LINE_VISIBILITY_OPTIONS}
-                value={axisLineVisibility}
-              />
-            </div>
-            <div className={styles.fieldRow}>
-              <Text className={styles.fieldLabel}>Y title</Text>
-              <Textbox onValueInput={setYAxisTitle} value={yAxisTitle} />
-            </div>
+            <EditSectionHeader
+              hideTitle="Hide tooltip"
+              onVisibilityToggle={() => setShowTooltip((current) => !current)}
+              showTitle="Show tooltip"
+              title="Tooltip"
+              visible={showTooltip}
+            />
+            {showTooltip ? (
+              <div className={styles.selectedControlStack}>
+                <div className={styles.selectedPositionRow}>
+                  <Text className={styles.fieldLabel}>Position</Text>
+                  <RangeSlider
+                    aria-label="Tooltip position"
+                    increment={1}
+                    maximum={100}
+                    minimum={0}
+                    onNumericValueInput={(value) =>
+                      setTooltipPercent(clampTooltipPercent(value))
+                    }
+                    ref={tooltipRangeInputRef}
+                    value={String(tooltipPercent)}
+                  />
+                </div>
+                <div className={styles.selectedPercentInputRow}>
+                  <span />
+                  <div className={styles.selectedPercentInputWrap}>
+                    <TextboxNumeric
+                      integer
+                      maximum={100}
+                      minimum={0}
+                      onNumericValueInput={(value) =>
+                        setTooltipPercent(clampTooltipPercent(value))
+                      }
+                      value={String(tooltipPercent)}
+                    />
+                    <span className={styles.selectedPercentSuffix}>%</span>
+                  </div>
+                </div>
+              </div>
+            ) : null}
           </Stack>
           <VerticalSpace space="medium" />
           <div className={styles.divider} />
@@ -782,81 +957,170 @@ function LineChartPage({ onBack }: LineChartPageProps) {
             <div className={styles.verticalBarDataHeader}>
               <Text className={styles.sectionTitle}>Data</Text>
               <Text className={styles.fieldLabel}>
-                {chartConfig.pointCount} data points
+                {series.length}/{MAX_DATASETS} datasets
               </Text>
             </div>
-            <Text className={styles.fieldGroupLabel}>Selection</Text>
-            <div className={styles.selectedControlStack}>
-              <div className={styles.selectedOptionRow}>
-                <Text className={styles.fieldLabel}>Selected</Text>
-                <div className={styles.selectedSwitchCell}>
-                  <Toggle
-                    aria-label="Show selection"
-                    onValueChange={setShowSelection}
-                    value={showSelection}
-                  >
-                    {""}
-                  </Toggle>
+            {series.map((item, index) => (
+              <div key={index} className={styles.chartItemInput}>
+                <div
+                  style={{
+                    backgroundColor: dataVisColor.general[index].value,
+                    flexShrink: 0,
+                    height: "12px",
+                    marginRight: "2px",
+                    width: "12px",
+                  }}
+                />
+                <div className={styles.chartItemInputField}>
+                  <Textbox
+                    onValueInput={(value) =>
+                      handleDatasetNameInput(index, value)
+                    }
+                    placeholder={`Product ${String.fromCharCode(65 + index)}`}
+                    value={item.name}
+                  />
+                </div>
+                <div className={styles.chartItemDeleteButtonWrap}>
+                  {series.length > MIN_DATASETS ? (
+                    <div
+                      className={styles.chartItemDeleteButton}
+                      onClick={() => handleDeleteDataset(index)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          handleDeleteDataset(index);
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
+                      title="Delete dataset"
+                    >
+                      —
+                    </div>
+                  ) : null}
                 </div>
               </div>
-              <div className={styles.selectedPositionRow}>
-                <Text className={styles.fieldLabel}>Position</Text>
-                <RangeSlider
-                  aria-label="Selected position"
-                  disabled={!showSelection}
-                  increment={1}
-                  maximum={100}
-                  minimum={0}
-                  onNumericValueInput={(value) =>
-                    setSelectedPercent(clampSelectedPercent(value))
-                  }
-                  ref={selectedRangeInputRef}
-                  value={String(selectedPercent)}
+            ))}
+            <Button
+              secondary
+              disabled={series.length >= MAX_DATASETS}
+              fullWidth
+              onClick={handleAddDataset}
+            >
+              <span
+                style={{
+                  alignItems: "center",
+                  display: "inline-flex",
+                  gap: "6px",
+                  justifyContent: "center",
+                }}
+              >
+                <IconPlus16 />
+                Add dataset
+              </span>
+            </Button>
+            <VerticalSpace space="extraSmall" />
+            <Divider />
+            <VerticalSpace space="extraSmall" />
+            <div className={styles.yAxisSection}>
+              <div className={styles.yAxisSectionHeader}>
+                <Text className={styles.sectionTitle}>Y-axis</Text>
+                <SegmentedControl
+                  onValueChange={handleYAxisDataTypeChange}
+                  options={Y_AXIS_DATA_TYPE_OPTIONS}
+                  value={yAxisDataType}
                 />
               </div>
-              <div className={styles.selectedPercentInputRow}>
-                <span />
-                <div className={styles.selectedPercentInputWrap}>
-                  <TextboxNumeric
-                    disabled={!showSelection}
-                    integer
-                    maximum={100}
-                    minimum={0}
-                    onNumericValueInput={(value) =>
-                      setSelectedPercent(clampSelectedPercent(value))
+              {yAxisDataType === "number" ? (
+                <div className={styles.fieldRow}>
+                  <Text className={styles.fieldLabel}>Unit</Text>
+                  <Textbox onValueInput={setYAxisUnit} value={yAxisUnit} />
+                </div>
+              ) : null}
+              <div className={styles.fieldRow}>
+                <Text className={styles.fieldLabel}>Min value</Text>
+                <div className={styles.yAxisValueInputWrap}>
+                  <Textbox
+                    onValueInput={(value) =>
+                      setMinValueInput(sanitizeNumberInput(value))
                     }
-                    value={String(selectedPercent)}
+                    value={minValueInput}
                   />
-                  <span className={styles.selectedPercentSuffix}>%</span>
+                  <span className={styles.yAxisValueInputSuffix}>
+                    {yAxisValueSuffix}
+                  </span>
                 </div>
               </div>
-            </div>
-            <Text className={styles.fieldGroupLabel}>Y-axis</Text>
-            <div className={styles.fieldRow}>
-              <Text className={styles.fieldLabel}>Min value</Text>
-              <Textbox
-                onValueInput={(value) =>
-                  setMinValueInput(sanitizeNumberInput(value))
-                }
-                value={minValueInput}
-              />
-            </div>
-            <div className={styles.fieldRow}>
-              <Text className={styles.fieldLabel}>Max value</Text>
-              <Textbox
-                onValueInput={(value) =>
-                  setMaxValueInput(sanitizeNumberInput(value))
-                }
-                value={maxValueInput}
-              />
-            </div>
-            {!isValueRangeValid ? (
-              <div className={styles.fieldHintError}>
-                Max must be greater than min.
+              <div className={styles.fieldRow}>
+                <Text className={styles.fieldLabel}>Max value</Text>
+                <div className={styles.yAxisValueInputWrap}>
+                  <Textbox
+                    onValueInput={(value) =>
+                      setMaxValueInput(sanitizeNumberInput(value))
+                    }
+                    value={maxValueInput}
+                  />
+                  <span className={styles.yAxisValueInputSuffix}>
+                    {yAxisValueSuffix}
+                  </span>
+                </div>
               </div>
-            ) : null}
+              {!isValueRangeValid ? (
+                <div className={styles.fieldHintError}>
+                  Max must be greater than min.
+                </div>
+              ) : null}
+            </div>
+            <VerticalSpace space="extraSmall" />
+            <div className={styles.xAxisSection}>
+              <div className={styles.xAxisSectionHeader}>
+                <Text className={styles.sectionTitle}>X-axis</Text>
+                <SegmentedControl
+                  onValueChange={handleXAxisModeChange}
+                  options={X_AXIS_MODE_OPTIONS}
+                  value={xAxisMode}
+                />
+              </div>
+              <div className={styles.fieldRow}>
+                <Text className={styles.fieldLabel}>
+                  {xAxisMode === "time" ? "Start time" : "Start date"}
+                </Text>
+                <Textbox
+                  onValueInput={(value) =>
+                    setXAxisStartInput(
+                      xAxisMode === "time"
+                        ? sanitizeTimeInput(value)
+                        : sanitizeDateInput(value),
+                    )
+                  }
+                  value={xAxisStartInput}
+                />
+              </div>
+              <div className={styles.fieldRow}>
+                <Text className={styles.fieldLabel}>
+                  {xAxisMode === "time" ? "End time" : "End date"}
+                </Text>
+                <Textbox
+                  onValueInput={(value) =>
+                    setXAxisEndInput(
+                      xAxisMode === "time"
+                        ? sanitizeTimeInput(value)
+                        : sanitizeDateInput(value),
+                    )
+                  }
+                  value={xAxisEndInput}
+                />
+              </div>
+              {!isXAxisRangeValid ? (
+                <div className={styles.fieldHintError}>
+                  {xAxisMode === "time"
+                    ? "Use 00:00-23:59; start < end."
+                    : "Use YYYY-MM; start < end."}
+                </div>
+              ) : null}
+            </div>
             <div className={styles.fieldRow}>
-              <Text className={styles.fieldLabel}>Data-set count</Text>
+              <Text className={styles.fieldLabel}>Data points</Text>
               <Textbox
                 onValueInput={handlePointCountChange}
                 value={pointCountInput}
@@ -865,52 +1129,6 @@ function LineChartPage({ onBack }: LineChartPageProps) {
             {!isPointCountValid ? (
               <div className={styles.fieldHintError}>
                 Use {MIN_POINTS}-{MAX_POINTS}.
-              </div>
-            ) : null}
-            <Text className={styles.fieldGroupLabel}>X-axis</Text>
-            <div className={styles.fieldRow}>
-              <Text className={styles.fieldLabel}>Data type</Text>
-              <Dropdown
-                onValueChange={handleXAxisModeChange}
-                options={X_AXIS_MODE_OPTIONS}
-                value={xAxisMode}
-              />
-            </div>
-            <div className={styles.fieldRow}>
-              <Text className={styles.fieldLabel}>
-                {xAxisMode === "time" ? "Start time" : "Start date"}
-              </Text>
-              <Textbox
-                onValueInput={(value) =>
-                  setXAxisStartInput(
-                    xAxisMode === "time"
-                      ? sanitizeTimeInput(value)
-                      : sanitizeDateInput(value),
-                  )
-                }
-                value={xAxisStartInput}
-              />
-            </div>
-            <div className={styles.fieldRow}>
-              <Text className={styles.fieldLabel}>
-                {xAxisMode === "time" ? "End time" : "End date"}
-              </Text>
-              <Textbox
-                onValueInput={(value) =>
-                  setXAxisEndInput(
-                    xAxisMode === "time"
-                      ? sanitizeTimeInput(value)
-                      : sanitizeDateInput(value),
-                  )
-                }
-                value={xAxisEndInput}
-              />
-            </div>
-            {!isXAxisRangeValid ? (
-              <div className={styles.fieldHintError}>
-                {xAxisMode === "time"
-                  ? "Use 00:00-23:59; start < end."
-                  : "Use YYYY-MM; start < end."}
               </div>
             ) : null}
             <div className={styles.dataSectionActions}>

@@ -20,7 +20,11 @@ export interface TokenVarKeyLookupMatch {
   libraryName?: string;
 }
 
-export type TokenVarKeyLookupStatus = "found" | "multiple" | "not_found" | "error";
+export type TokenVarKeyLookupStatus =
+  | "found"
+  | "multiple"
+  | "not_found"
+  | "error";
 
 export interface TokenVarKeyLookupResult {
   /** User-entered path (trimmed line). */
@@ -104,6 +108,7 @@ export type CartesianYAxisPosition = "left" | "right";
 export type CartesianAxisLineVisibility = "both" | "x" | "y" | "none";
 export type LineChartMode = "single" | "multi";
 export type LineChartRange = "partial" | "full";
+export type YAxisDataType = "number" | "percentage";
 
 export interface VerticalBarChartSeries {
   name: string;
@@ -168,6 +173,7 @@ export interface LineChartConfig {
   height: number;
   minValue: number;
   maxValue: number;
+  yAxisDataType?: YAxisDataType;
   yAxisTitle: string;
   xAxisLabels: string[];
   pointLabels: string[];
