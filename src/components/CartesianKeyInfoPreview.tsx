@@ -4,7 +4,11 @@ import {
   CartesianKeyInfoData,
   formatPercentageChange,
 } from "../utils/cartesianKeyInfo";
-import { colorTokenPreviewBackground } from "../utils/colorTokenDisplay";
+import {
+  colorTokenPreviewBackground,
+  colorTokenSwatchHex,
+} from "../utils/colorTokenDisplay";
+import { dataVisAt } from "../utils/dataVisAt";
 import { numberTokenResolvedValue } from "../utils/numberTokenDisplay";
 import { typographyTokenToPreviewCss } from "../utils/typographyTokenDisplay";
 import { useColorTokenResolved } from "./ColorChips/colorTokenSwatchContext";
@@ -54,18 +58,24 @@ function lineIndicator(index: number, color: string, chartBgColor: string) {
     return (
       <div style={containerStyle}>
         <div style={lineStyle} />
-        <div
+        <svg
+          height={13.5}
           style={{
-            background: color,
-            boxSizing: "border-box",
-            clipPath: "polygon(50% 0, 100% 100%, 0 100%)",
-            filter: `drop-shadow(0 -1.5px 0 ${chartBgColor}) drop-shadow(1.5px 1.5px 0 ${chartBgColor}) drop-shadow(-1.5px 1.5px 0 ${chartBgColor})`,
-            height: 10.5,
+            overflow: "visible",
             position: "relative",
-            width: 11.5,
             zIndex: 1,
           }}
-        />
+          viewBox="-1.5 -1.5 14.5 13.5"
+          width={14.5}
+        >
+          <polygon
+            fill={color}
+            points="5.75 0 11.5 10.5 0 10.5"
+            stroke={chartBgColor}
+            strokeLinejoin="round"
+            strokeWidth={1.5}
+          />
+        </svg>
       </div>
     );
   }
@@ -180,6 +190,10 @@ function CartesianKeyInfoPreview({ data }: CartesianKeyInfoPreviewProps) {
       >
         {data.items.map((item) => {
           const change = item.percentageChange;
+          const swatchColor = colorTokenSwatchHex(
+            dataVisAt(item.colorTokenIndex),
+            resolvedColors,
+          );
           const changeColor =
             change === undefined
               ? primaryText
@@ -207,7 +221,12 @@ function CartesianKeyInfoPreview({ data }: CartesianKeyInfoPreviewProps) {
                     width: 18,
                   }}
                 >
-                  {swatch(data.kind, item.colorTokenIndex, item.color, chartBgColor)}
+                  {swatch(
+                    data.kind,
+                    item.colorTokenIndex,
+                    swatchColor,
+                    chartBgColor,
+                  )}
                 </div>
                 <div style={{ flex: "1 1 0", minWidth: 0, ...labelCss }}>
                   {item.label}

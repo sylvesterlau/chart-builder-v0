@@ -1,3 +1,5 @@
+import { roundToDecimals } from "../../helpers";
+
 export function createSeededLineValues(
   count: number,
   seed: number,
@@ -18,7 +20,7 @@ export function createSeededLineValues(
       min,
       Math.min(max, value + random * volatility + drift + wave),
     );
-    values.push(Math.round(value));
+    values.push(roundToDecimals(value));
   }
   return values;
 }

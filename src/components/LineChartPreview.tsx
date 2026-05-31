@@ -1,10 +1,16 @@
 import { h } from "preact";
 import { chartBackground, dataVisColor, textColor } from "../config";
 import {
+  buildRangeTicks,
   clamp,
   formatAxisTickLabel,
   isCartesianXAxisLineVisible,
   isCartesianYAxisLineVisible,
+  measurePreviewTextWidth,
+  measureYAxisLabelGutter,
+  measureYAxisTickLabelWidth,
+  normalizeYAxisDivisions,
+  Y_AXIS_LABEL_AXIS_GAP,
 } from "../helpers";
 import { LineChartConfig } from "../types";
 import { useColorTokenResolved } from "./ColorChips/colorTokenSwatchContext";
@@ -51,7 +57,6 @@ function markerStyle(seriesIndex: number, color: string, chartBgColor: string) {
     return {
       background: color,
       outline: `1.5px solid ${chartBgColor}`,
-      borderRadius: "1px",
       height: "9.5px",
       width: "9.5px",
     };
@@ -83,14 +88,10 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
   const maxValue =
     Number(config.maxValue) > minValue ? Number(config.maxValue) : minValue + 1;
   const valueRange = Math.max(1, maxValue - minValue);
+  const yAxisDivisions = normalizeYAxisDivisions(config.yAxisDivisions);
   const ticks =
     config.maxValue > config.minValue
-      ? [
-          Math.round(maxValue),
-          Math.round(maxValue - valueRange / 3),
-          Math.round(maxValue - (valueRange / 3) * 2),
-          Math.round(minValue),
-        ]
+      ? buildRangeTicks(minValue, maxValue, yAxisDivisions)
       : [maxValue, minValue];
   const { labelBg } = config.color.selected;
   const { typography: ty, yAxisLabel: yLab } = config.color;
@@ -103,14 +104,20 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
   const contentWidth = Math.max(1, config.width - 32);
   const contentHeight = Math.max(1, config.height - 24 - yTitleRowHeight);
   const plotHeight = Math.max(1, contentHeight - 30);
-  const labelGutter = 46;
+  const yAxisLabelCss = typographyTokenToPreviewCss(yLab, resolvedTypography);
+  const measureYAxisLabelWidth = (text: string) =>
+    measurePreviewTextWidth(text, yAxisLabelCss);
+  const labelGutter = measureYAxisLabelGutter(
+    ticks,
+    yAxisDataType,
+    measureYAxisLabelWidth,
+  );
   const plotWidth = Math.max(1, contentWidth - labelGutter);
   const xAxisWidth = Math.max(1, plotWidth - 1);
   const lineWidth =
     config.lineRange === "full" ? xAxisWidth : Math.round(plotWidth * 0.788);
   const yAxisPosition = config.yAxisPosition ?? "right";
   const plotX = yAxisPosition === "right" ? 0 : labelGutter;
-  const yAxisLabelX = yAxisPosition === "right" ? plotWidth + 8 : -8;
   const xAxisLabels = config.xAxisLabels.length
     ? config.xAxisLabels
     : ["", "", "", "", "", "", ""];
@@ -133,7 +140,6 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
     ty.yAxisTitle,
     resolvedTypography,
   );
-  const yAxisLabelCss = typographyTokenToPreviewCss(yLab, resolvedTypography);
   const xAxisLabelCss = typographyTokenToPreviewCss(
     ty.xAxisLabel,
     resolvedTypography,
@@ -151,10 +157,7 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
   const selectedLabel = hasSelection
     ? config.pointLabels[selectedIndex] || `P${selectedIndex + 1}`
     : "";
-  const rawSelectedAnchorX = 16 + plotX + markerX;
-  const previewScale = 0.9;
-  const selectedAnchorX =
-    config.width / 2 + (rawSelectedAnchorX - config.width / 2) * previewScale;
+  const selectedAnchorX = 16 + plotX + markerX;
   const chartTop = (config.chartTitle.trim() ? 46 : 0) + 100;
 
   return (
@@ -184,7 +187,6 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
           height: `${config.height}px`,
           overflow: "hidden",
           padding: "0 16px 16px",
-          transform: "scale(0.9)",
           transformOrigin: "top center",
           width: `${config.width}px`,
         }}
@@ -223,6 +225,12 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
             {ticks.map((tick, index) => {
               const y =
                 clamp(1 - (tick - minValue) / valueRange, 0, 1) * plotHeight;
+              const labelText = formatAxisTickLabel(tick, yAxisDataType);
+              const labelWidth = measureYAxisTickLabelWidth(
+                tick,
+                yAxisDataType,
+                measureYAxisLabelWidth,
+              );
               return (
                 <div
                   key={`${tick}-${index}`}
@@ -245,20 +253,20 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
                     style={{
                       left:
                         yAxisPosition === "right"
-                          ? `${yAxisLabelX}px`
-                          : undefined,
+                          ? `${plotWidth + Y_AXIS_LABEL_AXIS_GAP}px`
+                          : `${-labelWidth - Y_AXIS_LABEL_AXIS_GAP}px`,
                       position: "absolute",
-                      right:
-                        yAxisPosition === "left"
-                          ? `${plotWidth - yAxisLabelX}px`
-                          : undefined,
                       textAlign: yAxisPosition === "left" ? "right" : "left",
                       top: "-8px",
                       whiteSpace: "nowrap",
+                      width:
+                        yAxisPosition === "left"
+                          ? `${labelWidth}px`
+                          : undefined,
                       ...yAxisLabelCss,
                     }}
                   >
-                    {formatAxisTickLabel(tick, yAxisDataType)}
+                    {labelText}
                   </div>
                 </div>
               );

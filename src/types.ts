@@ -174,6 +174,7 @@ export interface LineChartConfig {
   minValue: number;
   maxValue: number;
   yAxisDataType?: YAxisDataType;
+  yAxisDivisions?: number;
   yAxisTitle: string;
   xAxisLabels: string[];
   pointLabels: string[];

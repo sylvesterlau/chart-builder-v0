@@ -40,6 +40,7 @@ import {
   drawCartesianXAxis,
   drawCartesianYAxis,
   drawCartesianYAxisTitle,
+  measureYAxisLabelGutterFigma,
 } from "./drawCartesianAxis";
 import { createChartTitle, loadChartTitleFont } from "./drawChartTitle";
 
@@ -283,7 +284,6 @@ async function drawMarker(
       fillToken,
     );
     await applyMarkerStroke(shape, chartBackground);
-    shape.cornerRadius = 1;
     return;
   }
 
@@ -465,7 +465,12 @@ async function drawChart(parent: FrameNode, config: NormalizedLineChartConfig) {
   contentFrame.layoutSizingVertical = "FILL";
 
   const yAxisPosition = config.yAxisPosition ?? "right";
-  const labelGutter = 46;
+  const labelGutter = await measureYAxisLabelGutterFigma(
+    config.yTicks,
+    config.yAxisDataType ?? "number",
+    config.color.yAxisLabel,
+    textColor.primary,
+  );
   const plotX = yAxisPosition === "right" ? 0 : labelGutter;
   const plotY = 9;
   const yAxisWidth = contentFrame.width - labelGutter;

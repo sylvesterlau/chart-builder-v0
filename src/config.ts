@@ -51,6 +51,12 @@ const typeScale = {
     } satisfies Readonly<TypographyToken>,
   },
   label: {
+    light: {
+      fontFamily: "Inter",
+      fontSize: 14,
+      fontWeight: 300,
+      lineHeight: 20,
+    },
     regular: {
       fontFamily: "Inter",
       fontSize: 14,
@@ -202,7 +208,7 @@ export const ds = {
 
   cartesianKeyInfo: {
     typography: {
-      range: typeScale.label.regular,
+      range: typeScale.label.light,
       label: typeScale.label.regular,
       valueLarge: typeScale.headline.regular,
       value: typeScale.heading.regular,
@@ -411,6 +417,7 @@ export const lineChartConfig = {
   height: 320,
   minValue: 100,
   maxValue: 250,
+  yAxisDivisions: 3,
   yAxisTitle: "HKD",
   xAxisLabels: ["Jan 2026", "", "", "Feb 2026", "", "", "Mar 2026"],
   pointLabels: createLinePointLabels(100),

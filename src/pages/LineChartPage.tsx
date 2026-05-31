@@ -32,6 +32,7 @@ import { dataVisColor, lineChartConfig, pluginUISize } from "../config";
 import {
   isCartesianXAxisLineVisible,
   isCartesianYAxisLineVisible,
+  roundToDecimals,
 } from "../helpers";
 import {
   LineChartConfig,
@@ -68,6 +69,9 @@ const LINE_RANGE_OPTIONS: Array<SegmentedControlOption> = [
 ];
 const MIN_POINTS = 2;
 const MAX_POINTS = 180;
+const MIN_Y_AXIS_DIVISIONS = 2;
+const MAX_Y_AXIS_DIVISIONS = 10;
+const DEFAULT_Y_AXIS_DIVISIONS = 3;
 const DEFAULT_START_DATE = "2026-01";
 const DEFAULT_END_DATE = "2026-03";
 const DEFAULT_START_TIME = "09:30";
@@ -374,7 +378,7 @@ function createLineValues(
       min,
       Math.min(max, value + random * volatility + drift + wave),
     );
-    values.push(Math.round(value));
+    values.push(roundToDecimals(value));
   }
   return values;
 }
@@ -471,6 +475,9 @@ function LineChartPage({ onBack }: LineChartPageProps) {
   const [pointCountInput, setPointCountInput] = useState<string>(
     String(sample.pointCount),
   );
+  const [yAxisDivisionsInput, setYAxisDivisionsInput] = useState<string>(
+    String(sample.yAxisDivisions ?? DEFAULT_Y_AXIS_DIVISIONS),
+  );
   const [minValueInput, setMinValueInput] = useState<string>(
     String(sample.minValue),
   );
@@ -539,6 +546,7 @@ function LineChartPage({ onBack }: LineChartPageProps) {
   }, [tooltipPercent, showTooltip]);
 
   const parsedPointCount = parseInputNumber(pointCountInput);
+  const parsedYAxisDivisions = parseInputNumber(yAxisDivisionsInput);
   const parsedMinValue = parseInputNumber(minValueInput);
   const parsedMaxValue = parseInputNumber(maxValueInput);
   const parsedXAxisStartDate = parseDateInput(xAxisStartInput);
@@ -550,6 +558,11 @@ function LineChartPage({ onBack }: LineChartPageProps) {
     Number.isInteger(parsedPointCount) &&
     parsedPointCount >= MIN_POINTS &&
     parsedPointCount <= MAX_POINTS;
+  const isYAxisDivisionsValid =
+    parsedYAxisDivisions !== null &&
+    Number.isInteger(parsedYAxisDivisions) &&
+    parsedYAxisDivisions >= MIN_Y_AXIS_DIVISIONS &&
+    parsedYAxisDivisions <= MAX_Y_AXIS_DIVISIONS;
   const isValueRangeValid =
     parsedMinValue !== null &&
     parsedMaxValue !== null &&
@@ -567,6 +580,9 @@ function LineChartPage({ onBack }: LineChartPageProps) {
   const effectivePointCount = isPointCountValid
     ? parsedPointCount
     : sample.pointCount;
+  const effectiveYAxisDivisions = isYAxisDivisionsValid
+    ? parsedYAxisDivisions
+    : DEFAULT_Y_AXIS_DIVISIONS;
   const effectiveMinValue = isValueRangeValid
     ? parsedMinValue
     : sample.minValue;
@@ -633,6 +649,7 @@ function LineChartPage({ onBack }: LineChartPageProps) {
       minValue: effectiveMinValue,
       maxValue: effectiveMaxValue,
       yAxisDataType,
+      yAxisDivisions: effectiveYAxisDivisions,
       yAxisTitle: effectiveYAxisTitle,
       xAxisLabels:
         xAxisMode === "time"
@@ -677,12 +694,17 @@ function LineChartPage({ onBack }: LineChartPageProps) {
     yAxisPosition,
     effectiveYAxisTitle,
     yAxisDataType,
+    effectiveYAxisDivisions,
     yAxisUnit,
     xAxisMode,
   ]);
 
   const handlePointCountChange = useCallback((value: string) => {
     setPointCountInput(sanitizeIntegerInput(value));
+  }, []);
+
+  const handleYAxisDivisionsChange = useCallback((value: string) => {
+    setYAxisDivisionsInput(sanitizeIntegerInput(value));
   }, []);
 
   const handleDatasetNameInput = useCallback((index: number, name: string) => {
@@ -1065,9 +1087,21 @@ function LineChartPage({ onBack }: LineChartPageProps) {
                   </span>
                 </div>
               </div>
+              <div className={styles.fieldRow}>
+                <Text className={styles.fieldLabel}>Divisions</Text>
+                <Textbox
+                  onValueInput={handleYAxisDivisionsChange}
+                  value={yAxisDivisionsInput}
+                />
+              </div>
               {!isValueRangeValid ? (
                 <div className={styles.fieldHintError}>
                   Max must be greater than min.
+                </div>
+              ) : null}
+              {!isYAxisDivisionsValid ? (
+                <div className={styles.fieldHintError}>
+                  Use {MIN_Y_AXIS_DIVISIONS}-{MAX_Y_AXIS_DIVISIONS}.
                 </div>
               ) : null}
             </div>

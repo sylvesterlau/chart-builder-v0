@@ -47,7 +47,49 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
 
-async function createSwatch(colorTokenIndex: number): Promise<FrameNode> {
+async function createLineSwatch(colorTokenIndex: number): Promise<FrameNode> {
+  const visual = await createFrame("Series indicator");
+  visual.resize(18, 18);
+
+  const line = figma.createRectangle();
+  line.name = "Line";
+  line.resize(18, 2);
+  line.x = 0;
+  line.y = 8;
+  await applyColorTokenToFills(line, dataVisAt(colorTokenIndex));
+  visual.appendChild(line);
+
+  const shape =
+    colorTokenIndex === 2
+      ? figma.createPolygon()
+      : colorTokenIndex === 1
+        ? figma.createRectangle()
+        : figma.createEllipse();
+  shape.name = "Shape";
+  if (shape.type === "POLYGON") {
+    shape.pointCount = 3;
+    shape.resize(11.5, 10.5);
+  } else {
+    shape.resize(
+      colorTokenIndex === 1 ? 9.5 : 11,
+      colorTokenIndex === 1 ? 9.5 : 11,
+    );
+  }
+  shape.x = (18 - shape.width) / 2;
+  shape.y = (18 - shape.height) / 2;
+  await applyColorTokenToFills(shape, dataVisAt(colorTokenIndex));
+  await applyColorTokenToStrokes(shape, cartesianTooltipConfig.color.panel);
+  shape.strokeWeight = 1.5;
+  shape.strokeAlign = "OUTSIDE";
+  visual.appendChild(shape);
+
+  return visual;
+}
+
+async function createSwatch(
+  kind: CartesianTooltipData["kind"],
+  colorTokenIndex: number,
+): Promise<FrameNode> {
   const visual = await createFrame("Visual");
   visual.resize(18, 20);
   Object.assign(visual, {
@@ -56,17 +98,22 @@ async function createSwatch(colorTokenIndex: number): Promise<FrameNode> {
     counterAxisAlignItems: "CENTER",
   });
 
-  const shape = figma.createRectangle();
-  shape.name = "Shape";
-  shape.resize(14, 14);
-  await applyColorTokenToFills(shape, dataVisAt(colorTokenIndex));
-  visual.appendChild(shape);
+  if (kind === "line") {
+    visual.appendChild(await createLineSwatch(colorTokenIndex));
+  } else {
+    const shape = figma.createRectangle();
+    shape.name = "Shape";
+    shape.resize(14, 14);
+    await applyColorTokenToFills(shape, dataVisAt(colorTokenIndex));
+    visual.appendChild(shape);
+  }
   return visual;
 }
 
 async function createTooltipRow(
   item: CartesianTooltipData["items"][number],
   width: number,
+  kind: CartesianTooltipData["kind"],
 ): Promise<FrameNode> {
   const row = await createFrame("Text line");
   row.resize(width, 20);
@@ -87,7 +134,7 @@ async function createTooltipRow(
     itemSpacing: numberTokenValue(cartesianTooltipConfig.spacing.itemGap),
     layoutGrow: 1,
   });
-  main.appendChild(await createSwatch(item.colorTokenIndex));
+  main.appendChild(await createSwatch(kind, item.colorTokenIndex));
 
   const label = await createText(
     item.label,
@@ -232,7 +279,7 @@ export async function createCartesianTooltip(
   panel.appendChild(title);
 
   for (const item of data.items) {
-    const row = await createTooltipRow(item, panelContentWidth);
+    const row = await createTooltipRow(item, panelContentWidth, data.kind);
     panel.appendChild(row);
     row.layoutSizingHorizontal = "FILL";
   }

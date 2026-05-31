@@ -25,9 +25,10 @@ export interface CartesianKeyInfoData {
 }
 
 export function formatKeyInfoNumber(value: number): string {
-  const rounded = Math.round(Number(value) || 0);
-  const sign = rounded < 0 ? "-" : "";
-  return `${sign}${String(Math.abs(rounded)).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+  const num = Number(value) || 0;
+  const sign = num < 0 ? "-" : "";
+  const [integerPart, decimalPart] = Math.abs(num).toFixed(2).split(".");
+  return `${sign}${integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}.${decimalPart}`;
 }
 
 export function formatPercentageChange(value: number): string {

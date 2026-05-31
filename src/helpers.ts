@@ -398,6 +398,11 @@ export function rgbaFromHex(hex: string, alpha: number): string {
   return `rgba(${r},${g},${b},${a})`;
 }
 
+export function roundToDecimals(value: number, decimals = 2): number {
+  const factor = 10 ** decimals;
+  return Math.round((Number(value) + Number.EPSILON) * factor) / factor;
+}
+
 export function formatAxisNumber(value: number): string {
   const roundedValue = Math.round(Number(value) || 0);
   const sign = roundedValue < 0 ? "-" : "";
@@ -413,8 +418,89 @@ export function formatAxisTickLabel(
   return dataType === "percentage" ? `${formatted}%` : formatted;
 }
 
+export const Y_AXIS_LABEL_AXIS_GAP = 8;
+
+export function estimateAxisLabelWidth(text: string, fontSize = 12): number {
+  return Math.ceil(String(text || "").length * fontSize * 0.55);
+}
+
+export function measureTextWidth(text: string, font: string): number {
+  if (typeof document === "undefined") {
+    return estimateAxisLabelWidth(text);
+  }
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+  if (!context) {
+    return estimateAxisLabelWidth(text);
+  }
+  context.font = font;
+  return Math.ceil(context.measureText(String(text || "")).width);
+}
+
+export function measurePreviewTextWidth(
+  text: string,
+  css: Record<string, string | number>,
+): number {
+  if (typeof document === "undefined") {
+    const fontSize = parseInt(String(css.fontSize ?? "12"), 10) || 12;
+    return estimateAxisLabelWidth(text, fontSize);
+  }
+  const span = document.createElement("span");
+  span.style.visibility = "hidden";
+  span.style.position = "absolute";
+  span.style.pointerEvents = "none";
+  span.style.whiteSpace = "nowrap";
+  if (css.fontFamily !== undefined) {
+    span.style.fontFamily = String(css.fontFamily);
+  }
+  if (css.fontSize !== undefined) {
+    span.style.fontSize = String(css.fontSize);
+  }
+  if (css.fontWeight !== undefined) {
+    span.style.fontWeight = String(css.fontWeight);
+  }
+  if (css.lineHeight !== undefined) {
+    span.style.lineHeight = String(css.lineHeight);
+  }
+  span.textContent = String(text || "");
+  document.body.appendChild(span);
+  const width = Math.ceil(span.getBoundingClientRect().width);
+  span.remove();
+  return width;
+}
+
+export function measureYAxisLabelGutter(
+  ticks: number[],
+  yAxisDataType: "number" | "percentage" = "number",
+  measureWidth: (text: string) => number,
+): number {
+  if (ticks.length === 0) {
+    return Y_AXIS_LABEL_AXIS_GAP;
+  }
+  let maxWidth = 0;
+  for (const tick of ticks) {
+    const label = formatAxisTickLabel(tick, yAxisDataType);
+    maxWidth = Math.max(maxWidth, measureWidth(label));
+  }
+  return maxWidth + Y_AXIS_LABEL_AXIS_GAP;
+}
+
+export function measureYAxisTickLabelWidth(
+  tick: number,
+  yAxisDataType: "number" | "percentage",
+  measureWidth: (text: string) => number,
+): number {
+  return measureWidth(formatAxisTickLabel(tick, yAxisDataType));
+}
+
 function normalizeYAxisDataType(value: unknown): "number" | "percentage" {
   return value === "percentage" ? "percentage" : "number";
+}
+
+export function normalizeYAxisDivisions(value: unknown, fallback = 3): number {
+  const parsed = Math.round(Number(value));
+  if (!Number.isFinite(parsed)) return fallback;
+  return clampNumber(parsed, 2, 10, fallback);
 }
 
 export function normalizeCartesianAxisLineVisibility(
@@ -666,6 +752,10 @@ export function normalizeLineChartConfig(
   const fallbackColor = fallback.color;
   const inputColor = input.color;
   const yAxisDataType = normalizeYAxisDataType(input.yAxisDataType);
+  const yAxisDivisions = normalizeYAxisDivisions(
+    input.yAxisDivisions,
+    normalizeYAxisDivisions(fallback.yAxisDivisions),
+  );
   const inputYAxisTitle = String(input.yAxisTitle ?? "").trim();
   const yAxisTitle =
     yAxisDataType === "percentage"
@@ -720,10 +810,11 @@ export function normalizeLineChartConfig(
     minValue,
     maxValue,
     yAxisDataType,
+    yAxisDivisions,
     yAxisTitle,
     xAxisLabels,
     pointLabels,
     series,
-    yTicks: buildRangeTicks(minValue, maxValue, 3),
+    yTicks: buildRangeTicks(minValue, maxValue, yAxisDivisions),
   };
 }
