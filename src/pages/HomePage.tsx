@@ -1,4 +1,4 @@
-import { Container, Text, VerticalSpace } from "@create-figma-plugin/ui";
+import { Container, Stack, Text, VerticalSpace } from "@create-figma-plugin/ui";
 import { h } from "preact";
 import ChartTypeIcon from "../components/ChartTypeIcon";
 import List from "../components/List";
@@ -20,13 +20,10 @@ interface HomePageProps {
 function HomePage({ onNavigate }: HomePageProps) {
   return (
     <Container space="medium">
-      <div className={styles.page}>
-        <VerticalSpace space="small" />
-        <Text className={styles.title}>Chart Builder</Text>
-        <VerticalSpace space="small" />
-        <Text className={styles.sectionTitle}>Charts</Text>
-        <VerticalSpace space="small" />
-        <div className={styles.listGroup}>
+      <VerticalSpace space="extraLarge" />
+      <Stack space="medium">
+        <Text className={styles.title}>Hive Charts</Text>
+        <Stack space="small">
           <List
             preview={<ChartTypeIcon variant="pie" />}
             title="Pie & Donut"
@@ -57,25 +54,24 @@ function HomePage({ onNavigate }: HomePageProps) {
             subtitle="Stacked horizontal bar chart"
             onClick={() => onNavigate("horizontalBar")}
           />
-        </div>
-
-        <VerticalSpace space="medium" />
-        {showDesignSystemEntry ? (
-          <div>
-            <Text className={styles.sectionTitle}>Settings</Text>
-            <VerticalSpace space="small" />
-            <div className={styles.listGroup}>
-              <List
-                preview={<ChartTypeIcon variant="designSystem" />}
-                title="Design system"
-                subtitle="Colors, typography, spacing"
-                variant="settings"
-                onClick={() => onNavigate("designSystemConfig")}
-              />
-            </div>
-          </div>
-        ) : null}
-      </div>
+        </Stack>
+      </Stack>
+      <VerticalSpace space="extraLarge" />
+      {showDesignSystemEntry ? (
+        <Stack space="small">
+          <Text className={styles.sectionTitle}>Settings</Text>
+          <Stack space="small">
+            <List
+              preview={<ChartTypeIcon variant="designSystem" />}
+              title="Design system"
+              subtitle="Colors, typography, spacing"
+              variant="settings"
+              onClick={() => onNavigate("designSystemConfig")}
+            />
+          </Stack>
+          <VerticalSpace space="extraLarge" />
+        </Stack>
+      ) : null}
     </Container>
   );
 }

@@ -756,11 +756,14 @@ export function normalizeLineChartConfig(
     input.yAxisDivisions,
     normalizeYAxisDivisions(fallback.yAxisDivisions),
   );
+  const hasYAxisTitleInput = input.yAxisTitle !== undefined;
   const inputYAxisTitle = String(input.yAxisTitle ?? "").trim();
   const yAxisTitle =
     yAxisDataType === "percentage"
       ? ""
-      : inputYAxisTitle || fallback.yAxisTitle;
+      : hasYAxisTitleInput
+        ? inputYAxisTitle
+        : fallback.yAxisTitle;
 
   return {
     chartType: "lineChart",

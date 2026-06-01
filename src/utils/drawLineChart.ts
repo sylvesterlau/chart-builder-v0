@@ -44,7 +44,7 @@ import {
 } from "./drawCartesianAxis";
 import { createChartTitle, loadChartTitleFont } from "./drawChartTitle";
 
-const ROOT_NAME = "_demo/line chart/1";
+const ROOT_NAME = "Line chart";
 
 function lineChartTypographyTokens(
   config: NormalizedLineChartConfig,
