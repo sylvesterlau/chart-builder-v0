@@ -5,6 +5,7 @@ import {
   formatAxisNumber,
   isCartesianXAxisLineVisible,
   isCartesianYAxisLineVisible,
+  measurePreviewTextWidth,
 } from "../helpers";
 import { LineChartConfig } from "../types";
 import { useColorTokenResolved } from "./ColorChips/colorTokenSwatchContext";
@@ -19,6 +20,7 @@ import {
 } from "../utils/typographyTokenDisplay";
 import { buildLineKeyInfo } from "../utils/cartesianKeyInfo";
 import { buildLineTooltip } from "../utils/cartesianTooltip";
+import { measureYAxisLabelGutter } from "../utils/drawCartesianAxis";
 import CartesianKeyInfoPreview from "./CartesianKeyInfoPreview";
 import CartesianTooltipPreview from "./CartesianTooltipPreview";
 import ChartTitlePreview from "./ChartTitlePreview";
@@ -108,7 +110,10 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
   const contentWidth = Math.max(1, config.width - 32);
   const contentHeight = Math.max(1, config.height - 24 - yTitleRowHeight);
   const plotHeight = Math.max(1, contentHeight - 30);
-  const labelGutter = 46;
+  const yAxisLabelCss = typographyTokenToPreviewCss(yLab, resolvedTypography);
+  const labelGutter = measureYAxisLabelGutter(ticks, (label) =>
+    measurePreviewTextWidth(label, yAxisLabelCss),
+  );
   const plotWidth = Math.max(1, contentWidth - labelGutter);
   const xAxisWidth = Math.max(1, plotWidth - 1);
   const lineWidth =
@@ -138,7 +143,6 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
     ty.yAxisTitle,
     resolvedTypography,
   );
-  const yAxisLabelCss = typographyTokenToPreviewCss(yLab, resolvedTypography);
   const xAxisLabelCss = typographyTokenToPreviewCss(
     ty.xAxisLabel,
     resolvedTypography,

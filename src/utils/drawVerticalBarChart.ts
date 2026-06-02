@@ -40,6 +40,7 @@ import {
   drawCartesianXAxis,
   drawCartesianYAxis,
   drawCartesianYAxisTitle,
+  measureYAxisLabelGutterFigma,
 } from "./drawCartesianAxis";
 import { createChartTitle, loadChartTitleFont } from "./drawChartTitle";
 
@@ -386,7 +387,10 @@ async function drawBarChart(
   contentFrame.layoutSizingVertical = "FILL";
 
   const yAxisPosition = config.yAxisPosition ?? "right";
-  const labelGutter = 46;
+  const labelGutter = await measureYAxisLabelGutterFigma(
+    config.yTicks,
+    config.color.yAxisLabel,
+  );
   const plotX = yAxisPosition === "right" ? 0 : labelGutter;
   const plotY = 9;
   const plotWidth = contentFrame.width - labelGutter;

@@ -407,6 +407,26 @@ export function formatAxisNumber(value: number): string {
   return `${sign}${absoluteValue.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
 }
 
+export function measurePreviewTextWidth(
+  text: string,
+  style: Record<string, string | number>,
+): number {
+  const fontSize = Number.parseFloat(String(style.fontSize || "12")) || 12;
+  const fontWeight = String(style.fontWeight || "400");
+  const fontFamily = String(style.fontFamily || "sans-serif");
+
+  if (typeof document !== "undefined") {
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+    if (context) {
+      context.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
+      return context.measureText(text).width;
+    }
+  }
+
+  return String(text || "").length * fontSize * 0.6;
+}
+
 export function normalizeCartesianAxisLineVisibility(
   value: unknown,
 ): CartesianAxisLineVisibility {
