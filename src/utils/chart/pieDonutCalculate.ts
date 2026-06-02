@@ -42,15 +42,8 @@ export function isValidDonutRingWidth(
   return ringWidthPx >= min && ringWidthPx <= max;
 }
 
-export function resolvePieSliceGap(gapPx: number | undefined): number {
-  const { sliceGap, sliceGapMin, sliceGapMax } = pieChartConfig;
-  const value = gapPx ?? sliceGap;
-  return Math.min(sliceGapMax, Math.max(sliceGapMin, value));
-}
-
-export function isValidPieSliceGap(gapPx: number): boolean {
-  const { sliceGapMin, sliceGapMax } = pieChartConfig;
-  return Number.isFinite(gapPx) && gapPx >= sliceGapMin && gapPx <= sliceGapMax;
+export function resolvePieSliceGap(): number {
+  return pieChartConfig.sliceGap.value;
 }
 
 export function resolveIndicatorLineExtend(

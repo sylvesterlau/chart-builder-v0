@@ -5,17 +5,17 @@ import {
   verticalBarChartConfig,
 } from "../config";
 import { dataVisAt } from "./dataVisAt";
-import {
-  clamp,
-  normalizeVerticalBarChartConfig,
-} from "../helpers";
+import { clamp, normalizeVerticalBarChartConfig } from "../helpers";
 import {
   ColorToken,
   NormalizedVerticalBarChartConfig,
   TypographyToken,
   VerticalBarChartConfig,
 } from "../types";
-import { applyColorTokenToFills, applyColorTokenToStrokes } from "./applyColorToken";
+import {
+  applyColorTokenToFills,
+  applyColorTokenToStrokes,
+} from "./applyColorToken";
 import {
   applyHorizontalPadding,
   applyItemSpacing,
@@ -44,7 +44,7 @@ import {
 } from "./drawCartesianAxis";
 import { createChartTitle, loadChartTitleFont } from "./drawChartTitle";
 
-const ROOT_NAME = "_demo/bar chart/1";
+const ROOT_NAME = "Vertical bar chart";
 
 function verticalBarTypographyTokens(
   config: NormalizedVerticalBarChartConfig,
@@ -53,9 +53,7 @@ function verticalBarTypographyTokens(
   return [ty.xAxisTitle, ty.yAxisTitle, ty.xAxisLabel, yAxisLabel];
 }
 
-async function loadVerticalBarFonts(
-  config: NormalizedVerticalBarChartConfig,
-) {
+async function loadVerticalBarFonts(config: NormalizedVerticalBarChartConfig) {
   await loadTypographyTokenFontsBatch(verticalBarTypographyTokens(config));
 }
 
@@ -246,7 +244,14 @@ async function drawBars(
   width: number,
   height: number,
 ) {
-  const barsFrame = await createFrameNode(parent, "Frame 1", x, y, width, height);
+  const barsFrame = await createFrameNode(
+    parent,
+    "Frame 1",
+    x,
+    y,
+    width,
+    height,
+  );
   Object.assign(barsFrame, {
     layoutMode: "HORIZONTAL",
     primaryAxisSizingMode: "FIXED",
@@ -287,7 +292,13 @@ async function drawBars(
         labelBg,
         config.color.typography.xAxisLabel,
       );
-      await drawDashedIndicator(barGroup, centerX, 0, -40, config.color.axisLine);
+      await drawDashedIndicator(
+        barGroup,
+        centerX,
+        0,
+        -40,
+        config.color.axisLine,
+      );
       await createRect(
         barGroup,
         "Highlighted BG",
@@ -299,7 +310,11 @@ async function drawBars(
       );
     }
 
-    for (let seriesIndex = 0; seriesIndex < visibleSeries.length; seriesIndex++) {
+    for (
+      let seriesIndex = 0;
+      seriesIndex < visibleSeries.length;
+      seriesIndex++
+    ) {
       const series = visibleSeries[seriesIndex];
       const rawValue = Number(series.values[labelIndex]) || 0;
       const value = clamp(rawValue, 0, config.maxValue);
@@ -389,7 +404,9 @@ async function drawBarChart(
   const yAxisPosition = config.yAxisPosition ?? "right";
   const labelGutter = await measureYAxisLabelGutterFigma(
     config.yTicks,
+    "number",
     config.color.yAxisLabel,
+    textColor.primary,
   );
   const plotX = yAxisPosition === "right" ? 0 : labelGutter;
   const plotY = 9;
@@ -397,7 +414,9 @@ async function drawBarChart(
   const plotHeight = contentFrame.height - 54;
   const selectedIndicatorX =
     config.selectedIndex >= 0 && config.selectedIndex < config.labels.length
-      ? 16 + plotX + (plotWidth / config.labels.length) * config.selectedIndex +
+      ? 16 +
+        plotX +
+        (plotWidth / config.labels.length) * config.selectedIndex +
         plotWidth / config.labels.length / 2
       : null;
 

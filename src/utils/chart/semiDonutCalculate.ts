@@ -54,9 +54,9 @@ export function isValidSemiDonutRingWidth(
   return ringWidthPx >= min && ringWidthPx <= max;
 }
 
-export function resolveSemiDonutSliceGapPx(gapPx: number | undefined): number {
+export function resolveSemiDonutSliceGapPx(): number {
   const { sliceGapMin, sliceGapMax } = semiDonutChartLayout;
-  const value = gapPx ?? semiDonutChartConfig.sliceGap;
+  const value = semiDonutChartConfig.sliceGap;
   return Math.min(sliceGapMax, Math.max(sliceGapMin, value));
 }
 

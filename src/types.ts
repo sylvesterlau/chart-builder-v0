@@ -20,7 +20,11 @@ export interface TokenVarKeyLookupMatch {
   libraryName?: string;
 }
 
-export type TokenVarKeyLookupStatus = "found" | "multiple" | "not_found" | "error";
+export type TokenVarKeyLookupStatus =
+  | "found"
+  | "multiple"
+  | "not_found"
+  | "error";
 
 export interface TokenVarKeyLookupResult {
   /** User-entered path (trimmed line). */
@@ -85,14 +89,10 @@ export interface ChartData {
   frameWidth?: number;
   /** Semi-donut ring diameter (px). */
   semiDonutSize?: number;
-  /** Semi-donut slice gap along mid-ring arc (px). */
-  semiDonutSliceGap?: number;
   /** Semi-donut ring radial thickness (px). */
   semiDonutRingWidth?: number;
   /** Indicator leader line extend past slice edge (px). */
   indicatorLineExtend?: number;
-  /** Pie/donut slice separator stroke (px). */
-  pieSliceGap?: number;
   /** Donut ring radial thickness (px). */
   donutRingWidth?: number;
   /** Horizontal bar gap between segments (px). */
@@ -104,6 +104,7 @@ export type CartesianYAxisPosition = "left" | "right";
 export type CartesianAxisLineVisibility = "both" | "x" | "y" | "none";
 export type LineChartMode = "single" | "multi";
 export type LineChartRange = "partial" | "full";
+export type YAxisDataType = "number" | "percentage";
 
 export interface VerticalBarChartSeries {
   name: string;
@@ -168,6 +169,8 @@ export interface LineChartConfig {
   height: number;
   minValue: number;
   maxValue: number;
+  yAxisDataType?: YAxisDataType;
+  yAxisDivisions?: number;
   yAxisTitle: string;
   xAxisLabels: string[];
   pointLabels: string[];

@@ -1,5 +1,10 @@
 import { h } from "preact";
-import { chartBackground, textColor, typography } from "../config";
+import {
+  chartBackground,
+  semiDonutChartConfig,
+  textColor,
+  typography,
+} from "../config";
 import {
   semiDonutGapPxToPercent,
   semiDonutRingWidthPxToRatio,
@@ -26,7 +31,6 @@ interface SemiDonutChartPreviewProps {
   items: ChartItem[];
   legendStyle: LegendStyle;
   ringWidth: number;
-  sliceGap: number;
   showPercentage: boolean;
   valuePrefix: string;
   valueSuffix: string;
@@ -74,7 +78,6 @@ function SemiDonutChartPreview({
   items,
   legendStyle,
   ringWidth,
-  sliceGap,
   showPercentage,
   valuePrefix,
   valueSuffix,
@@ -103,6 +106,7 @@ function SemiDonutChartPreview({
   const innerRadiusRatio = semiDonutRingWidthPxToRatio(ringWidth, chartSize);
   const innerRadius = outerRadius * innerRadiusRatio;
   const ringWidthPx = outerRadius - innerRadius;
+  const sliceGap = semiDonutChartConfig.sliceGap;
   const strokeRadius = (outerRadius + innerRadius) / 2;
   const gapPercent = semiDonutGapPxToPercent(
     sliceGap,

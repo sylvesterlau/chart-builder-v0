@@ -1,7 +1,8 @@
 import {
-  formatAxisNumber,
+  formatAxisTickLabel,
   isCartesianXAxisLineVisible,
   isCartesianYAxisLineVisible,
+  Y_AXIS_LABEL_AXIS_GAP,
 } from "../helpers";
 import type {
   CartesianAxisLineVisibility,
@@ -9,6 +10,7 @@ import type {
   CartesianYAxisPosition,
   ColorToken,
   TypographyToken,
+  YAxisDataType,
 } from "../types";
 import { applyColorTokenToFills, applyColorTokenToStrokes } from "./applyColorToken";
 import { applyTypographyTokenToText } from "./applyTypographyToken";
@@ -108,35 +110,18 @@ function measureAxisLabelWidth(value: string): number {
   return Math.max(1, String(value || "").length * 7);
 }
 
-const Y_AXIS_LABEL_GAP = 8;
-
 export function measureYAxisLabelGutter(
   ticks: number[],
   measureLabelWidth: (label: string) => number,
+  yAxisDataType: YAxisDataType = "number",
 ): number {
   const widestLabel = ticks.reduce((maxWidth, tick) => {
-    return Math.max(maxWidth, measureLabelWidth(formatAxisNumber(tick)));
+    return Math.max(
+      maxWidth,
+      measureLabelWidth(formatAxisTickLabel(tick, yAxisDataType)),
+    );
   }, 0);
-  return Math.max(1, Math.ceil(widestLabel + Y_AXIS_LABEL_GAP));
-}
-
-export async function measureYAxisLabelGutterFigma(
-  ticks: number[],
-  style: TypographyToken,
-): Promise<number> {
-  const measurer = await createCartesianText("", style, {
-    value: "#000000",
-  });
-  measurer.visible = false;
-  figma.currentPage.appendChild(measurer);
-
-  const gutter = measureYAxisLabelGutter(ticks, (label) => {
-    measurer.characters = label;
-    return measurer.width;
-  });
-
-  measurer.remove();
-  return gutter;
+  return Math.max(1, Math.ceil(widestLabel + Y_AXIS_LABEL_AXIS_GAP));
 }
 
 export interface CartesianAxisTitleOptions {
@@ -176,6 +161,7 @@ export interface CartesianYAxisOptions {
   color: CartesianChartColorConfig;
   textColor: ColorToken;
   ticks: number[];
+  yAxisDataType?: YAxisDataType;
   yAxisPosition?: CartesianYAxisPosition;
 }
 
@@ -190,6 +176,7 @@ export async function drawCartesianYAxis(
   const axis = await createCartesianFrameNode(parent, "Y-axis", x, y, width, height);
   const yAxisPosition = options.yAxisPosition ?? "right";
   const yLabelStyle = options.color.yAxisLabel;
+  const yAxisDataType = options.yAxisDataType ?? "number";
   Object.assign(axis, {
     layoutMode: "VERTICAL",
     primaryAxisSizingMode: "FIXED",
@@ -224,7 +211,7 @@ export async function drawCartesianYAxis(
       : 0;
 
     const label = await createCartesianText(
-      formatAxisNumber(tick),
+      formatAxisTickLabel(tick, yAxisDataType),
       yLabelStyle,
       options.textColor,
     );
@@ -234,8 +221,8 @@ export async function drawCartesianYAxis(
     label.layoutPositioning = "ABSOLUTE";
     label.x =
       yAxisPosition === "right"
-        ? width + Y_AXIS_LABEL_GAP
-        : -label.width - Y_AXIS_LABEL_GAP;
+        ? width + Y_AXIS_LABEL_AXIS_GAP
+        : -label.width - Y_AXIS_LABEL_AXIS_GAP;
     label.y = -8;
   }
 
@@ -252,6 +239,32 @@ export async function drawCartesianYAxis(
   ruler.layoutPositioning = "ABSOLUTE";
   ruler.x = rulerX;
   ruler.y = -1;
+}
+
+export async function measureYAxisLabelGutterFigma(
+  ticks: number[],
+  yAxisDataType: YAxisDataType,
+  yLabelStyle: TypographyToken,
+  textColor: ColorToken,
+): Promise<number> {
+  if (ticks.length === 0) {
+    return Y_AXIS_LABEL_AXIS_GAP;
+  }
+  const measurer = await createCartesianText("", yLabelStyle, textColor);
+  measurer.visible = false;
+  figma.currentPage.appendChild(measurer);
+
+  const gutter = measureYAxisLabelGutter(
+    ticks,
+    (label) => {
+      measurer.characters = label;
+      return measurer.width;
+    },
+    yAxisDataType,
+  );
+
+  measurer.remove();
+  return gutter;
 }
 
 export interface CartesianXAxisOptions {

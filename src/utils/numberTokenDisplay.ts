@@ -38,7 +38,7 @@ registerNumberTokenKeys(ds.cartesianTooltip.spacing);
 registerNumberTokenKeys(ds.legend.spacing);
 registerNumberTokenKeys(ds.legend.shape);
 registerNumberTokenKeys(horizontalBarChartLayout);
-registerNumberTokenKeys(ds.chart.pie.indicator);
+registerNumberTokenKeys(ds.chart.pie);
 
 export function numberTokenHasVariableBinding(token: NumberToken): boolean {
   return Boolean(token.key?.trim());

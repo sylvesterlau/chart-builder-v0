@@ -1,5 +1,6 @@
 declare const styles: {
   readonly "chartColorSwatchGrid": string;
+  readonly "chartDimensionInputs": string;
   readonly "chartItemDeleteButton": string;
   readonly "chartItemDeleteButtonWrap": string;
   readonly "chartItemInput": string;
@@ -18,10 +19,12 @@ declare const styles: {
   readonly "field-row": string;
   readonly "fieldGroupLabel": string;
   readonly "fieldHintError": string;
+  readonly "fieldHintErrorFullWidth": string;
   readonly "fieldLabel": string;
   readonly "fieldRow": string;
   readonly "fieldRowAlignStart": string;
   readonly "fieldRowSegmentControl": string;
+  readonly "gridLineCheckboxGroup": string;
   readonly "horizontalBarActions": string;
   readonly "horizontalBarBackButton": string;
   readonly "horizontalBarControls": string;
@@ -71,6 +74,12 @@ declare const styles: {
   readonly "verticalBarLeftPanel": string;
   readonly "verticalBarPage": string;
   readonly "verticalBarPreviewPanel": string;
+  readonly "xAxisSection": string;
+  readonly "xAxisSectionHeader": string;
+  readonly "yAxisSection": string;
+  readonly "yAxisSectionHeader": string;
+  readonly "yAxisValueInputSuffix": string;
+  readonly "yAxisValueInputWrap": string;
 };
 export = styles;
 

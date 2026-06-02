@@ -38,7 +38,6 @@ interface PieDonutPreviewProps {
   showIndicator: boolean;
   showIndicatorPercentage: boolean;
   indicatorLineExtend: number;
-  sliceGap: number;
   donutRingWidth: number;
   showPercentage: boolean;
   valuePrefix: string;
@@ -99,7 +98,6 @@ function PieDonutPreview({
   showIndicator,
   showIndicatorPercentage,
   indicatorLineExtend,
-  sliceGap,
   donutRingWidth,
   showPercentage,
   valuePrefix,
@@ -123,6 +121,10 @@ function PieDonutPreview({
   );
   const leaderLineStrokeWeight = numberTokenResolvedValue(
     pieChartConfig.indicator.leaderLineStrokeWeight,
+    resolvedNumbers,
+  );
+  const sliceGap = numberTokenResolvedValue(
+    pieChartConfig.sliceGap,
     resolvedNumbers,
   );
   const frameHeight = getPieChartAreaHeight(

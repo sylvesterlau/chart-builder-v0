@@ -104,7 +104,9 @@ export function parseTokenPathLines(input: string): string[] {
 
 type LibraryVariableIndexEntry = TokenVarKeyLookupMatch & { name: string };
 
-async function buildLibraryVariableIndex(): Promise<LibraryVariableIndexEntry[]> {
+async function buildLibraryVariableIndex(): Promise<
+  LibraryVariableIndexEntry[]
+> {
   const collections =
     await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync();
   const index: LibraryVariableIndexEntry[] = [];
@@ -177,8 +179,7 @@ export async function lookupTokenVarKeys(
       };
     });
   } catch (err) {
-    const message =
-      err instanceof Error ? err.message : "Token lookup failed";
+    const message = err instanceof Error ? err.message : "Token lookup failed";
     return paths.map(function (path): TokenVarKeyLookupResult {
       return {
         path,
@@ -343,12 +344,7 @@ export function mergeColorToken(
   if (key !== undefined) next.key = key;
   const opacity =
     input?.opacity !== undefined
-      ? clampNumber(
-          input.opacity,
-          0,
-          1,
-          fallback.opacity ?? 0,
-        )
+      ? clampNumber(input.opacity, 0, 1, fallback.opacity ?? 0)
       : fallback.opacity;
   if (opacity !== undefined) next.opacity = opacity;
   return next;
@@ -373,7 +369,9 @@ export function mergeCartesianTextStyle(
   const family = String(input?.fontFamily ?? "").trim();
   const merged: TypographyToken = {
     fontFamily: family || fallback.fontFamily,
-    fontSize: Math.round(clampNumber(input?.fontSize, 6, 96, fallback.fontSize)),
+    fontSize: Math.round(
+      clampNumber(input?.fontSize, 6, 96, fallback.fontSize),
+    ),
     fontWeight: Math.round(
       clampNumber(input?.fontWeight, 100, 900, fallback.fontWeight),
     ),
@@ -400,6 +398,11 @@ export function rgbaFromHex(hex: string, alpha: number): string {
   return `rgba(${r},${g},${b},${a})`;
 }
 
+export function roundToDecimals(value: number, decimals = 2): number {
+  const factor = 10 ** decimals;
+  return Math.round((Number(value) + Number.EPSILON) * factor) / factor;
+}
+
 export function formatAxisNumber(value: number): string {
   const roundedValue = Math.round(Number(value) || 0);
   const sign = roundedValue < 0 ? "-" : "";
@@ -407,24 +410,97 @@ export function formatAxisNumber(value: number): string {
   return `${sign}${absoluteValue.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
 }
 
+export function formatAxisTickLabel(
+  value: number,
+  dataType: "number" | "percentage" = "number",
+): string {
+  const formatted = formatAxisNumber(value);
+  return dataType === "percentage" ? `${formatted}%` : formatted;
+}
+
+export const Y_AXIS_LABEL_AXIS_GAP = 8;
+
+export function estimateAxisLabelWidth(text: string, fontSize = 12): number {
+  return Math.ceil(String(text || "").length * fontSize * 0.55);
+}
+
+export function measureTextWidth(text: string, font: string): number {
+  if (typeof document === "undefined") {
+    return estimateAxisLabelWidth(text);
+  }
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+  if (!context) {
+    return estimateAxisLabelWidth(text);
+  }
+  context.font = font;
+  return Math.ceil(context.measureText(String(text || "")).width);
+}
+
 export function measurePreviewTextWidth(
   text: string,
-  style: Record<string, string | number>,
+  css: Record<string, string | number>,
 ): number {
-  const fontSize = Number.parseFloat(String(style.fontSize || "12")) || 12;
-  const fontWeight = String(style.fontWeight || "400");
-  const fontFamily = String(style.fontFamily || "sans-serif");
-
-  if (typeof document !== "undefined") {
-    const canvas = document.createElement("canvas");
-    const context = canvas.getContext("2d");
-    if (context) {
-      context.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
-      return context.measureText(text).width;
-    }
+  if (typeof document === "undefined") {
+    const fontSize = parseInt(String(css.fontSize ?? "12"), 10) || 12;
+    return estimateAxisLabelWidth(text, fontSize);
   }
+  const span = document.createElement("span");
+  span.style.visibility = "hidden";
+  span.style.position = "absolute";
+  span.style.pointerEvents = "none";
+  span.style.whiteSpace = "nowrap";
+  if (css.fontFamily !== undefined) {
+    span.style.fontFamily = String(css.fontFamily);
+  }
+  if (css.fontSize !== undefined) {
+    span.style.fontSize = String(css.fontSize);
+  }
+  if (css.fontWeight !== undefined) {
+    span.style.fontWeight = String(css.fontWeight);
+  }
+  if (css.lineHeight !== undefined) {
+    span.style.lineHeight = String(css.lineHeight);
+  }
+  span.textContent = String(text || "");
+  document.body.appendChild(span);
+  const width = Math.ceil(span.getBoundingClientRect().width);
+  span.remove();
+  return width;
+}
 
-  return String(text || "").length * fontSize * 0.6;
+export function measureYAxisLabelGutter(
+  ticks: number[],
+  yAxisDataType: "number" | "percentage" = "number",
+  measureWidth: (text: string) => number,
+): number {
+  if (ticks.length === 0) {
+    return Y_AXIS_LABEL_AXIS_GAP;
+  }
+  let maxWidth = 0;
+  for (const tick of ticks) {
+    const label = formatAxisTickLabel(tick, yAxisDataType);
+    maxWidth = Math.max(maxWidth, measureWidth(label));
+  }
+  return maxWidth + Y_AXIS_LABEL_AXIS_GAP;
+}
+
+export function measureYAxisTickLabelWidth(
+  tick: number,
+  yAxisDataType: "number" | "percentage",
+  measureWidth: (text: string) => number,
+): number {
+  return measureWidth(formatAxisTickLabel(tick, yAxisDataType));
+}
+
+function normalizeYAxisDataType(value: unknown): "number" | "percentage" {
+  return value === "percentage" ? "percentage" : "number";
+}
+
+export function normalizeYAxisDivisions(value: unknown, fallback = 3): number {
+  const parsed = Math.round(Number(value));
+  if (!Number.isFinite(parsed)) return fallback;
+  return clampNumber(parsed, 2, 10, fallback);
 }
 
 export function normalizeCartesianAxisLineVisibility(
@@ -588,8 +664,19 @@ export function normalizeLineChartConfig(
   const pointCount = Math.round(
     clampNumber(input.pointCount, 2, 180, fallback.pointCount),
   );
-  const lineMode = normalizeLineChartMode(input.lineMode);
-  const seriesCount = lineMode === "single" ? 1 : 3;
+  const inputSeriesArray = Array.isArray(input.series) ? input.series : [];
+  const defaultSeriesCount =
+    normalizeLineChartMode(input.lineMode) === "single" ? 1 : 3;
+  const seriesCount = Math.max(
+    1,
+    Math.min(
+      3,
+      inputSeriesArray.length > 0
+        ? inputSeriesArray.length
+        : defaultSeriesCount,
+    ),
+  );
+  const lineMode = seriesCount === 1 ? "single" : "multi";
   const pointLabels: string[] = [];
   const inputPointLabels = Array.isArray(input.pointLabels)
     ? input.pointLabels
@@ -598,19 +685,22 @@ export function normalizeLineChartConfig(
   for (let index = 0; index < pointCount; index += 1) {
     pointLabels.push(
       String(
-        inputPointLabels[index] || fallback.pointLabels[index] || `P${index + 1}`,
+        inputPointLabels[index] ||
+          fallback.pointLabels[index] ||
+          `P${index + 1}`,
       ).trim(),
     );
   }
 
-  const xAxisLabels = Array.isArray(input.xAxisLabels) && input.xAxisLabels.length > 0
-    ? input.xAxisLabels.map((label) => String(label ?? ""))
-    : [...fallback.xAxisLabels];
+  const xAxisLabels =
+    Array.isArray(input.xAxisLabels) && input.xAxisLabels.length > 0
+      ? input.xAxisLabels.map((label) => String(label ?? ""))
+      : [...fallback.xAxisLabels];
 
   const series = [];
   for (let index = 0; index < seriesCount; index += 1) {
     const fallbackSeries = fallback.series[index] || fallback.series[0];
-    const inputSeries = Array.isArray(input.series) ? input.series[index] : null;
+    const inputSeries = inputSeriesArray[index] ?? null;
     const inputValues =
       inputSeries && Array.isArray(inputSeries.values)
         ? inputSeries.values
@@ -661,6 +751,19 @@ export function normalizeLineChartConfig(
   );
   const fallbackColor = fallback.color;
   const inputColor = input.color;
+  const yAxisDataType = normalizeYAxisDataType(input.yAxisDataType);
+  const yAxisDivisions = normalizeYAxisDivisions(
+    input.yAxisDivisions,
+    normalizeYAxisDivisions(fallback.yAxisDivisions),
+  );
+  const hasYAxisTitleInput = input.yAxisTitle !== undefined;
+  const inputYAxisTitle = String(input.yAxisTitle ?? "").trim();
+  const yAxisTitle =
+    yAxisDataType === "percentage"
+      ? ""
+      : hasYAxisTitleInput
+        ? inputYAxisTitle
+        : fallback.yAxisTitle;
 
   return {
     chartType: "lineChart",
@@ -709,10 +812,12 @@ export function normalizeLineChartConfig(
     height: Math.round(clampNumber(input.height, 260, 900, fallback.height)),
     minValue,
     maxValue,
-    yAxisTitle: String(input.yAxisTitle || "").trim() || fallback.yAxisTitle,
+    yAxisDataType,
+    yAxisDivisions,
+    yAxisTitle,
     xAxisLabels,
     pointLabels,
     series,
-    yTicks: buildRangeTicks(minValue, maxValue, 3),
+    yTicks: buildRangeTicks(minValue, maxValue, yAxisDivisions),
   };
 }

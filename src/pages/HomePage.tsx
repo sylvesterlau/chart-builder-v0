@@ -1,8 +1,9 @@
-import { Container, Text, VerticalSpace } from "@create-figma-plugin/ui";
+import { Container, Stack, Text, VerticalSpace } from "@create-figma-plugin/ui";
 import { h } from "preact";
 import ChartTypeIcon from "../components/ChartTypeIcon";
 import List from "../components/List";
 import styles from "./HomePage.module.css";
+import { showDesignSystemEntry } from "../config";
 
 interface HomePageProps {
   onNavigate: (
@@ -19,24 +20,15 @@ interface HomePageProps {
 function HomePage({ onNavigate }: HomePageProps) {
   return (
     <Container space="medium">
-      <div className={styles.page}>
-        <VerticalSpace space="small" />
-        <Text className={styles.title}>Chart Builder</Text>
-        <VerticalSpace space="small" />
-        <Text className={styles.sectionTitle}>Charts</Text>
-        <VerticalSpace space="small" />
-        <div className={styles.listGroup}>
+      <VerticalSpace space="extraLarge" />
+      <Stack space="medium">
+        <Text className={styles.title}>Hive Charts</Text>
+        <Stack space="small">
           <List
             preview={<ChartTypeIcon variant="pie" />}
             title="Pie & Donut"
             subtitle="Part-to-whole comparisons"
             onClick={() => onNavigate("pieDonutChart")}
-          />
-          <List
-            preview={<ChartTypeIcon variant="semiDonut" />}
-            title="Semi-donut"
-            subtitle="Half-circle progress breakdown"
-            onClick={() => onNavigate("semiDonutChart")}
           />
           <List
             preview={<ChartTypeIcon variant="verticalBar" />}
@@ -45,33 +37,41 @@ function HomePage({ onNavigate }: HomePageProps) {
             onClick={() => onNavigate("verticalBar")}
           />
           <List
-            preview={<ChartTypeIcon variant="horizontalBar" />}
-            title="Horizontal stack bar"
-            subtitle="Stacked horizontal bar chart"
-            onClick={() => onNavigate("horizontalBar")}
-          />
-          <List
             preview={<ChartTypeIcon variant="line" />}
             title="Line chart"
             subtitle="Trends over time or date ranges"
             onClick={() => onNavigate("lineChart")}
           />
-        </div>
-
-        <VerticalSpace space="medium" />
-
-        <Text className={styles.sectionTitle}>Settings</Text>
-        <VerticalSpace space="small" />
-        <div className={styles.listGroup}>
           <List
-            preview={<ChartTypeIcon variant="designSystem" />}
-            title="Design system"
-            subtitle="Colors, typography, spacing"
-            variant="settings"
-            onClick={() => onNavigate("designSystemConfig")}
+            preview={<ChartTypeIcon variant="semiDonut" />}
+            title="Semi-donut"
+            subtitle="Half-circle progress breakdown"
+            onClick={() => onNavigate("semiDonutChart")}
           />
-        </div>
-      </div>
+          <List
+            preview={<ChartTypeIcon variant="horizontalBar" />}
+            title="Horizontal stack bar"
+            subtitle="Stacked horizontal bar chart"
+            onClick={() => onNavigate("horizontalBar")}
+          />
+        </Stack>
+      </Stack>
+      <VerticalSpace space="extraLarge" />
+      {showDesignSystemEntry ? (
+        <Stack space="small">
+          <Text className={styles.sectionTitle}>Settings</Text>
+          <Stack space="small">
+            <List
+              preview={<ChartTypeIcon variant="designSystem" />}
+              title="Design system"
+              subtitle="Colors, typography, spacing"
+              variant="settings"
+              onClick={() => onNavigate("designSystemConfig")}
+            />
+          </Stack>
+          <VerticalSpace space="extraLarge" />
+        </Stack>
+      ) : null}
     </Container>
   );
 }

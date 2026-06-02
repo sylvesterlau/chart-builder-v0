@@ -1,11 +1,16 @@
 import { h } from "preact";
 import { chartBackground, dataVisColor, textColor } from "../config";
 import {
+  buildRangeTicks,
   clamp,
-  formatAxisNumber,
+  formatAxisTickLabel,
   isCartesianXAxisLineVisible,
   isCartesianYAxisLineVisible,
   measurePreviewTextWidth,
+  measureYAxisLabelGutter,
+  measureYAxisTickLabelWidth,
+  normalizeYAxisDivisions,
+  Y_AXIS_LABEL_AXIS_GAP,
 } from "../helpers";
 import { LineChartConfig } from "../types";
 import { useColorTokenResolved } from "./ColorChips/colorTokenSwatchContext";
@@ -20,7 +25,6 @@ import {
 } from "../utils/typographyTokenDisplay";
 import { buildLineKeyInfo } from "../utils/cartesianKeyInfo";
 import { buildLineTooltip } from "../utils/cartesianTooltip";
-import { measureYAxisLabelGutter } from "../utils/drawCartesianAxis";
 import CartesianKeyInfoPreview from "./CartesianKeyInfoPreview";
 import CartesianTooltipPreview from "./CartesianTooltipPreview";
 import ChartTitlePreview from "./ChartTitlePreview";
@@ -48,16 +52,11 @@ function createLinePath(
     .join(" ");
 }
 
-function markerStyle(
-  seriesIndex: number,
-  color: string,
-  chartBgColor: string,
-) {
+function markerStyle(seriesIndex: number, color: string, chartBgColor: string) {
   if (seriesIndex === 1) {
     return {
       background: color,
       outline: `1.5px solid ${chartBgColor}`,
-      borderRadius: "1px",
       height: "9.5px",
       width: "9.5px",
     };
@@ -84,35 +83,34 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
   const { values: resolvedColors } = useColorTokenResolved();
   const { values: resolvedTypography } = useTypographyTokenResolved();
 
-  const visibleSeries =
-    config.lineMode === "single"
-      ? config.series.slice(0, 1)
-      : config.series.slice(0, 3);
+  const visibleSeries = config.series;
   const minValue = Number(config.minValue) || 0;
   const maxValue =
     Number(config.maxValue) > minValue ? Number(config.maxValue) : minValue + 1;
   const valueRange = Math.max(1, maxValue - minValue);
+  const yAxisDivisions = normalizeYAxisDivisions(config.yAxisDivisions);
   const ticks =
     config.maxValue > config.minValue
-      ? [
-          Math.round(maxValue),
-          Math.round(maxValue - valueRange / 3),
-          Math.round(maxValue - (valueRange / 3) * 2),
-          Math.round(minValue),
-        ]
+      ? buildRangeTicks(minValue, maxValue, yAxisDivisions)
       : [maxValue, minValue];
   const { labelBg } = config.color.selected;
   const { typography: ty, yAxisLabel: yLab } = config.color;
-  const yTitleRowHeight = typographyResolvedLineHeight(
-    ty.yAxisTitle,
-    resolvedTypography,
-  );
+  const yAxisDataType = config.yAxisDataType ?? "number";
+  const showYAxisTitle =
+    yAxisDataType !== "percentage" && config.yAxisTitle.trim().length > 0;
+  const yTitleRowHeight = showYAxisTitle
+    ? typographyResolvedLineHeight(ty.yAxisTitle, resolvedTypography)
+    : 0;
   const contentWidth = Math.max(1, config.width - 32);
   const contentHeight = Math.max(1, config.height - 24 - yTitleRowHeight);
   const plotHeight = Math.max(1, contentHeight - 30);
   const yAxisLabelCss = typographyTokenToPreviewCss(yLab, resolvedTypography);
-  const labelGutter = measureYAxisLabelGutter(ticks, (label) =>
-    measurePreviewTextWidth(label, yAxisLabelCss),
+  const measureYAxisLabelWidth = (text: string) =>
+    measurePreviewTextWidth(text, yAxisLabelCss);
+  const labelGutter = measureYAxisLabelGutter(
+    ticks,
+    yAxisDataType,
+    measureYAxisLabelWidth,
   );
   const plotWidth = Math.max(1, contentWidth - labelGutter);
   const xAxisWidth = Math.max(1, plotWidth - 1);
@@ -120,7 +118,6 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
     config.lineRange === "full" ? xAxisWidth : Math.round(plotWidth * 0.788);
   const yAxisPosition = config.yAxisPosition ?? "right";
   const plotX = yAxisPosition === "right" ? 0 : labelGutter;
-  const yAxisLabelX = yAxisPosition === "right" ? plotWidth + 8 : -8;
   const xAxisLabels = config.xAxisLabels.length
     ? config.xAxisLabels
     : ["", "", "", "", "", "", ""];
@@ -147,23 +144,20 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
     ty.xAxisLabel,
     resolvedTypography,
   );
-  const defaultFontFamily =
-    typographyTokenToPreviewCss(ty.xAxisLabel, resolvedTypography).fontFamily;
+  const defaultFontFamily = typographyTokenToPreviewCss(
+    ty.xAxisLabel,
+    resolvedTypography,
+  ).fontFamily;
   const selectedIndex = config.selectedIndex;
   const hasSelection = selectedIndex >= 0;
   const markerIndex = hasSelection ? selectedIndex : config.pointCount - 1;
   const markerRatio =
-    config.pointCount > 1
-      ? markerIndex / (config.pointCount - 1)
-      : 0;
+    config.pointCount > 1 ? markerIndex / (config.pointCount - 1) : 0;
   const markerX = markerRatio * lineWidth;
   const selectedLabel = hasSelection
     ? config.pointLabels[selectedIndex] || `P${selectedIndex + 1}`
     : "";
-  const rawSelectedAnchorX = 16 + plotX + markerX;
-  const previewScale = 0.9;
-  const selectedAnchorX =
-    config.width / 2 + (rawSelectedAnchorX - config.width / 2) * previewScale;
+  const selectedAnchorX = 16 + plotX + markerX;
   const chartTop = (config.chartTitle.trim() ? 46 : 0) + 100;
 
   return (
@@ -193,262 +187,272 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
           height: `${config.height}px`,
           overflow: "hidden",
           padding: "0 16px 16px",
-          transform: "scale(0.9)",
           transformOrigin: "top center",
           width: `${config.width}px`,
         }}
       >
-      <div
-        style={{
-          display: "flex",
-          height: `${yTitleRowHeight}px`,
-          justifyContent: yAxisPosition === "right" ? "flex-end" : "flex-start",
-          ...yAxisTitleCss,
-        }}
-      >
-        {config.yAxisTitle}
-      </div>
-      <div
-        style={{
-          height: `${contentHeight}px`,
-          marginTop: "8px",
-          position: "relative",
-          width: `${contentWidth}px`,
-        }}
-      >
+        {showYAxisTitle ? (
+          <div
+            style={{
+              display: "flex",
+              height: `${yTitleRowHeight}px`,
+              justifyContent:
+                yAxisPosition === "right" ? "flex-end" : "flex-start",
+              ...yAxisTitleCss,
+            }}
+          >
+            {config.yAxisTitle}
+          </div>
+        ) : null}
         <div
           style={{
-            height: `${plotHeight}px`,
-            left: `${plotX}px`,
-            position: "absolute",
-            top: "9px",
-            width: `${plotWidth}px`,
-            zIndex: 0,
+            height: `${contentHeight}px`,
+            marginTop: showYAxisTitle ? "8px" : "0",
+            position: "relative",
+            width: `${contentWidth}px`,
           }}
         >
-          {ticks.map((tick, index) => {
-            const y =
-              clamp(1 - (tick - minValue) / valueRange, 0, 1) * plotHeight;
-            return (
+          <div
+            style={{
+              height: `${plotHeight}px`,
+              left: `${plotX}px`,
+              position: "absolute",
+              top: "9px",
+              width: `${plotWidth}px`,
+              zIndex: 0,
+            }}
+          >
+            {ticks.map((tick, index) => {
+              const y =
+                clamp(1 - (tick - minValue) / valueRange, 0, 1) * plotHeight;
+              const labelText = formatAxisTickLabel(tick, yAxisDataType);
+              const labelWidth = measureYAxisTickLabelWidth(
+                tick,
+                yAxisDataType,
+                measureYAxisLabelWidth,
+              );
+              return (
+                <div
+                  key={`${tick}-${index}`}
+                  style={{
+                    height: "1px",
+                    left: 0,
+                    position: "absolute",
+                    top: `${y}px`,
+                    width: `${plotWidth}px`,
+                  }}
+                >
+                  <div
+                    style={{
+                      background: showYAxisLine ? gridLineColor : "transparent",
+                      height: "1px",
+                      width: `${plotWidth}px`,
+                    }}
+                  />
+                  <div
+                    style={{
+                      left:
+                        yAxisPosition === "right"
+                          ? `${plotWidth + Y_AXIS_LABEL_AXIS_GAP}px`
+                          : `${-labelWidth - Y_AXIS_LABEL_AXIS_GAP}px`,
+                      position: "absolute",
+                      textAlign: yAxisPosition === "left" ? "right" : "left",
+                      top: "-8px",
+                      whiteSpace: "nowrap",
+                      width:
+                        yAxisPosition === "left"
+                          ? `${labelWidth}px`
+                          : undefined,
+                      ...yAxisLabelCss,
+                    }}
+                  >
+                    {labelText}
+                  </div>
+                </div>
+              );
+            })}
+            <div
+              style={{
+                background: axisLineColor,
+                height: `${plotHeight + 1}px`,
+                left: yAxisPosition === "left" ? 0 : `${plotWidth - 1}px`,
+                position: "absolute",
+                top: "-1px",
+                width: "1px",
+              }}
+            />
+          </div>
+          <div
+            style={{
+              height: `${plotHeight}px`,
+              left: `${plotX}px`,
+              position: "absolute",
+              top: "9px",
+              width: `${xAxisWidth}px`,
+              zIndex: 1,
+            }}
+          >
+            {xAxisLabels.map((label, index) => (
               <div
-                key={`${tick}-${index}`}
+                key={`${label}-${index}`}
                 style={{
-                  height: "1px",
-                  left: 0,
+                  height: `${plotHeight}px`,
+                  left: `${xGroupWidth * index}px`,
                   position: "absolute",
-                  top: `${y}px`,
-                  width: `${plotWidth}px`,
+                  top: 0,
+                  width: `${xGroupWidth}px`,
                 }}
               >
                 <div
                   style={{
-                    background: showYAxisLine ? gridLineColor : "transparent",
-                    height: "1px",
-                    width: `${plotWidth}px`,
+                    background: showXAxisLine ? gridLineColor : "transparent",
+                    height: `${plotHeight}px`,
+                    left: `${xGroupWidth / 2}px`,
+                    position: "absolute",
+                    top: 0,
+                    width: "1px",
                   }}
                 />
-                <div
-                  style={{
-                    left:
-                      yAxisPosition === "right"
-                        ? `${yAxisLabelX}px`
-                        : undefined,
-                    position: "absolute",
-                    right:
-                      yAxisPosition === "left"
-                        ? `${plotWidth - yAxisLabelX}px`
-                        : undefined,
-                    textAlign: yAxisPosition === "left" ? "right" : "left",
-                    top: "-8px",
-                    whiteSpace: "nowrap",
-                    ...yAxisLabelCss,
-                  }}
-                >
-                  {formatAxisNumber(tick)}
-                </div>
-              </div>
-            );
-          })}
-          <div
-            style={{
-              background: axisLineColor,
-              height: `${plotHeight + 1}px`,
-              left: yAxisPosition === "left" ? 0 : `${plotWidth - 1}px`,
-              position: "absolute",
-              top: "-1px",
-              width: "1px",
-            }}
-          />
-        </div>
-        <div
-          style={{
-            height: `${plotHeight}px`,
-            left: `${plotX}px`,
-            position: "absolute",
-            top: "9px",
-            width: `${xAxisWidth}px`,
-            zIndex: 1,
-          }}
-        >
-          {xAxisLabels.map((label, index) => (
-            <div
-              key={`${label}-${index}`}
-              style={{
-                height: `${plotHeight}px`,
-                left: `${xGroupWidth * index}px`,
-                position: "absolute",
-                top: 0,
-                width: `${xGroupWidth}px`,
-              }}
-            >
-              <div
-                style={{
-                  background: showXAxisLine ? gridLineColor : "transparent",
-                  height: `${plotHeight}px`,
-                  left: `${xGroupWidth / 2}px`,
-                  position: "absolute",
-                  top: 0,
-                  width: "1px",
-                }}
-              />
-              {label ? (
-                <div
-                  style={{
-                    bottom: "-22px",
-                    left: "50%",
-                    position: "absolute",
-                    textAlign: "center",
-                    transform: "translateX(-50%)",
-                    whiteSpace: "nowrap",
-                    ...xAxisLabelCss,
-                  }}
-                >
-                  {label}
-                </div>
-              ) : null}
-            </div>
-          ))}
-          <div
-            style={{
-              background: axisLineColor,
-              height: "1px",
-              left: 0,
-              position: "absolute",
-              top: `${plotHeight - 1}px`,
-              width: `${xAxisWidth}px`,
-            }}
-          />
-        </div>
-        <div
-          style={{
-            height: `${plotHeight}px`,
-            left: `${plotX}px`,
-            position: "absolute",
-            top: "9px",
-            width: `${lineWidth}px`,
-            zIndex: 2,
-          }}
-        >
-          <svg
-            height={plotHeight}
-            style={{ display: "block", overflow: "visible" }}
-            viewBox={`0 0 ${lineWidth} ${plotHeight}`}
-            width={lineWidth}
-          >
-            {visibleSeries.map((series, seriesIndex) => (
-              <path
-                d={createLinePath(
-                  series.values,
-                  minValue,
-                  maxValue,
-                  lineWidth,
-                  plotHeight,
-                )}
-                fill="none"
-                key={series.name}
-                stroke={colorTokenSwatchHex(
-                  dataVisColor.general[seriesIndex],
-                  resolvedColors,
-                )}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="1.5"
-              />
-            ))}
-          </svg>
-          {hasSelection ? (
-            <div
-              style={{
-                borderLeft: `1px dashed ${axisLineColor}`,
-                bottom: 0,
-                left: `${markerX}px`,
-                position: "absolute",
-                top: "-40px",
-                transform: "translateX(-0.5px)",
-                width: 0,
-              }}
-            />
-          ) : null}
-          {hasSelection ? (
-            <div
-              style={{
-                alignItems: "center",
-                background: colorTokenPreviewBackground(labelBg, resolvedColors),
-                bottom: "-22px",
-                color: colorTokenPreviewBackground(
-                  textColor.onDark,
-                  resolvedColors,
-                ),
-                display: "flex",
-                height: "18px",
-                justifyContent: "center",
-                left: `${markerX}px`,
-                padding: "0 8px 2px",
-                position: "absolute",
-                transform: "translateX(-50%)",
-                whiteSpace: "nowrap",
-                ...xAxisLabelCss,
-              }}
-            >
-              {selectedLabel}
-            </div>
-          ) : null}
-          {visibleSeries.map((series, seriesIndex) => {
-                const value = clamp(
-                  Number(series.values[markerIndex]) || 0,
-                  minValue,
-                  maxValue,
-                );
-                const y =
-                  clamp(1 - (value - minValue) / valueRange, 0, 1) *
-                  plotHeight;
-                const seriesColor = colorTokenSwatchHex(
-                  dataVisColor.general[seriesIndex],
-                  resolvedColors,
-                );
-                return (
+                {label ? (
                   <div
-                    key={`${series.name}-marker`}
                     style={{
-                      alignItems: "center",
-                      display: "flex",
-                      height: "12px",
-                      justifyContent: "center",
-                      left: `${markerX}px`,
+                      bottom: "-22px",
+                      left: "50%",
                       position: "absolute",
-                      top: `${y}px`,
-                      transform: "translate(-50%, -50%)",
-                      width: "12px",
+                      textAlign: "center",
+                      transform: "translateX(-50%)",
+                      whiteSpace: "nowrap",
+                      ...xAxisLabelCss,
                     }}
                   >
-                    <div
-                      style={markerStyle(seriesIndex, seriesColor, chartBgColor)}
-                    />
+                    {label}
                   </div>
-                );
-              })}
+                ) : null}
+              </div>
+            ))}
+            <div
+              style={{
+                background: axisLineColor,
+                height: "1px",
+                left: 0,
+                position: "absolute",
+                top: `${plotHeight - 1}px`,
+                width: `${xAxisWidth}px`,
+              }}
+            />
+          </div>
+          <div
+            style={{
+              height: `${plotHeight}px`,
+              left: `${plotX}px`,
+              position: "absolute",
+              top: "9px",
+              width: `${lineWidth}px`,
+              zIndex: 2,
+            }}
+          >
+            <svg
+              height={plotHeight}
+              style={{ display: "block", overflow: "visible" }}
+              viewBox={`0 0 ${lineWidth} ${plotHeight}`}
+              width={lineWidth}
+            >
+              {visibleSeries.map((series, seriesIndex) => (
+                <path
+                  d={createLinePath(
+                    series.values,
+                    minValue,
+                    maxValue,
+                    lineWidth,
+                    plotHeight,
+                  )}
+                  fill="none"
+                  key={series.name}
+                  stroke={colorTokenSwatchHex(
+                    dataVisColor.general[seriesIndex],
+                    resolvedColors,
+                  )}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="1.5"
+                />
+              ))}
+            </svg>
+            {hasSelection ? (
+              <div
+                style={{
+                  borderLeft: `1px dashed ${axisLineColor}`,
+                  bottom: 0,
+                  left: `${markerX}px`,
+                  position: "absolute",
+                  top: "-40px",
+                  transform: "translateX(-0.5px)",
+                  width: 0,
+                }}
+              />
+            ) : null}
+            {hasSelection ? (
+              <div
+                style={{
+                  alignItems: "center",
+                  background: colorTokenPreviewBackground(
+                    labelBg,
+                    resolvedColors,
+                  ),
+                  bottom: "-22px",
+                  color: colorTokenPreviewBackground(
+                    textColor.onDark,
+                    resolvedColors,
+                  ),
+                  display: "flex",
+                  height: "18px",
+                  justifyContent: "center",
+                  left: `${markerX}px`,
+                  padding: "0 8px 2px",
+                  position: "absolute",
+                  transform: "translateX(-50%)",
+                  whiteSpace: "nowrap",
+                  ...xAxisLabelCss,
+                }}
+              >
+                {selectedLabel}
+              </div>
+            ) : null}
+            {visibleSeries.map((series, seriesIndex) => {
+              const value = clamp(
+                Number(series.values[markerIndex]) || 0,
+                minValue,
+                maxValue,
+              );
+              const y =
+                clamp(1 - (value - minValue) / valueRange, 0, 1) * plotHeight;
+              const seriesColor = colorTokenSwatchHex(
+                dataVisColor.general[seriesIndex],
+                resolvedColors,
+              );
+              return (
+                <div
+                  key={`${series.name}-marker`}
+                  style={{
+                    alignItems: "center",
+                    display: "flex",
+                    height: "12px",
+                    justifyContent: "center",
+                    left: `${markerX}px`,
+                    position: "absolute",
+                    top: `${y}px`,
+                    transform: "translate(-50%, -50%)",
+                    width: "12px",
+                  }}
+                >
+                  <div
+                    style={markerStyle(seriesIndex, seriesColor, chartBgColor)}
+                  />
+                </div>
+              );
+            })}
+          </div>
         </div>
-      </div>
       </div>
     </div>
   );

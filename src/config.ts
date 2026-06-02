@@ -4,6 +4,9 @@ import {
   createSeededLineValues,
 } from "./utils/chart/lineChartCalculate";
 
+// Show design system entry
+export const showDesignSystemEntry = true;
+
 // chart sample data — demo inputs, not visual tokens
 export const sampleData = {
   spending: {
@@ -51,6 +54,12 @@ const typeScale = {
     } satisfies Readonly<TypographyToken>,
   },
   label: {
+    light: {
+      fontFamily: "Inter",
+      fontSize: 14,
+      fontWeight: 300,
+      lineHeight: 20,
+    },
     regular: {
       fontFamily: "Inter",
       fontSize: 14,
@@ -202,7 +211,7 @@ export const ds = {
 
   cartesianKeyInfo: {
     typography: {
-      range: typeScale.label.regular,
+      range: typeScale.label.light,
       label: typeScale.label.regular,
       valueLarge: typeScale.headline.regular,
       value: typeScale.heading.regular,
@@ -312,9 +321,10 @@ export const ds = {
       ratioMin: 0.5,
       ratioMax: 0.99,
       ringWidth: 20,
-      sliceGap: 1.5,
-      sliceGapMin: 0,
-      sliceGapMax: 20,
+      sliceGap: {
+        value: 1.5,
+        key: "e7a7a7e1c7572287d371c5fb928b4cac8879bda6",
+      } satisfies NumberToken,
       indicator: {
         lineExtend: 8,
         lineExtendMin: 0,
@@ -402,7 +412,7 @@ export const lineChartConfig = {
   chartTitle: "Chart title",
   lineMode: "single" as const,
   lineRange: "partial" as const,
-  yAxisPosition: cartesianChartConfig.yAxisPosition,
+  yAxisPosition: "left" as const,
   axisLineVisibility: cartesianChartConfig.axisLineVisibility,
   color: cartesianChartConfig.color,
   pointCount: 100,
@@ -411,6 +421,7 @@ export const lineChartConfig = {
   height: 320,
   minValue: 100,
   maxValue: 250,
+  yAxisDivisions: 3,
   yAxisTitle: "HKD",
   xAxisLabels: ["Jan 2026", "", "", "Feb 2026", "", "", "Mar 2026"],
   pointLabels: createLinePointLabels(100),
