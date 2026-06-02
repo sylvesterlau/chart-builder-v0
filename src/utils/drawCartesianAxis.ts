@@ -109,7 +109,6 @@ function measureAxisLabelWidth(value: string): number {
 }
 
 const Y_AXIS_LABEL_GAP = 8;
-const MIN_Y_AXIS_LABEL_GUTTER = 46;
 
 export function measureYAxisLabelGutter(
   ticks: number[],
@@ -118,7 +117,7 @@ export function measureYAxisLabelGutter(
   const widestLabel = ticks.reduce((maxWidth, tick) => {
     return Math.max(maxWidth, measureLabelWidth(formatAxisNumber(tick)));
   }, 0);
-  return Math.max(MIN_Y_AXIS_LABEL_GUTTER, Math.ceil(widestLabel + Y_AXIS_LABEL_GAP));
+  return Math.max(1, Math.ceil(widestLabel + Y_AXIS_LABEL_GAP));
 }
 
 export async function measureYAxisLabelGutterFigma(
