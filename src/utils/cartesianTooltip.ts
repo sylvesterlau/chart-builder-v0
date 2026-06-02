@@ -26,7 +26,10 @@ function seriesName(
   series: VerticalBarChartSeries | LineChartSeries,
   index: number,
 ): string {
-  return String(series.name || "").trim() || `Product ${String.fromCharCode(65 + index)}`;
+  return (
+    String(series.name || "").trim() ||
+    `Product ${String.fromCharCode(65 + index)}`
+  );
 }
 
 function colorForSeries(
@@ -75,19 +78,23 @@ export function buildLineTooltip(
     return null;
   }
 
-  const visibleSeries =
-    config.lineMode === "single"
-      ? config.series.slice(0, 1)
-      : config.series.slice(0, 3);
+  const visibleSeries = config.series;
+  const yAxisDataType = config.yAxisDataType ?? "number";
   const label =
     config.pointLabels[config.selectedIndex] || `P${config.selectedIndex + 1}`;
+  const valueSuffix =
+    yAxisDataType === "percentage"
+      ? "%"
+      : config.yAxisTitle.trim()
+        ? ` ${config.yAxisTitle}`
+        : "";
 
   return {
     kind: "line",
     title: label ? `As of ${label}` : "",
     items: visibleSeries.map((series, index) => ({
       label: seriesName(series, index),
-      value: `${formatKeyInfoNumber(series.values[config.selectedIndex] || 0)} ${config.yAxisTitle}`,
+      value: `${formatKeyInfoNumber(series.values[config.selectedIndex] || 0)}${valueSuffix}`,
       color: colorForSeries(series, index),
       colorTokenIndex: index,
     })),

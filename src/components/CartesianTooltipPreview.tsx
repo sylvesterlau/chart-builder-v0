@@ -1,7 +1,11 @@
 import { h } from "preact";
 import { cartesianTooltipConfig, textColor } from "../config";
 import { CartesianTooltipData } from "../utils/cartesianTooltip";
-import { colorTokenPreviewBackground } from "../utils/colorTokenDisplay";
+import {
+  colorTokenPreviewBackground,
+  colorTokenSwatchHex,
+} from "../utils/colorTokenDisplay";
+import { dataVisAt } from "../utils/dataVisAt";
 import { numberTokenResolvedValue } from "../utils/numberTokenDisplay";
 import { typographyTokenToPreviewCss } from "../utils/typographyTokenDisplay";
 import { useColorTokenResolved } from "./ColorChips/colorTokenSwatchContext";
@@ -31,6 +35,98 @@ function tooltipHeight(itemCount: number): number {
   const contentHeight =
     titleHeight + gap + itemCount * rowHeight + Math.max(0, itemCount - 1) * gap;
   return outerPadding + panelPadding * 2 + contentHeight + pointerHeight;
+}
+
+function lineIndicator(index: number, color: string, backgroundColor: string) {
+  const containerStyle = {
+    alignItems: "center",
+    display: "flex",
+    height: 18,
+    justifyContent: "center",
+    position: "relative" as const,
+    width: 18,
+  };
+  const lineStyle = {
+    background: color,
+    height: 2,
+    left: 0,
+    position: "absolute" as const,
+    top: 8,
+    width: 18,
+  };
+
+  if (index === 1) {
+    return (
+      <div style={containerStyle}>
+        <div style={lineStyle} />
+        <div
+          style={{
+            background: color,
+            height: 9.5,
+            outline: `1.5px solid ${backgroundColor}`,
+            position: "relative",
+            width: 9.5,
+            zIndex: 1,
+          }}
+        />
+      </div>
+    );
+  }
+
+  if (index === 2) {
+    return (
+      <div style={containerStyle}>
+        <div style={lineStyle} />
+        <svg
+          height={13.5}
+          style={{
+            overflow: "visible",
+            position: "relative",
+            zIndex: 1,
+          }}
+          viewBox="-1.5 -1.5 14.5 13.5"
+          width={14.5}
+        >
+          <polygon
+            fill={color}
+            points="5.75 0 11.5 10.5 0 10.5"
+            stroke={backgroundColor}
+            strokeLinejoin="round"
+            strokeWidth={1.5}
+          />
+        </svg>
+      </div>
+    );
+  }
+
+  return (
+    <div style={containerStyle}>
+      <div style={lineStyle} />
+      <div
+        style={{
+          background: color,
+          borderRadius: "50%",
+          height: 11,
+          outline: `1.5px solid ${backgroundColor}`,
+          position: "relative",
+          width: 11,
+          zIndex: 1,
+        }}
+      />
+    </div>
+  );
+}
+
+function swatch(
+  kind: CartesianTooltipData["kind"],
+  index: number,
+  color: string,
+  backgroundColor: string,
+) {
+  if (kind === "line") {
+    return lineIndicator(index, color, backgroundColor);
+  }
+  return <div style={{ background: color, height: "14px", width: "14px" }} />;
 }
 
 function CartesianTooltipPreview({
@@ -135,16 +231,21 @@ function CartesianTooltipPreview({
               width: "100%",
             }}
           >
-            {data.items.map((item) => (
-              <div
-                key={item.label}
-                style={{
-                  alignItems: "flex-start",
-                  display: "flex",
-                  gap: `${itemGap}px`,
-                  width: "100%",
-                }}
-              >
+            {data.items.map((item) => {
+              const swatchColor = colorTokenSwatchHex(
+                dataVisAt(item.colorTokenIndex),
+                resolvedColors,
+              );
+              return (
+                <div
+                  key={item.label}
+                  style={{
+                    alignItems: "flex-start",
+                    display: "flex",
+                    gap: `${itemGap}px`,
+                    width: "100%",
+                  }}
+                >
                 <div
                   style={{
                     alignItems: "center",
@@ -164,13 +265,12 @@ function CartesianTooltipPreview({
                       width: "18px",
                     }}
                   >
-                    <div
-                      style={{
-                        background: item.color,
-                        height: "14px",
-                        width: "14px",
-                      }}
-                    />
+                    {swatch(
+                      data.kind,
+                      item.colorTokenIndex,
+                      swatchColor,
+                      panelBg,
+                    )}
                   </div>
                   <div
                     style={{
@@ -197,8 +297,9 @@ function CartesianTooltipPreview({
                 >
                   {item.value}
                 </div>
-              </div>
-            ))}
+                </div>
+              );
+            })}
           </div>
         </div>
         <div

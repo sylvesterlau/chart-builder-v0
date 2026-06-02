@@ -26,9 +26,10 @@ export interface CartesianKeyInfoData {
 }
 
 export function formatKeyInfoNumber(value: number): string {
-  const rounded = Math.round(Number(value) || 0);
-  const sign = rounded < 0 ? "-" : "";
-  return `${sign}${String(Math.abs(rounded)).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+  const num = Number(value) || 0;
+  const sign = num < 0 ? "-" : "";
+  const [integerPart, decimalPart] = Math.abs(num).toFixed(2).split(".");
+  return `${sign}${integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}.${decimalPart}`;
 }
 
 export function formatPercentageChange(value: number): string {
@@ -116,7 +117,9 @@ function yearFromAxisTitle(axisTitle: string): string {
   return match ? match[0] : "";
 }
 
-export function buildBarKeyInfo(config: VerticalBarChartConfig): CartesianKeyInfoData {
+export function buildBarKeyInfo(
+  config: VerticalBarChartConfig,
+): CartesianKeyInfoData {
   const visibleSeries =
     config.barMode === "single"
       ? config.series.slice(0, 1)
@@ -153,12 +156,13 @@ export function buildBarKeyInfo(config: VerticalBarChartConfig): CartesianKeyInf
   };
 }
 
-export function buildLineKeyInfo(config: LineChartConfig): CartesianKeyInfoData {
-  const visibleSeries =
-    config.lineMode === "single"
-      ? config.series.slice(0, 1)
-      : config.series.slice(0, 3);
-  const firstLabel = config.pointLabels[0] || config.xAxisLabels.find(Boolean) || "";
+export function buildLineKeyInfo(
+  config: LineChartConfig,
+): CartesianKeyInfoData {
+  const visibleSeries = config.series;
+  const yAxisDataType = config.yAxisDataType ?? "number";
+  const firstLabel =
+    config.pointLabels[0] || config.xAxisLabels.find(Boolean) || "";
   const lastLabel =
     config.pointLabels[config.pointCount - 1] ||
     [...config.xAxisLabels].reverse().find(Boolean) ||
@@ -175,7 +179,7 @@ export function buildLineKeyInfo(config: LineChartConfig): CartesianKeyInfoData 
     return {
       label: seriesName(series, index),
       value: formatKeyInfoNumber(last),
-      unit: config.yAxisTitle,
+      unit: yAxisDataType === "percentage" ? "%" : config.yAxisTitle,
       color: colorForSeries(series, index),
       colorTokenIndex: index,
       percentageChange,

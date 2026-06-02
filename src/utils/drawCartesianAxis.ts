@@ -1,7 +1,9 @@
 import {
   formatAxisNumber,
+  formatAxisTickLabel,
   isCartesianXAxisLineVisible,
   isCartesianYAxisLineVisible,
+  Y_AXIS_LABEL_AXIS_GAP,
 } from "../helpers";
 import type {
   CartesianAxisLineVisibility,
@@ -9,6 +11,7 @@ import type {
   CartesianYAxisPosition,
   ColorToken,
   TypographyToken,
+  YAxisDataType,
 } from "../types";
 import { applyColorTokenToFills, applyColorTokenToStrokes } from "./applyColorToken";
 import { applyTypographyTokenToText } from "./applyTypographyToken";
@@ -145,6 +148,7 @@ export interface CartesianYAxisOptions {
   color: CartesianChartColorConfig;
   textColor: ColorToken;
   ticks: number[];
+  yAxisDataType?: YAxisDataType;
   yAxisPosition?: CartesianYAxisPosition;
 }
 
@@ -159,6 +163,7 @@ export async function drawCartesianYAxis(
   const axis = await createCartesianFrameNode(parent, "Y-axis", x, y, width, height);
   const yAxisPosition = options.yAxisPosition ?? "right";
   const yLabelStyle = options.color.yAxisLabel;
+  const yAxisDataType = options.yAxisDataType ?? "number";
   Object.assign(axis, {
     layoutMode: "VERTICAL",
     primaryAxisSizingMode: "FIXED",
@@ -193,7 +198,7 @@ export async function drawCartesianYAxis(
       : 0;
 
     const label = await createCartesianText(
-      formatAxisNumber(tick),
+      formatAxisTickLabel(tick, yAxisDataType),
       yLabelStyle,
       options.textColor,
     );
@@ -201,7 +206,7 @@ export async function drawCartesianYAxis(
     label.textAlignHorizontal = yAxisPosition === "right" ? "LEFT" : "RIGHT";
     lineFrame.appendChild(label);
     label.layoutPositioning = "ABSOLUTE";
-    label.x = yAxisPosition === "right" ? width + 8 : -label.width - 8;
+    label.x = yAxisPosition === "right" ? width + Y_AXIS_LABEL_AXIS_GAP : -label.width - Y_AXIS_LABEL_AXIS_GAP;
     label.y = -8;
   }
 
@@ -218,6 +223,28 @@ export async function drawCartesianYAxis(
   ruler.layoutPositioning = "ABSOLUTE";
   ruler.x = rulerX;
   ruler.y = -1;
+}
+
+export async function measureYAxisLabelGutterFigma(
+  ticks: number[],
+  yAxisDataType: YAxisDataType,
+  yLabelStyle: TypographyToken,
+  textColor: ColorToken,
+): Promise<number> {
+  if (ticks.length === 0) {
+    return Y_AXIS_LABEL_AXIS_GAP;
+  }
+  let maxWidth = 0;
+  for (const tick of ticks) {
+    const text = await createCartesianText(
+      formatAxisTickLabel(tick, yAxisDataType),
+      yLabelStyle,
+      textColor,
+    );
+    maxWidth = Math.max(maxWidth, text.width);
+    text.remove();
+  }
+  return maxWidth + Y_AXIS_LABEL_AXIS_GAP;
 }
 
 export interface CartesianXAxisOptions {
