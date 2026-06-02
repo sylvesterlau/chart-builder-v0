@@ -1,5 +1,4 @@
 import {
-  formatAxisNumber,
   formatAxisTickLabel,
   isCartesianXAxisLineVisible,
   isCartesianYAxisLineVisible,
@@ -111,6 +110,20 @@ function measureAxisLabelWidth(value: string): number {
   return Math.max(1, String(value || "").length * 7);
 }
 
+export function measureYAxisLabelGutter(
+  ticks: number[],
+  measureLabelWidth: (label: string) => number,
+  yAxisDataType: YAxisDataType = "number",
+): number {
+  const widestLabel = ticks.reduce((maxWidth, tick) => {
+    return Math.max(
+      maxWidth,
+      measureLabelWidth(formatAxisTickLabel(tick, yAxisDataType)),
+    );
+  }, 0);
+  return Math.max(1, Math.ceil(widestLabel + Y_AXIS_LABEL_AXIS_GAP));
+}
+
 export interface CartesianAxisTitleOptions {
   color: CartesianChartColorConfig;
   textColor: ColorToken;
@@ -206,7 +219,10 @@ export async function drawCartesianYAxis(
     label.textAlignHorizontal = yAxisPosition === "right" ? "LEFT" : "RIGHT";
     lineFrame.appendChild(label);
     label.layoutPositioning = "ABSOLUTE";
-    label.x = yAxisPosition === "right" ? width + Y_AXIS_LABEL_AXIS_GAP : -label.width - Y_AXIS_LABEL_AXIS_GAP;
+    label.x =
+      yAxisPosition === "right"
+        ? width + Y_AXIS_LABEL_AXIS_GAP
+        : -label.width - Y_AXIS_LABEL_AXIS_GAP;
     label.y = -8;
   }
 
@@ -234,17 +250,21 @@ export async function measureYAxisLabelGutterFigma(
   if (ticks.length === 0) {
     return Y_AXIS_LABEL_AXIS_GAP;
   }
-  let maxWidth = 0;
-  for (const tick of ticks) {
-    const text = await createCartesianText(
-      formatAxisTickLabel(tick, yAxisDataType),
-      yLabelStyle,
-      textColor,
-    );
-    maxWidth = Math.max(maxWidth, text.width);
-    text.remove();
-  }
-  return maxWidth + Y_AXIS_LABEL_AXIS_GAP;
+  const measurer = await createCartesianText("", yLabelStyle, textColor);
+  measurer.visible = false;
+  figma.currentPage.appendChild(measurer);
+
+  const gutter = measureYAxisLabelGutter(
+    ticks,
+    (label) => {
+      measurer.characters = label;
+      return measurer.width;
+    },
+    yAxisDataType,
+  );
+
+  measurer.remove();
+  return gutter;
 }
 
 export interface CartesianXAxisOptions {
