@@ -108,6 +108,38 @@ function measureAxisLabelWidth(value: string): number {
   return Math.max(1, String(value || "").length * 7);
 }
 
+const Y_AXIS_LABEL_GAP = 8;
+const MIN_Y_AXIS_LABEL_GUTTER = 46;
+
+export function measureYAxisLabelGutter(
+  ticks: number[],
+  measureLabelWidth: (label: string) => number,
+): number {
+  const widestLabel = ticks.reduce((maxWidth, tick) => {
+    return Math.max(maxWidth, measureLabelWidth(formatAxisNumber(tick)));
+  }, 0);
+  return Math.max(MIN_Y_AXIS_LABEL_GUTTER, Math.ceil(widestLabel + Y_AXIS_LABEL_GAP));
+}
+
+export async function measureYAxisLabelGutterFigma(
+  ticks: number[],
+  style: TypographyToken,
+): Promise<number> {
+  const measurer = await createCartesianText("", style, {
+    value: "#000000",
+  });
+  measurer.visible = false;
+  figma.currentPage.appendChild(measurer);
+
+  const gutter = measureYAxisLabelGutter(ticks, (label) => {
+    measurer.characters = label;
+    return measurer.width;
+  });
+
+  measurer.remove();
+  return gutter;
+}
+
 export interface CartesianAxisTitleOptions {
   color: CartesianChartColorConfig;
   textColor: ColorToken;
@@ -201,7 +233,10 @@ export async function drawCartesianYAxis(
     label.textAlignHorizontal = yAxisPosition === "right" ? "LEFT" : "RIGHT";
     lineFrame.appendChild(label);
     label.layoutPositioning = "ABSOLUTE";
-    label.x = yAxisPosition === "right" ? width + 8 : -label.width - 8;
+    label.x =
+      yAxisPosition === "right"
+        ? width + Y_AXIS_LABEL_GAP
+        : -label.width - Y_AXIS_LABEL_GAP;
     label.y = -8;
   }
 

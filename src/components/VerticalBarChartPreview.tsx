@@ -6,6 +6,7 @@ import {
   formatAxisNumber,
   isCartesianXAxisLineVisible,
   isCartesianYAxisLineVisible,
+  measurePreviewTextWidth,
   niceMax,
   rgbaFromHex,
 } from "../helpers";
@@ -19,6 +20,7 @@ import {
 } from "../utils/typographyTokenDisplay";
 import { buildBarKeyInfo } from "../utils/cartesianKeyInfo";
 import { buildBarTooltip } from "../utils/cartesianTooltip";
+import { measureYAxisLabelGutter } from "../utils/drawCartesianAxis";
 import CartesianKeyInfoPreview from "./CartesianKeyInfoPreview";
 import CartesianTooltipPreview from "./CartesianTooltipPreview";
 import ChartTitlePreview from "./ChartTitlePreview";
@@ -52,9 +54,12 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
   const contentWidth = Math.max(1, config.width - 32);
   const contentHeight = Math.max(1, config.height - 24 - yTitleRowHeight);
   const plotHeight = Math.max(1, contentHeight - 54);
-  const labelGutter = 46;
-  const plotWidth = Math.max(1, contentWidth - labelGutter);
   const yAxisPosition = config.yAxisPosition ?? "right";
+  const yAxisLabelCss = typographyTokenToPreviewCss(yLab, resolvedTypography);
+  const labelGutter = measureYAxisLabelGutter(ticks, (label) =>
+    measurePreviewTextWidth(label, yAxisLabelCss),
+  );
+  const plotWidth = Math.max(1, contentWidth - labelGutter);
   const plotX = yAxisPosition === "right" ? 0 : labelGutter;
   const yAxisLabelX = yAxisPosition === "right" ? plotWidth + 8 : -8;
   const groupWidth = labels.length > 0 ? plotWidth / labels.length : plotWidth;
@@ -88,7 +93,6 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
     ty.yAxisTitle,
     resolvedTypography,
   );
-  const yAxisLabelCss = typographyTokenToPreviewCss(yLab, resolvedTypography);
   const xAxisLabelCss = typographyTokenToPreviewCss(
     ty.xAxisLabel,
     resolvedTypography,
