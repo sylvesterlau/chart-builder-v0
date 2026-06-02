@@ -321,9 +321,10 @@ export const ds = {
       ratioMin: 0.5,
       ratioMax: 0.99,
       ringWidth: 20,
-      sliceGap: 1.5,
-      sliceGapMin: 0,
-      sliceGapMax: 20,
+      sliceGap: {
+        value: 1.5,
+        key: "e7a7a7e1c7572287d371c5fb928b4cac8879bda6",
+      } satisfies NumberToken,
       indicator: {
         lineExtend: 8,
         lineExtendMin: 0,

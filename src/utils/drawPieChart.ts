@@ -16,7 +16,7 @@ import {
 } from "./chart/pieDonutCalculate";
 import { dataVisAt } from "./dataVisAt";
 import { formatLegendPercentageDisplay, getSum } from "../helpers";
-import { ChartData } from "../types";
+import { ChartData, NumberToken } from "../types";
 import {
   applyColorTokenToFills,
   applyColorTokenToStrokes,
@@ -67,14 +67,14 @@ async function createPieSlice(
   pieRadius: number,
   centerX: number,
   centerY: number,
-  sliceGapPx: number,
+  sliceGapToken: NumberToken,
 ): Promise<EllipseNode> {
   const slice = figma.createEllipse();
   slice.name = name;
   slice.resize(pieRadius * 2, pieRadius * 2);
   slice.x = centerX - pieRadius;
   slice.y = centerY - pieRadius;
-  slice.strokeWeight = sliceGapPx;
+  await applyStrokeWeight(slice, sliceGapToken);
   slice.strokeAlign = "CENTER";
   const sweep = endAngle - startAngle;
   if (sweep >= 359.999) {
@@ -165,7 +165,7 @@ export async function drawPieChart(chartData: ChartData) {
 
   const chartTitle = chartData.chartTitle ?? "";
   const pieChartKind = chartData.pieChartKind ?? "pie";
-  const sliceGapPx = resolvePieSliceGap(chartData.pieSliceGap);
+  const sliceGapPx = resolvePieSliceGap();
   const shouldShowLegend = chartData.legendStyle !== "none";
   const legendTileLayout =
     chartData.legendStyle === "topAndBottom" ? "topAndBottom" : "leftAndRight";
@@ -320,7 +320,7 @@ export async function drawPieChart(chartData: ChartData) {
             pieRadius,
             centerX,
             centerY,
-            sliceGapPx,
+            pieChartConfig.sliceGap,
           );
     chartFrame.appendChild(slice);
     if (indicatorText) {

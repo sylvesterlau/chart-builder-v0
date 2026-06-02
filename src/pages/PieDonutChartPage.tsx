@@ -34,7 +34,6 @@ import {
   getDonutRingWidthBounds,
   getPieChartSizeBounds,
   isValidDonutRingWidth,
-  isValidPieSliceGap,
 } from "../utils/chart/pieDonutCalculate";
 import { LegendStyle } from "../types";
 import { useRefreshDesignTokensOnMount } from "../utils/useRefreshDesignTokens";
@@ -107,11 +106,6 @@ function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
     frameWidthMin: pieChartConfig.frameWidthMin,
     getChartSizeBounds: getPieChartSizeBounds,
   });
-  const [sliceGap, setSliceGap] = useState<number>(pieChartConfig.sliceGap);
-  const [sliceGapInput, setSliceGapInput] = useState<string>(
-    String(pieChartConfig.sliceGap),
-  );
-  const sliceGapInputValid = isValidPieSliceGap(Number(sliceGapInput));
   const [donutRingWidth, setDonutRingWidth] = useState<number>(
     pieChartConfig.ringWidth,
   );
@@ -219,7 +213,6 @@ function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
         showIndicator,
         showIndicatorPercentage,
         indicatorLineExtend,
-        pieSliceGap: sliceGap,
         donutRingWidth: chartKind === "donut" ? donutRingWidth : undefined,
         valuePrefix,
         valueSuffix,
@@ -236,7 +229,6 @@ function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
       showIndicator,
       showIndicatorPercentage,
       indicatorLineExtend,
-      sliceGap,
       donutRingWidth,
       valuePrefix,
       valueSuffix,
@@ -274,7 +266,6 @@ function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
             showIndicator={showIndicator}
             showIndicatorPercentage={showIndicatorPercentage}
             indicatorLineExtend={indicatorLineExtend}
-            sliceGap={sliceGap}
             donutRingWidth={donutRingWidth}
             showPercentage={showPercentage}
             valuePrefix={valuePrefix}
@@ -321,7 +312,6 @@ function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
             isRingWidthValid={
               chartKind === "donut" ? donutRingWidthInputValid : undefined
             }
-            isSliceGapValid={sliceGapInputValid}
             onChartSizeNumericInput={sizeControl.handleChartSizeNumericInput}
             onChartSizeSliderInput={sizeControl.handleChartSizeSliderInput}
             onFrameWidthInput={sizeControl.handleFrameWidthInput}
@@ -340,14 +330,6 @@ function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
                   }
                 : undefined
             }
-            onSliceGapInput={(value) => {
-              const sanitizedValue = sanitizeDecimalInput(value);
-              setSliceGapInput(sanitizedValue);
-              const numericValue = Number(sanitizedValue);
-              if (sanitizedValue !== "" && isValidPieSliceGap(numericValue)) {
-                setSliceGap(numericValue);
-              }
-            }}
             ringWidthInput={
               chartKind === "donut" ? donutRingWidthInput : undefined
             }
@@ -357,9 +339,6 @@ function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
             ringWidthMin={
               chartKind === "donut" ? donutRingWidthBounds.min : undefined
             }
-            sliceGapInput={sliceGapInput}
-            sliceGapMax={pieChartConfig.sliceGapMax}
-            sliceGapMin={pieChartConfig.sliceGapMin}
           />
           <VerticalSpace space="medium" />
           <div className={styles.divider} />

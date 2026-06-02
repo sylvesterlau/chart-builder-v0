@@ -140,7 +140,7 @@ export async function drawSemiDonutChart(chartData: ChartData) {
   const chartSize = resolveSemiDonutSize(chartData.semiDonutSize, frameWidth);
   const ringWidthPx = resolveSemiDonutRingWidth(chartData.semiDonutRingWidth);
   const innerRadiusRatio = semiDonutRingWidthPxToRatio(ringWidthPx, chartSize);
-  const sliceGapPx = resolveSemiDonutSliceGapPx(chartData.semiDonutSliceGap);
+  const sliceGapPx = resolveSemiDonutSliceGapPx();
   const gapPercent = semiDonutGapPxToPercent(
     sliceGapPx,
     chartSize,

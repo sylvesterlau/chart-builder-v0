@@ -77,7 +77,7 @@ function semiDonutLayoutEntries(): Array<[string, string | number]> {
   return Object.entries(layout);
 }
 
-function pieLayoutEntries(): Array<[string, string | number]> {
+function pieLayoutEntries(): Array<[string, unknown]> {
   const { indicator: _, ...layout } = ds.chart.pie;
   return Object.entries(layout);
 }
@@ -482,7 +482,7 @@ function DesignSystemConfigPage({ onBack }: DesignSystemConfigPageProps) {
                 return (
                   <div key={key} className={uiStyles.configValueRow}>
                     <span className={uiStyles.fieldLabel}>{key}</span>
-                    <NumChip value={value} />
+                    <ConfigMetricChip value={value} />
                   </div>
                 );
               })}
