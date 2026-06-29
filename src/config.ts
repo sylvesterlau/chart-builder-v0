@@ -465,9 +465,16 @@ export const semiDonutChartLayout = {
 
 /** Horizontal bar edit/draw layout constraints (not part of design-system tokens). */
 export const horizontalBarChartLayout = {
-  sliceGap: 2,
+  sliceGap: {
+    value: 2,
+    key: "e76beb259ba90985b31fd1a235f8c36284f6f0f8",
+  } satisfies NumberToken,
   sliceGapMin: 0,
   sliceGapMax: 20,
+  barHeight: {
+    value: 12,
+    key: "5fa48bc5d43b0d01983848fe6be4643851c631b6",
+  } satisfies NumberToken,
   horizontalPadding: spacing.padding.normal,
   verticalPadding: spacing.padding.normal,
 } as const;

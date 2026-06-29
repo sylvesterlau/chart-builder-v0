@@ -45,6 +45,10 @@ function HorizontalBarChartPreview({
     horizontalBarChartLayout.verticalPadding,
     resolvedNumbers,
   );
+  const barHeight = numberTokenResolvedValue(
+    horizontalBarChartLayout.barHeight,
+    resolvedNumbers,
+  );
 
   const legendItems = items
     .map((item, index) => ({ ...item, index }))
@@ -81,7 +85,7 @@ function HorizontalBarChartPreview({
           boxSizing: "border-box",
           display: "flex",
           gap: `${sliceGap}px`,
-          height: "12px",
+          height: `${barHeight}px`,
           padding: `${verticalPadding}px ${horizontalPadding}px`,
           overflow: "hidden",
           width: "100%",
@@ -95,7 +99,7 @@ function HorizontalBarChartPreview({
               style={{
                 backgroundColor: color,
                 flex: `${item.value} 1 0`,
-                height: "12px",
+                height: `${barHeight}px`,
               }}
             />
           );
