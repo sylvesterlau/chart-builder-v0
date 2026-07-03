@@ -19,20 +19,35 @@ export const sampleData = {
   },
 };
 
-/** Plugin panel window sizes */
+/** Plugin panel window sizes and resize bounds. */
 export const pluginUISize = {
   homePage: {
-    width: 348,
+    width: 346,
     height: 490,
   },
   editPage: {
-    width: 640,
-    height: 490,
-  },
-  verticalBarPage: {
     width: 680,
     height: 560,
+    minWidth: 460,
+    minHeight: 460,
+    maxWidth: 1200,
+    maxHeight: 900,
   },
+  designSystemPage: {
+    width: 490,
+    height: 490,
+    minWidth: 460,
+    minHeight: 460,
+    maxWidth: 1200,
+    maxHeight: 900,
+  },
+} as const;
+
+/** Edit chart pages: right-side controls panel width (px). */
+export const editControlsPanelWidth = {
+  width: 260,
+  minWidth: 240,
+  maxWidth: 400,
 } as const;
 
 /** Shared type scale; component typography references these tokens. */

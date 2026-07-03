@@ -8,8 +8,8 @@ import {
   VerticalSpace,
 } from "@create-figma-plugin/ui";
 import { emit } from "@create-figma-plugin/utilities";
-import { h } from "preact";
-import { useCallback, useEffect, useState } from "preact/hooks";
+import { h, Fragment } from "preact";
+import { useCallback, useState } from "preact/hooks";
 import ChartItemInput, { ChartItem } from "../components/ChartItemInput";
 import ChartTitleControl, {
   getEffectiveChartTitle,
@@ -18,11 +18,11 @@ import LegendControl, {
   getEffectiveLegendStyle,
 } from "../components/editControl/LegendControl";
 import HorizontalBarChartPreview from "../components/HorizontalBarChartPreview";
+import { EditChartPageLayout } from "../components/EditChartPageLayout";
 import {
   chartGeneralConfig,
   horizontalBarChartLayout,
   pieChartConfig,
-  pluginUISize,
   sampleData,
 } from "../config";
 import { LegendStyle } from "../types";
@@ -119,18 +119,6 @@ function HorizontalBarPage({ onBack }: HorizontalBarPageProps) {
     String(defaultSliceGap),
   );
   const sliceGapInputValid = isValidSliceGap(Number(sliceGapInput));
-  useEffect(() => {
-    emit("RESIZE_PLUGIN_UI_WINDOW", {
-      width: pluginUISize.editPage.width,
-      height: pluginUISize.editPage.height,
-    });
-    return () => {
-      emit("RESIZE_PLUGIN_UI_WINDOW", {
-        width: pluginUISize.homePage.width,
-        height: pluginUISize.homePage.height,
-      });
-    };
-  }, []);
   const handleLabelInput = useCallback((index: number, label: string) => {
     setItems((currentItems) =>
       currentItems.map((item, itemIndex) =>
@@ -197,38 +185,24 @@ function HorizontalBarPage({ onBack }: HorizontalBarPageProps) {
     ],
   );
   return (
-    <div className={styles.horizontalBarPage}>
-      <div className={styles.horizontalBarLeftPanel}>
-        <div className={styles.horizontalBarHeader}>
-          <button
-            className={styles.horizontalBarBackButton}
-            onClick={onBack}
-            title="Back"
-            type="button"
-          >
-            ←
-          </button>
-          <Text className={styles.horizontalBarTypeTitle}>
-            Horizontal bar chart
-          </Text>
-        </div>
-        <div
-          className={`${styles.horizontalBarPreviewPanel} ${styles.horizontalBarPreviewPanelVariableWidth}`}
-        >
-          <HorizontalBarChartPreview
-            chartTitle={effectiveChartTitle}
-            frameWidth={frameWidth}
-            items={items}
-            sliceGap={sliceGap}
-            legendStyle={effectiveLegendStyle}
-            showPercentage={showPercentage}
-            valuePrefix={valuePrefix}
-            valueSuffix={valueSuffix}
-          />
-        </div>
-      </div>
-      <div className={styles.horizontalBarRightPanel}>
-        <div className={styles.horizontalBarControls}>
+    <EditChartPageLayout
+      onBack={onBack}
+      title="Horizontal bar chart"
+      previewVariant="horizontal"
+      preview={
+        <HorizontalBarChartPreview
+          chartTitle={effectiveChartTitle}
+          frameWidth={frameWidth}
+          items={items}
+          sliceGap={sliceGap}
+          legendStyle={effectiveLegendStyle}
+          showPercentage={showPercentage}
+          valuePrefix={valuePrefix}
+          valueSuffix={valueSuffix}
+        />
+      }
+      controls={
+        <Fragment>
           <ChartTitleControl
             onTitleChange={setChartTitle}
             onVisibleChange={setShowChartTitle}
@@ -327,14 +301,14 @@ function HorizontalBarPage({ onBack }: HorizontalBarPageProps) {
             valueSuffix={valueSuffix}
             visible={showLegend}
           />
-        </div>
-        <div className={styles.horizontalBarActions}>
-          <Button fullWidth onClick={handleGenerateButtonClick}>
-            Generate
-          </Button>
-        </div>
-      </div>
-    </div>
+        </Fragment>
+      }
+      actions={
+        <Button fullWidth onClick={handleGenerateButtonClick}>
+          Generate
+        </Button>
+      }
+    />
   );
 }
 export default HorizontalBarPage;

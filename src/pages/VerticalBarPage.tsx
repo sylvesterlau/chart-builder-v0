@@ -11,10 +11,11 @@ import {
   VerticalSpace,
 } from "@create-figma-plugin/ui";
 import { emit } from "@create-figma-plugin/utilities";
-import { h } from "preact";
-import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
+import { Fragment, h } from "preact";
+import { useCallback, useMemo, useState } from "preact/hooks";
 import VerticalBarChartPreview from "../components/VerticalBarChartPreview";
-import { dataVisColor, pluginUISize, verticalBarChartConfig } from "../config";
+import { EditChartPageLayout } from "../components/EditChartPageLayout";
+import { dataVisColor, verticalBarChartConfig } from "../config";
 import {
   VerticalBarChartConfig,
   VerticalBarChartSeries,
@@ -150,19 +151,6 @@ function VerticalBarPage({ onBack }: VerticalBarPageProps) {
     ),
   );
 
-  useEffect(() => {
-    emit("RESIZE_PLUGIN_UI_WINDOW", {
-      width: pluginUISize.verticalBarPage.width,
-      height: pluginUISize.verticalBarPage.height,
-    });
-    return () => {
-      emit("RESIZE_PLUGIN_UI_WINDOW", {
-        width: pluginUISize.homePage.width,
-        height: pluginUISize.homePage.height,
-      });
-    };
-  }, []);
-
   const chartConfig = useMemo<VerticalBarChartConfig>(() => {
     const labels = items.map((item, index) => item.label.trim() || `Item ${index + 1}`);
     const series: VerticalBarChartSeries[] = [
@@ -285,27 +273,13 @@ function VerticalBarPage({ onBack }: VerticalBarPageProps) {
   );
 
   return (
-    <div className={styles.verticalBarPage}>
-      <div className={styles.verticalBarLeftPanel}>
-        <div className={styles.horizontalBarHeader}>
-          <button
-            className={styles.horizontalBarBackButton}
-            onClick={onBack}
-            title="Back"
-            type="button"
-          >
-            ←
-          </button>
-          <Text className={styles.horizontalBarTypeTitle}>
-            Vertical bar chart
-          </Text>
-        </div>
-        <div className={styles.verticalBarPreviewPanel}>
-          <VerticalBarChartPreview config={chartConfig} />
-        </div>
-      </div>
-      <div className={styles.horizontalBarRightPanel}>
-        <div className={styles.horizontalBarControls}>
+    <EditChartPageLayout
+      onBack={onBack}
+      title="Vertical bar chart"
+      previewVariant="vertical"
+      preview={<VerticalBarChartPreview config={chartConfig} />}
+      controls={
+        <Fragment>
           <Stack space="small">
             <Text className={styles.sectionTitle}>Chart</Text>
             <div className={styles.fieldRow}>
@@ -453,14 +427,14 @@ function VerticalBarPage({ onBack }: VerticalBarPageProps) {
               </div>
             </Stack>
           </div>
-        </div>
-        <div className={styles.horizontalBarActions}>
-          <Button fullWidth onClick={handleGenerateButtonClick}>
-            Generate
-          </Button>
-        </div>
-      </div>
-    </div>
+        </Fragment>
+      }
+      actions={
+        <Button fullWidth onClick={handleGenerateButtonClick}>
+          Generate
+        </Button>
+      }
+    />
   );
 }
 

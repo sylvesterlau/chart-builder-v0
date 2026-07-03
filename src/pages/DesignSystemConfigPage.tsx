@@ -1,7 +1,6 @@
 import { Divider, Stack, Text, VerticalSpace } from "@create-figma-plugin/ui";
-import { emit } from "@create-figma-plugin/utilities";
 import { h } from "preact";
-import { useEffect, useState } from "preact/hooks";
+import { useState } from "preact/hooks";
 import NavTab from "../components/navTab/NavTab";
 import { TokenKeyLookupPanel } from "../components/TokenKeyLookupPanel";
 import { ColorTokenChip } from "../components/ColorChips/ColorTokenChip";
@@ -14,7 +13,6 @@ import {
   ds,
   horizontalBarChartLayout,
   lineChartConfig,
-  pluginUISize,
   spacing,
   verticalBarChartConfig,
 } from "../config";
@@ -44,8 +42,7 @@ type DesignSystemTabId =
   | "lineChart"
   | "util";
 
-/** Plugin UI dimensions while Design system page is open. */
-const DESIGN_SYSTEM_WINDOW = { width: 490, height: 490 } as const;
+/** Design system page layout uses full plugin window height via CSS. */
 
 const DESIGN_SYSTEM_TABS: ReadonlyArray<{
   id: DesignSystemTabId;
@@ -185,26 +182,13 @@ function TypographyBlock(props: { pathPrefix: string; root: unknown }) {
 function DesignSystemConfigPage({ onBack }: DesignSystemConfigPageProps) {
   const [activeTab, setActiveTab] = useState<DesignSystemTabId>("general");
 
-  useEffect(function () {
-    emit("RESIZE_PLUGIN_UI_WINDOW", {
-      width: DESIGN_SYSTEM_WINDOW.width,
-      height: DESIGN_SYSTEM_WINDOW.height,
-    });
-    return function () {
-      emit("RESIZE_PLUGIN_UI_WINDOW", {
-        width: pluginUISize.homePage.width,
-        height: pluginUISize.homePage.height,
-      });
-    };
-  }, []);
-
   return (
     <div
       style={{
         boxSizing: "border-box",
         display: "flex",
         flexDirection: "row",
-        height: DESIGN_SYSTEM_WINDOW.height,
+        height: "100vh",
         overflow: "hidden",
         width: "100%",
       }}

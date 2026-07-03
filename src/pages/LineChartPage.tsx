@@ -15,7 +15,7 @@ import {
   Divider,
 } from "@create-figma-plugin/ui";
 import { emit } from "@create-figma-plugin/utilities";
-import { h } from "preact";
+import { Fragment, h } from "preact";
 import {
   useCallback,
   useEffect,
@@ -24,11 +24,12 @@ import {
   useState,
 } from "preact/hooks";
 import LineChartPreview from "../components/LineChartPreview";
+import { EditChartPageLayout } from "../components/EditChartPageLayout";
 import ChartTitleControl, {
   getEffectiveChartTitle,
 } from "../components/editControl/ChartTitleControl";
 import EditSectionHeader from "../components/editControl/EditSectionHeader";
-import { dataVisColor, lineChartConfig, pluginUISize } from "../config";
+import { dataVisColor, lineChartConfig } from "../config";
 import {
   isCartesianXAxisLineVisible,
   isCartesianYAxisLineVisible,
@@ -521,19 +522,6 @@ function LineChartPage({ onBack }: LineChartPageProps) {
   });
 
   useEffect(() => {
-    emit("RESIZE_PLUGIN_UI_WINDOW", {
-      width: pluginUISize.verticalBarPage.width,
-      height: pluginUISize.verticalBarPage.height,
-    });
-    return () => {
-      emit("RESIZE_PLUGIN_UI_WINDOW", {
-        width: pluginUISize.homePage.width,
-        height: pluginUISize.homePage.height,
-      });
-    };
-  }, []);
-
-  useEffect(() => {
     const syncProgress = () =>
       syncTooltipRangeProgress(
         tooltipRangeInputRef.current,
@@ -821,25 +809,13 @@ function LineChartPage({ onBack }: LineChartPageProps) {
   );
 
   return (
-    <div className={styles.verticalBarPage}>
-      <div className={styles.verticalBarLeftPanel}>
-        <div className={styles.horizontalBarHeader}>
-          <button
-            className={styles.horizontalBarBackButton}
-            onClick={onBack}
-            title="Back"
-            type="button"
-          >
-            ←
-          </button>
-          <Text className={styles.horizontalBarTypeTitle}>Line chart</Text>
-        </div>
-        <div className={styles.verticalBarPreviewPanel}>
-          <LineChartPreview config={chartConfig} />
-        </div>
-      </div>
-      <div className={styles.horizontalBarRightPanel}>
-        <div className={styles.horizontalBarControls}>
+    <EditChartPageLayout
+      onBack={onBack}
+      title="Line chart"
+      previewVariant="vertical"
+      preview={<LineChartPreview config={chartConfig} />}
+      controls={
+        <Fragment>
           <ChartTitleControl
             onTitleChange={setChartTitle}
             onVisibleChange={setShowChartTitle}
@@ -1176,18 +1152,18 @@ function LineChartPage({ onBack }: LineChartPageProps) {
               </Button>
             </div>
           </div>
-        </div>
-        <div className={styles.horizontalBarActions}>
-          <Button
-            disabled={!isDataConfigValid}
-            fullWidth
-            onClick={handleGenerateButtonClick}
-          >
-            Generate
-          </Button>
-        </div>
-      </div>
-    </div>
+        </Fragment>
+      }
+      actions={
+        <Button
+          disabled={!isDataConfigValid}
+          fullWidth
+          onClick={handleGenerateButtonClick}
+        >
+          Generate
+        </Button>
+      }
+    />
   );
 }
 
