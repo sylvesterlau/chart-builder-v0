@@ -286,6 +286,12 @@ export const ds = {
         value: 14,
       } satisfies NumberToken,
     },
+    indicator: {
+      size: {
+        key: "9179373b52c7a39cae89dbdf0c29f0e2806edff5",
+        value: 18,
+      } satisfies NumberToken,
+    },
     color: {
       divider: {
         key: "8d6515c52d71ded4d4487081d1f62ff9a47e8ff2",
@@ -481,6 +487,7 @@ export const horizontalBarChartLayout = {
 
 export const legendSpacingConfig = ds.legend.spacing;
 export const legendShapeConfig = ds.legend.shape;
+export const legendIndicatorConfig = ds.legend.indicator;
 export const dataVisColor = ds.colors.dataVis;
 export const textColor = ds.colors.text;
 export const dividerColor = ds.legend.color.divider;

@@ -37,6 +37,7 @@ registerNumberTokenKeys(ds.cartesianKeyInfo.spacing);
 registerNumberTokenKeys(ds.cartesianTooltip.spacing);
 registerNumberTokenKeys(ds.legend.spacing);
 registerNumberTokenKeys(ds.legend.shape);
+registerNumberTokenKeys(ds.legend.indicator);
 registerNumberTokenKeys(horizontalBarChartLayout);
 registerNumberTokenKeys(ds.chart.pie);
 

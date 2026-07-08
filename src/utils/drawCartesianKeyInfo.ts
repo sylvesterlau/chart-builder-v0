@@ -1,20 +1,21 @@
-import { cartesianKeyInfoConfig, chartBackground, textColor } from "../config";
-import { dataVisAt } from "./dataVisAt";
 import {
-  CartesianKeyInfoData,
-  formatPercentageChange,
-} from "./cartesianKeyInfo";
+  cartesianKeyInfoConfig,
+  chartBackground,
+  legendIndicatorConfig,
+  textColor,
+} from "../config";
+import { dataVisAt } from "./dataVisAt";
+import { CartesianKeyInfoData, formatPercentageChange } from "./cartesianKeyInfo";
 import type { ColorToken, TypographyToken } from "../types";
 import {
+  applyHeight,
   applyItemSpacing,
   applyKeyInfoSpacing,
+  applyWidth,
   numberTokenValue,
 } from "./applyNumberToken";
 import { applyColorTokenToFills, applyColorTokenToStrokes } from "./applyColorToken";
-import {
-  applyTypographyTokenToText,
-  loadTypographyTokenFontsBatch,
-} from "./applyTypographyToken";
+import { applyTypographyTokenToText, loadTypographyTokenFontsBatch } from "./applyTypographyToken";
 
 const keyInfoTextColor = textColor.primary;
 
@@ -60,18 +61,17 @@ async function createBarSwatch(colorToken: ColorToken): Promise<RectangleNode> {
   return shape;
 }
 
-async function createLineSwatch(
-  colorToken: ColorToken,
-  seriesIndex: number,
-): Promise<FrameNode> {
-  const visual = await createFrame("Series indicator");
-  visual.resize(18, 18);
+async function createLineSwatch(colorToken: ColorToken, seriesIndex: number): Promise<FrameNode> {
+  const visual = await createFrame(".Legend indicator");
+  await applyWidth(visual, legendIndicatorConfig.size);
+  await applyHeight(visual, legendIndicatorConfig.size);
+  const indicatorSize = numberTokenValue(legendIndicatorConfig.size);
 
   const line = figma.createRectangle();
   line.name = "Line";
-  line.resize(18, 2);
+  line.resize(indicatorSize, 2);
   line.x = 0;
-  line.y = 8;
+  line.y = (indicatorSize - line.height) / 2;
   await applyColorTokenToFills(line, colorToken);
   visual.appendChild(line);
 
@@ -88,8 +88,8 @@ async function createLineSwatch(
   } else {
     shape.resize(seriesIndex === 1 ? 9.5 : 11, seriesIndex === 1 ? 9.5 : 11);
   }
-  shape.x = (18 - shape.width) / 2;
-  shape.y = (18 - shape.height) / 2;
+  shape.x = (indicatorSize - shape.width) / 2;
+  shape.y = (indicatorSize - shape.height) / 2;
   await applyColorTokenToFills(shape, colorToken);
   await applyColorTokenToStrokes(shape, chartBackground);
   shape.strokeWeight = 1.5;
@@ -112,17 +112,12 @@ async function createVisual(
   });
   const token = dataVisAt(colorTokenIndex);
   visual.appendChild(
-    kind === "line"
-      ? await createLineSwatch(token, colorTokenIndex)
-      : await createBarSwatch(token),
+    kind === "line" ? await createLineSwatch(token, colorTokenIndex) : await createBarSwatch(token),
   );
   return visual;
 }
 
-async function createLabelRow(
-  data: CartesianKeyInfoData,
-  itemIndex: number,
-): Promise<FrameNode> {
+async function createLabelRow(data: CartesianKeyInfoData, itemIndex: number): Promise<FrameNode> {
   const item = data.items[itemIndex];
   const row = await createFrame("Main");
   row.resize(160, 20);
@@ -146,10 +141,7 @@ async function createLabelRow(
   return row;
 }
 
-async function createValueRow(
-  data: CartesianKeyInfoData,
-  itemIndex: number,
-): Promise<FrameNode> {
+async function createValueRow(data: CartesianKeyInfoData, itemIndex: number): Promise<FrameNode> {
   const item = data.items[itemIndex];
   const isRows = data.layout === "rows";
   const row = await createFrame("Data");
@@ -174,11 +166,7 @@ async function createValueRow(
     ),
   );
   row.appendChild(
-    await createText(
-      item.unit,
-      cartesianKeyInfoConfig.typography.unit,
-      keyInfoTextColor,
-    ),
+    await createText(item.unit, cartesianKeyInfoConfig.typography.unit, keyInfoTextColor),
   );
 
   if (item.percentageChange !== undefined) {
@@ -199,10 +187,7 @@ async function createValueRow(
   return row;
 }
 
-async function createInlineItem(
-  data: CartesianKeyInfoData,
-  itemIndex: number,
-): Promise<FrameNode> {
+async function createInlineItem(data: CartesianKeyInfoData, itemIndex: number): Promise<FrameNode> {
   const item = await createFrame("Key info item");
   item.resize(160, data.kind === "line" ? 56 : 47);
   Object.assign(item, {
@@ -266,27 +251,17 @@ export async function createCartesianKeyInfo(
     primaryAxisSizingMode: "AUTO",
     counterAxisSizingMode: "FIXED",
     layoutAlign: "STRETCH",
-    paddingLeft: numberTokenValue(
-      cartesianKeyInfoConfig.spacing.horizontalPadding,
-    ),
-    paddingRight: numberTokenValue(
-      cartesianKeyInfoConfig.spacing.horizontalPadding,
-    ),
+    paddingLeft: numberTokenValue(cartesianKeyInfoConfig.spacing.horizontalPadding),
+    paddingRight: numberTokenValue(cartesianKeyInfoConfig.spacing.horizontalPadding),
     paddingTop: numberTokenValue(cartesianKeyInfoConfig.spacing.topPadding),
-    paddingBottom: numberTokenValue(
-      cartesianKeyInfoConfig.spacing.bottomPadding,
-    ),
+    paddingBottom: numberTokenValue(cartesianKeyInfoConfig.spacing.bottomPadding),
     itemSpacing: 0,
   });
   await applyKeyInfoSpacing(keyInfo, cartesianKeyInfoConfig.spacing);
 
   if (data.rangeLabel) {
     keyInfo.appendChild(
-      await createText(
-        data.rangeLabel,
-        cartesianKeyInfoConfig.typography.range,
-        keyInfoTextColor,
-      ),
+      await createText(data.rangeLabel, cartesianKeyInfoConfig.typography.range, keyInfoTextColor),
     );
   }
 
