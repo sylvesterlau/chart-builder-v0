@@ -35,11 +35,8 @@ const MIN_ITEMS = 2;
 const MAX_ITEMS = 10;
 const DEFAULT_ITEM_COUNT = 4;
 const { frameWidthMin, frameWidthMax } = pieChartConfig;
-const {
-  sliceGap: defaultSliceGap,
-  sliceGapMin,
-  sliceGapMax,
-} = horizontalBarChartLayout;
+const { sliceGapMin, sliceGapMax } = horizontalBarChartLayout;
+const defaultSliceGap = horizontalBarChartLayout.sliceGap.value;
 
 function isValidFrameWidth(value: number) {
   return (

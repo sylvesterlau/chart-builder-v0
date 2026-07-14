@@ -1,14 +1,23 @@
-import { cartesianTooltipConfig, textColor } from "../config";
+import {
+  cartesianTooltipConfig,
+  legendIndicatorConfig,
+  textColor,
+} from "../config";
 import { dataVisAt } from "./dataVisAt";
 import type { ColorToken, TypographyToken } from "../types";
 import {
+  applyHeight,
   applyHorizontalPadding,
   applyItemSpacing,
   applyPaddingTop,
   applyVerticalPadding,
+  applyWidth,
   numberTokenValue,
 } from "./applyNumberToken";
-import { applyColorTokenToFills, applyColorTokenToStrokes } from "./applyColorToken";
+import {
+  applyColorTokenToFills,
+  applyColorTokenToStrokes,
+} from "./applyColorToken";
 import {
   applyTypographyTokenToText,
   loadTypographyTokenFontsBatch,
@@ -48,14 +57,16 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 async function createLineSwatch(colorTokenIndex: number): Promise<FrameNode> {
-  const visual = await createFrame("Series indicator");
-  visual.resize(18, 18);
+  const visual = await createFrame(".Legend indicator");
+  await applyWidth(visual, legendIndicatorConfig.size);
+  await applyHeight(visual, legendIndicatorConfig.size);
+  const indicatorSize = numberTokenValue(legendIndicatorConfig.size);
 
   const line = figma.createRectangle();
   line.name = "Line";
-  line.resize(18, 2);
+  line.resize(indicatorSize, 2);
   line.x = 0;
-  line.y = 8;
+  line.y = (indicatorSize - line.height) / 2;
   await applyColorTokenToFills(line, dataVisAt(colorTokenIndex));
   visual.appendChild(line);
 
@@ -75,8 +86,8 @@ async function createLineSwatch(colorTokenIndex: number): Promise<FrameNode> {
       colorTokenIndex === 1 ? 9.5 : 11,
     );
   }
-  shape.x = (18 - shape.width) / 2;
-  shape.y = (18 - shape.height) / 2;
+  shape.x = (indicatorSize - shape.width) / 2;
+  shape.y = (indicatorSize - shape.height) / 2;
   await applyColorTokenToFills(shape, dataVisAt(colorTokenIndex));
   await applyColorTokenToStrokes(shape, cartesianTooltipConfig.color.panel);
   shape.strokeWeight = 1.5;
@@ -203,16 +214,11 @@ export async function createCartesianTooltip(
   const panelPaddingPx = numberTokenValue(panelPadding);
   const pointerInsetEndPx = numberTokenValue(pointerInsetEnd);
   const contentWidth = Math.max(1, parent.width - outerPaddingPx * 2);
-  const panelContentWidth = Math.max(
-    1,
-    contentWidth - panelPaddingPx * 2,
-  );
+  const panelContentWidth = Math.max(1, contentWidth - panelPaddingPx * 2);
   const pointerLeft = clamp(
     anchorX - outerPaddingPx - cartesianTooltipConfig.pointerWidth / 2,
     0,
-    contentWidth -
-      pointerInsetEndPx -
-      cartesianTooltipConfig.pointerWidth,
+    contentWidth - pointerInsetEndPx - cartesianTooltipConfig.pointerWidth,
   );
   const tooltip = await createFrame("Tooltip");
   tooltip.resize(parent.width, 1);
@@ -274,7 +280,10 @@ export async function createCartesianTooltip(
   );
   title.name = "Title";
   title.textAutoResize = "NONE";
-  title.resize(panelContentWidth, cartesianTooltipConfig.typography.title.lineHeight);
+  title.resize(
+    panelContentWidth,
+    cartesianTooltipConfig.typography.title.lineHeight,
+  );
   title.textAutoResize = "HEIGHT";
   panel.appendChild(title);
 

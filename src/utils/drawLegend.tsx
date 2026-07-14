@@ -1,5 +1,6 @@
 import {
   dividerColor,
+  legendIndicatorConfig,
   legendShapeConfig,
   legendSpacingConfig,
   textColor,
@@ -7,7 +8,12 @@ import {
 } from "../config";
 import { formatLegendPercentageDisplay } from "../helpers";
 import type { ColorToken } from "../types";
-import { applyItemSpacing, applyLegendSpacing } from "./applyNumberToken";
+import {
+  applyHeight,
+  applyItemSpacing,
+  applyLegendSpacing,
+  applyWidth,
+} from "./applyNumberToken";
 import {
   applyColorTokenToFills,
   applyColorTokenToStrokes,
@@ -50,6 +56,20 @@ export async function createLegend(
   const shapeSize = legendShapeConfig.size.value;
   shapeNode.resize(shapeSize, shapeSize);
 
+  const indicatorFrame = figma.createFrame();
+  indicatorFrame.fills = [];
+  await applyWidth(indicatorFrame, legendIndicatorConfig.size);
+  await applyHeight(indicatorFrame, legendIndicatorConfig.size);
+  Object.assign(indicatorFrame, {
+    name: ".Legend indicator",
+    layoutMode: "VERTICAL",
+    primaryAxisSizingMode: "FIXED",
+    counterAxisSizingMode: "FIXED",
+    primaryAxisAlignItems: "CENTER",
+    counterAxisAlignItems: "CENTER",
+  });
+  indicatorFrame.appendChild(shapeNode);
+
   const valueTextInline = formatLegendValue(value, valuePrefix, valueSuffix);
   const percentText =
     showPercentage && percentage !== null && percentage !== undefined
@@ -81,7 +101,7 @@ export async function createLegend(
   const textNodes: TextNode[] = [];
 
   if (isStacked) {
-    Object.assign(shapeNode, { layoutAlign: "MIN" });
+    Object.assign(indicatorFrame, { layoutAlign: "MIN" });
 
     const labelNode = figma.createText();
     labelNode.name = legendLabel;
@@ -137,7 +157,7 @@ export async function createLegend(
     textStack.appendChild(labelNode);
     textStack.appendChild(valueRow);
 
-    legend.appendChild(shapeNode);
+    legend.appendChild(indicatorFrame);
     legend.appendChild(textStack);
   } else {
     const labelNode = figma.createText();
@@ -179,7 +199,7 @@ export async function createLegend(
     valueNode.characters = valueTextInline;
     textNodes.push(valueNode);
 
-    legend.appendChild(shapeNode);
+    legend.appendChild(indicatorFrame);
     legend.appendChild(labelRow);
     legend.appendChild(valueNode);
   }
