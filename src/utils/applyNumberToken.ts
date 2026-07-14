@@ -11,6 +11,54 @@ type LayoutBindableNode = FrameNode | ComponentNode | InstanceNode;
 
 type StrokeWeightBindableNode = EllipseNode | VectorNode | LineNode;
 
+type DimensionField = "width" | "height";
+
+type DimensionBindableNode = FrameNode | RectangleNode;
+
+async function applyNumberTokenToDimension(
+  node: DimensionBindableNode,
+  field: DimensionField,
+  token: NumberToken,
+): Promise<void> {
+  node.resize(
+    field === "width" ? token.value : node.width,
+    field === "height" ? token.value : node.height,
+  );
+  const key = numberTokenVariableKey(token);
+  if (!key) {
+    return;
+  }
+  const variable = await importFloatVariable(key);
+  if (!variable) {
+    return;
+  }
+  try {
+    node.setBoundVariable(field, variable);
+  } catch (err) {
+    console.error(
+      "applyNumberTokenToDimension: setBoundVariable failed",
+      field,
+      err,
+    );
+  }
+}
+
+/** Bind `width` on frame / rectangle nodes. */
+export async function applyWidth(
+  node: DimensionBindableNode,
+  token: NumberToken,
+): Promise<void> {
+  await applyNumberTokenToDimension(node, "width", token);
+}
+
+/** Bind `height` on frame / rectangle nodes. */
+export async function applyHeight(
+  node: DimensionBindableNode,
+  token: NumberToken,
+): Promise<void> {
+  await applyNumberTokenToDimension(node, "height", token);
+}
+
 /** Non-empty variable import key, or null when binding should be skipped. */
 export function numberTokenVariableKey(token: NumberToken): string | null {
   const key = token.key?.trim();
@@ -134,6 +182,7 @@ export async function applyKeyInfoSpacing(
   await applyPaddingTop(node, spacing.topPadding);
   await applyPaddingBottom(node, spacing.bottomPadding);
 }
+
 
 /** Bind `strokeWeight` on geometry nodes (ellipse, vector, line, etc.). */
 export async function applyStrokeWeight(

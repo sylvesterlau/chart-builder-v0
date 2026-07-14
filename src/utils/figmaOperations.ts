@@ -20,7 +20,7 @@ export async function checkThemeCol(colID: string) {
 // Draw final frame
 export async function createFinalFrame(
   frameWidth: number = chartGeneralConfig.frameWidth,
-  name: string = "Chart + legend",
+  name: string = "Chart",
 ): Promise<FrameNode> {
   const finalFrame = figma.createFrame();
   finalFrame.resize(frameWidth, 0);

@@ -9,34 +9,36 @@ import { getSum, transformToPercents, TransformedChartItem } from "../helpers";
 import type { ColorToken } from "../types";
 import { applyColorTokenToFills } from "./applyColorToken";
 import {
+  applyHeight,
   applyHorizontalPadding,
+  applyItemSpacing,
   applyVerticalPadding,
   numberTokenValue,
 } from "./applyNumberToken";
+import type { NumberToken } from "../types";
 import { createChartTitle, loadChartTitleFont } from "./drawChartTitle";
 import { createFinalFrame } from "./figmaOperations";
-import {
-  createLegend,
-  createLegendList,
-  loadLegendFonts,
-} from "./drawLegend";
+import { createLegend, createLegendList, loadLegendFonts } from "./drawLegend";
 
 async function createHorBar(
   exactPercent: number,
   layerName: string,
   fillToken: ColorToken,
   barTrackWidth: number,
+  barHeight: NumberToken,
 ): Promise<RectangleNode | null> {
   const barWidth = (exactPercent * barTrackWidth) / 100;
   if (barWidth <= 0) {
     return null;
   }
+  const barHeightPx = numberTokenValue(barHeight);
   const bar = figma.createRectangle();
-  bar.resize(barWidth, 12);
+  bar.resize(barWidth, barHeightPx);
   Object.assign(bar, {
     name: layerName,
   });
   await applyColorTokenToFills(bar, fillToken);
+  await applyHeight(bar, barHeight);
   return bar;
 }
 
@@ -48,7 +50,7 @@ function resolveHorBarFrameWidth(frameWidth: number | undefined): number {
 
 function resolveHorBarSliceGap(gapPx: number | undefined): number {
   const { sliceGap, sliceGapMin, sliceGapMax } = horizontalBarChartLayout;
-  const value = gapPx ?? sliceGap;
+  const value = gapPx ?? numberTokenValue(sliceGap);
   return Math.min(sliceGapMax, Math.max(sliceGapMin, value));
 }
 
@@ -68,7 +70,9 @@ export async function drawHorBarChart(chartData: ChartData) {
   const valuePrefix = chartData.valuePrefix ?? "";
   const valueSuffix = chartData.valueSuffix ?? "HKD";
   const frameWidth = resolveHorBarFrameWidth(chartData.frameWidth);
-  const { horizontalPadding, verticalPadding } = horizontalBarChartLayout;
+  const { horizontalPadding, verticalPadding, barHeight, sliceGap } =
+    horizontalBarChartLayout;
+  const barHeightPx = numberTokenValue(barHeight);
   const horizontalPaddingPx = numberTokenValue(horizontalPadding);
   const chartAreaWidth = frameWidth - horizontalPaddingPx * 2;
   const sliceGapPx = resolveHorBarSliceGap(chartData.horBarSliceGap);
@@ -99,7 +103,7 @@ export async function drawHorBarChart(chartData: ChartData) {
   await applyVerticalPadding(chartContainerFrame, verticalPadding);
   const chartFrame = figma.createFrame();
   chartFrame.fills = [];
-  chartFrame.resize(chartAreaWidth, 12);
+  chartFrame.resize(chartAreaWidth, barHeightPx);
   Object.assign(chartFrame, {
     name: "Horizontal Bar Chart area",
     layoutMode: "HORIZONTAL",
@@ -108,6 +112,14 @@ export async function drawHorBarChart(chartData: ChartData) {
     itemSpacing: sliceGapPx,
     layoutAlign: "STRETCH",
   });
+  await applyHeight(chartFrame, barHeight);
+  const tokenSliceGapPx = numberTokenValue(sliceGap);
+  if (
+    chartData.horBarSliceGap === undefined ||
+    chartData.horBarSliceGap === tokenSliceGapPx
+  ) {
+    await applyItemSpacing(chartFrame, sliceGap);
+  }
   for (let i = 0; i < transformedData.length; i++) {
     const item = transformedData[i];
     const layerName = `${item.label} (${item.value})`;
@@ -118,6 +130,7 @@ export async function drawHorBarChart(chartData: ChartData) {
         layerName,
         barColor,
         barTrackWidth,
+        barHeight,
       );
       if (bar) {
         chartFrame.appendChild(bar);
@@ -140,7 +153,7 @@ export async function drawHorBarChart(chartData: ChartData) {
       }
     }
   }
-  const finalFrame = await createFinalFrame(frameWidth, "Chart + legend");
+  const finalFrame = await createFinalFrame(frameWidth, "Horizontal Bar Chart");
   const titleFrame = await createChartTitle(chartTitle, frameWidth);
   if (titleFrame) {
     finalFrame.appendChild(titleFrame);

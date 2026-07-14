@@ -286,6 +286,12 @@ export const ds = {
         value: 14,
       } satisfies NumberToken,
     },
+    indicator: {
+      size: {
+        key: "9179373b52c7a39cae89dbdf0c29f0e2806edff5",
+        value: 18,
+      } satisfies NumberToken,
+    },
     color: {
       divider: {
         key: "8d6515c52d71ded4d4487081d1f62ff9a47e8ff2",
@@ -465,15 +471,23 @@ export const semiDonutChartLayout = {
 
 /** Horizontal bar edit/draw layout constraints (not part of design-system tokens). */
 export const horizontalBarChartLayout = {
-  sliceGap: 2,
+  sliceGap: {
+    value: 2,
+    key: "e76beb259ba90985b31fd1a235f8c36284f6f0f8",
+  } satisfies NumberToken,
   sliceGapMin: 0,
   sliceGapMax: 20,
+  barHeight: {
+    value: 12,
+    key: "5fa48bc5d43b0d01983848fe6be4643851c631b6",
+  } satisfies NumberToken,
   horizontalPadding: spacing.padding.normal,
   verticalPadding: spacing.padding.normal,
 } as const;
 
 export const legendSpacingConfig = ds.legend.spacing;
 export const legendShapeConfig = ds.legend.shape;
+export const legendIndicatorConfig = ds.legend.indicator;
 export const dataVisColor = ds.colors.dataVis;
 export const textColor = ds.colors.text;
 export const dividerColor = ds.legend.color.divider;
