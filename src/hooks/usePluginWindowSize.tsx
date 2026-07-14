@@ -1,6 +1,7 @@
 import { emit, on } from "@create-figma-plugin/utilities";
 import { h } from "preact";
 import { useCallback, useEffect, useLayoutEffect, useState } from "preact/hooks";
+import { WindowResizeGrip } from "../components/WindowResizeGrip/WindowResizeGrip";
 import { usePluginWindowResize } from "./usePluginWindowResize";
 import {
   clampPluginWindowSize,
@@ -27,7 +28,7 @@ export function PluginWindowResizeManager(props: PluginWindowResizeManagerProps)
     resizeBehaviorOnDoubleClick: "minimize",
   });
 
-  return null;
+  return <WindowResizeGrip />;
 }
 
 export function usePluginWindowSize(page: PluginPageId) {

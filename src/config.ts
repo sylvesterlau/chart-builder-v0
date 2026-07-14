@@ -28,8 +28,8 @@ export const pluginUISize = {
   editPage: {
     width: 680,
     height: 560,
-    minWidth: 460,
-    minHeight: 460,
+    minWidth: 680,
+    minHeight: 500,
     maxWidth: 1200,
     maxHeight: 900,
   },
