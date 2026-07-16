@@ -153,7 +153,7 @@ function SemiDonutChartPreview({
             flexDirection: "column",
             gap: "16px",
             maxWidth: `${frameWidth}px`,
-            padding: "16px 0",
+            padding: "16px 0 0",
             transform: `scale(${PREVIEW_SCALE})`,
             transformOrigin: "top left",
             width: `${frameWidth}px`,
