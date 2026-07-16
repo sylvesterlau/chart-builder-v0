@@ -5,7 +5,12 @@ import {
   verticalBarChartConfig,
 } from "../config";
 import { dataVisAt } from "./dataVisAt";
-import { clamp, normalizeVerticalBarChartConfig } from "../helpers";
+import {
+  cartesianRulerY,
+  clamp,
+  normalizeVerticalBarChartConfig,
+  valueToY,
+} from "../helpers";
 import {
   ColorToken,
   NormalizedVerticalBarChartConfig,
@@ -220,6 +225,7 @@ async function drawBarMark(
   name: string,
   barColor: ColorToken,
   x: number,
+  y: number,
   width: number,
   height: number,
   barHeight: number,
@@ -229,7 +235,7 @@ async function drawBarMark(
     markFrame,
     "bar-mark",
     0,
-    height - barHeight - 1,
+    y,
     width,
     barHeight,
     barColor,
@@ -269,6 +275,11 @@ async function drawBars(
   const gap = visibleSeries.length === 1 ? 0 : Math.max(3, barWidth * 0.75);
   const totalBarWidth =
     visibleSeries.length * barWidth + (visibleSeries.length - 1) * gap;
+  const zeroBaselineY = cartesianRulerY(
+    config.minValue,
+    config.maxValue,
+    height,
+  );
 
   for (let labelIndex = 0; labelIndex < config.labels.length; labelIndex++) {
     const label = config.labels[labelIndex];
@@ -317,14 +328,22 @@ async function drawBars(
     ) {
       const series = visibleSeries[seriesIndex];
       const rawValue = Number(series.values[labelIndex]) || 0;
-      const value = clamp(rawValue, 0, config.maxValue);
-      const barHeight = Math.max(1, (value / config.maxValue) * height);
+      const value = clamp(rawValue, config.minValue, config.maxValue);
+      const valueY = valueToY(
+        value,
+        config.minValue,
+        config.maxValue,
+        height,
+      );
+      const barHeight = Math.max(1, Math.abs(valueY - zeroBaselineY));
+      const barY = value >= 0 ? zeroBaselineY - barHeight : zeroBaselineY;
       const barX = centerX - totalBarWidth / 2 + seriesIndex * (barWidth + gap);
       await drawBarMark(
         barGroup,
         seriesIndex === 0 ? "Bar-mark-1" : "Bar-mark-2",
         dataVisAt(seriesIndex),
         barX,
+        barY,
         barWidth,
         height,
         barHeight,
@@ -412,6 +431,11 @@ async function drawBarChart(
   const plotY = 9;
   const plotWidth = contentFrame.width - labelGutter;
   const plotHeight = contentFrame.height - 54;
+  const zeroBaselineY = cartesianRulerY(
+    config.minValue,
+    config.maxValue,
+    plotHeight,
+  );
   const selectedIndicatorX =
     config.selectedIndex >= 0 && config.selectedIndex < config.labels.length
       ? 16 +
@@ -445,7 +469,7 @@ async function drawBarChart(
       color: config.color,
       labelYOffset: 4,
       labels: config.labels,
-      rulerY: plotHeight - 1,
+      rulerY: zeroBaselineY,
       textColor: textColor.primary,
       titleText: config.xAxisTitle,
       titleYOffset: 28,

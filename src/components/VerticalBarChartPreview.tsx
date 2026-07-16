@@ -1,14 +1,16 @@
 import { h } from "preact";
 import { chartBackground, dataVisColor, textColor } from "../config";
 import {
-  buildTicks,
+  cartesianRulerY,
   clamp,
   formatAxisNumber,
   isCartesianXAxisLineVisible,
   isCartesianYAxisLineVisible,
   measurePreviewTextWidth,
-  niceMax,
+  normalizeYAxisDivisions,
   rgbaFromHex,
+  resolveBarScale,
+  valueToY,
 } from "../helpers";
 import { VerticalBarChartConfig } from "../types";
 import { useColorTokenResolved } from "./ColorChips/colorTokenSwatchContext";
@@ -37,16 +39,17 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
     config.barMode === "single"
       ? config.series.slice(0, 1)
       : config.series.slice(0, 2);
-  const maxValue = niceMax(
-    Math.max(
-      1,
-      ...visibleSeries.reduce<number[]>(
-        (values, series) => values.concat(series.values),
-        [],
-      ),
+  const {
+    minValue,
+    maxValue,
+    ticks,
+  } = resolveBarScale(
+    visibleSeries.reduce<number[]>(
+      (values, series) => values.concat(series.values),
+      [],
     ),
+    normalizeYAxisDivisions(config.yAxisDivisions),
   );
-  const ticks = buildTicks(maxValue, 3);
   const labels = config.labels.slice(0, config.periodCount);
   const { labelBg, highlightBg } = config.color.selected;
   const { typography: ty, yAxisLabel: yLab } = config.color;
@@ -54,6 +57,11 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
   const contentWidth = Math.max(1, config.width - 32);
   const contentHeight = Math.max(1, config.height - 24 - yTitleRowHeight);
   const plotHeight = Math.max(1, contentHeight - 54);
+  const zeroBaselineY = cartesianRulerY(
+    minValue,
+    maxValue,
+    plotHeight,
+  );
   const yAxisPosition = config.yAxisPosition ?? "right";
   const yAxisLabelCss = typographyTokenToPreviewCss(yLab, resolvedTypography);
   const labelGutter = measureYAxisLabelGutter(ticks, (label) =>
@@ -182,7 +190,7 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
             }}
           >
             {ticks.map((tick) => {
-              const y = clamp(1 - tick / maxValue, 0, 1) * plotHeight;
+              const y = valueToY(tick, minValue, maxValue, plotHeight);
               return (
                 <div
                   key={tick}
@@ -289,7 +297,7 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
                 height: "1px",
                 left: 0,
                 position: "absolute",
-                top: `${plotHeight - 1}px`,
+                top: `${zeroBaselineY}px`,
                 width: `${plotWidth}px`,
               }}
             />
@@ -363,13 +371,21 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
                   {visibleSeries.map((series, seriesIndex) => {
                     const value = clamp(
                       Number(series.values[labelIndex]) || 0,
-                      0,
+                      minValue,
                       maxValue,
+                    );
+                    const valueY = valueToY(
+                      value,
+                      minValue,
+                      maxValue,
+                      plotHeight,
                     );
                     const barHeight = Math.max(
                       1,
-                      (value / maxValue) * plotHeight,
+                      Math.abs(valueY - zeroBaselineY),
                     );
+                    const barTop =
+                      value >= 0 ? zeroBaselineY - barHeight : zeroBaselineY;
                     return (
                       <div
                         key={series.name}
@@ -378,12 +394,12 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
                             dataVisColor.general[seriesIndex],
                             resolvedColors,
                           ),
-                          bottom: "1px",
                           height: `${barHeight}px`,
                           left: `calc(50% - ${totalWidth / 2}px + ${
                             seriesIndex * (barWidth + gap)
                           }px)`,
                           position: "absolute",
+                          top: `${barTop}px`,
                           width: `${barWidth}px`,
                         }}
                       />

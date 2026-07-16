@@ -411,6 +411,7 @@ export const verticalBarChartConfig = {
   selectedIndex: 3,
   width: 390,
   height: 280,
+  yAxisDivisions: 3,
   yAxisTitle: "USD",
   xAxisTitle: "Year 2026",
   labels: ["Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
@@ -444,7 +445,8 @@ export const lineChartConfig = {
   maxValue: 250,
   yAxisDivisions: 3,
   yAxisTitle: "HKD",
-  xAxisLabels: ["Jan 2026", "", "", "Feb 2026", "", "", "Mar 2026"],
+  xAxisTitle: "Year 2026",
+  xAxisLabels: ["Jan", "", "", "Feb", "", "", "Mar"],
   pointLabels: createLinePointLabels(100),
   series: [
     {
