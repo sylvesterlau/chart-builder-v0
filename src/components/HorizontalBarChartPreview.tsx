@@ -14,7 +14,6 @@ interface HorizontalBarChartPreviewProps {
   chartTitle: string;
   frameWidth: number;
   items: ChartItem[];
-  sliceGap: number;
   legendStyle: LegendStyle;
   showPercentage: boolean;
   valuePrefix: string;
@@ -29,7 +28,6 @@ function HorizontalBarChartPreview({
   chartTitle,
   frameWidth,
   items,
-  sliceGap,
   legendStyle,
   showPercentage,
   valuePrefix,
@@ -47,6 +45,10 @@ function HorizontalBarChartPreview({
   );
   const barHeight = numberTokenResolvedValue(
     horizontalBarChartLayout.barHeight,
+    resolvedNumbers,
+  );
+  const sliceGap = numberTokenResolvedValue(
+    horizontalBarChartLayout.sliceGap,
     resolvedNumbers,
   );
 
@@ -82,12 +84,11 @@ function HorizontalBarChartPreview({
       <ChartTitlePreview title={chartTitle} />
       <div
         style={{
+          alignItems: "center",
           boxSizing: "border-box",
           display: "flex",
           gap: `${sliceGap}px`,
-          height: `${barHeight}px`,
           padding: `${verticalPadding}px ${horizontalPadding}px`,
-          overflow: "hidden",
           width: "100%",
         }}
       >

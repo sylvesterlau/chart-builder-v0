@@ -3,7 +3,6 @@ import {
   IconPlus16,
   Stack,
   Text,
-  Textbox,
   TextboxNumeric,
   VerticalSpace,
 } from "@create-figma-plugin/ui";
@@ -20,7 +19,6 @@ import LegendControl, {
 import HorizontalBarChartPreview from "../components/HorizontalBarChartPreview";
 import {
   chartGeneralConfig,
-  horizontalBarChartLayout,
   pieChartConfig,
   pluginUISize,
   sampleData,
@@ -35,17 +33,11 @@ const MIN_ITEMS = 2;
 const MAX_ITEMS = 10;
 const DEFAULT_ITEM_COUNT = 4;
 const { frameWidthMin, frameWidthMax } = pieChartConfig;
-const { sliceGapMin, sliceGapMax } = horizontalBarChartLayout;
-const defaultSliceGap = horizontalBarChartLayout.sliceGap.value;
 
 function isValidFrameWidth(value: number) {
   return (
     Number.isFinite(value) && value >= frameWidthMin && value <= frameWidthMax
   );
-}
-
-function isValidSliceGap(value: number) {
-  return Number.isFinite(value) && value >= sliceGapMin && value <= sliceGapMax;
 }
 
 function createEmptyItem(index: number): ChartItem {
@@ -111,11 +103,6 @@ function HorizontalBarPage({ onBack }: HorizontalBarPageProps) {
       setFrameWidth(Math.round(value));
     }
   }, []);
-  const [sliceGap, setSliceGap] = useState<number>(defaultSliceGap);
-  const [sliceGapInput, setSliceGapInput] = useState<string>(
-    String(defaultSliceGap),
-  );
-  const sliceGapInputValid = isValidSliceGap(Number(sliceGapInput));
   useEffect(() => {
     emit("RESIZE_PLUGIN_UI_WINDOW", {
       width: pluginUISize.editPage.width,
@@ -173,7 +160,6 @@ function HorizontalBarPage({ onBack }: HorizontalBarPageProps) {
           value: item.value,
         })),
         frameWidth,
-        horBarSliceGap: sliceGap,
         legendStyle: effectiveLegendStyle,
         showPercentage,
         valuePrefix,
@@ -186,7 +172,6 @@ function HorizontalBarPage({ onBack }: HorizontalBarPageProps) {
       effectiveChartTitle,
       frameWidth,
       items,
-      sliceGap,
       effectiveLegendStyle,
       showPercentage,
       valuePrefix,
@@ -216,7 +201,6 @@ function HorizontalBarPage({ onBack }: HorizontalBarPageProps) {
             chartTitle={effectiveChartTitle}
             frameWidth={frameWidth}
             items={items}
-            sliceGap={sliceGap}
             legendStyle={effectiveLegendStyle}
             showPercentage={showPercentage}
             valuePrefix={valuePrefix}
@@ -247,25 +231,6 @@ function HorizontalBarPage({ onBack }: HorizontalBarPageProps) {
             {!frameWidthInputValid ? (
               <div className={styles.fieldHintError}>
                 Width must be between {frameWidthMin} and {frameWidthMax}.
-              </div>
-            ) : null}
-            <div className={styles.fieldRow}>
-              <Text className={styles.fieldLabel}>Slice gap</Text>
-              <Textbox
-                onValueInput={(value) => {
-                  const sanitizedValue = sanitizeDecimalInput(value);
-                  setSliceGapInput(sanitizedValue);
-                  const numericValue = Number(sanitizedValue);
-                  if (sanitizedValue !== "" && isValidSliceGap(numericValue)) {
-                    setSliceGap(numericValue);
-                  }
-                }}
-                value={sliceGapInput}
-              />
-            </div>
-            {!sliceGapInputValid ? (
-              <div className={styles.fieldHintError}>
-                Gap must be between {sliceGapMin} and {sliceGapMax}.
               </div>
             ) : null}
           </Stack>
