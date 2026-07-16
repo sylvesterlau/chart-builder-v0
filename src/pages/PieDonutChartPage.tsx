@@ -10,8 +10,8 @@ import {
   VerticalSpace,
 } from "@create-figma-plugin/ui";
 import { emit } from "@create-figma-plugin/utilities";
-import { h } from "preact";
-import { useCallback, useEffect, useState } from "preact/hooks";
+import { Fragment, h } from "preact";
+import { useCallback, useState } from "preact/hooks";
 import ChartItemInput, { ChartItem } from "../components/ChartItemInput";
 import ChartSizeControl, {
   useChartSizeControl,
@@ -24,10 +24,10 @@ import LegendControl, {
   getEffectiveLegendStyle,
 } from "../components/editControl/LegendControl";
 import PieDonutPreview from "../components/PieDonutPreview";
+import { EditChartPageLayout } from "../components/EditChartPageLayout";
 import {
   chartGeneralConfig,
   pieChartConfig,
-  pluginUISize,
   sampleData,
 } from "../config";
 import {
@@ -146,19 +146,6 @@ function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
   const [valuePrefix, setValuePrefix] = useState<string>("");
   const [valueSuffix, setValueSuffix] = useState<string>("HKD");
 
-  useEffect(() => {
-    emit("RESIZE_PLUGIN_UI_WINDOW", {
-      width: pluginUISize.editPage.width,
-      height: pluginUISize.editPage.height,
-    });
-    return () => {
-      emit("RESIZE_PLUGIN_UI_WINDOW", {
-        width: pluginUISize.homePage.width,
-        height: pluginUISize.homePage.height,
-      });
-    };
-  }, []);
-
   const handleLabelInput = useCallback((index: number, label: string) => {
     setItems((currentItems) =>
       currentItems.map((item, itemIndex) =>
@@ -240,41 +227,29 @@ function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
   const pageTitle = chartKind === "donut" ? "Donut chart" : "Pie chart";
 
   return (
-    <div className={styles.horizontalBarPage}>
-      <div className={styles.horizontalBarLeftPanel}>
-        <div className={styles.horizontalBarHeader}>
-          <button
-            className={styles.horizontalBarBackButton}
-            onClick={onBack}
-            title="Back"
-            type="button"
-          >
-            ←
-          </button>
-          <Text className={styles.horizontalBarTypeTitle}>{pageTitle}</Text>
-        </div>
-        <div
-          className={`${styles.horizontalBarPreviewPanel} ${styles.horizontalBarPreviewPanelVariableWidth}`}
-        >
-          <PieDonutPreview
-            chartKind={chartKind}
-            frameWidth={sizeControl.frameWidth}
-            chartSize={sizeControl.chartSize}
-            chartTitle={effectiveChartTitle}
-            items={items}
-            legendStyle={effectiveLegendStyle}
-            showIndicator={showIndicator}
-            showIndicatorPercentage={showIndicatorPercentage}
-            indicatorLineExtend={indicatorLineExtend}
-            donutRingWidth={donutRingWidth}
-            showPercentage={showPercentage}
-            valuePrefix={valuePrefix}
-            valueSuffix={valueSuffix}
-          />
-        </div>
-      </div>
-      <div className={styles.horizontalBarRightPanel}>
-        <div className={styles.horizontalBarControls}>
+    <EditChartPageLayout
+      onBack={onBack}
+      title={pageTitle}
+      previewVariant="horizontal"
+      preview={
+        <PieDonutPreview
+          chartKind={chartKind}
+          frameWidth={sizeControl.frameWidth}
+          chartSize={sizeControl.chartSize}
+          chartTitle={effectiveChartTitle}
+          items={items}
+          legendStyle={effectiveLegendStyle}
+          showIndicator={showIndicator}
+          showIndicatorPercentage={showIndicatorPercentage}
+          indicatorLineExtend={indicatorLineExtend}
+          donutRingWidth={donutRingWidth}
+          showPercentage={showPercentage}
+          valuePrefix={valuePrefix}
+          valueSuffix={valueSuffix}
+        />
+      }
+      controls={
+        <Fragment>
           <div className={styles.fieldRow}>
             <Text className={styles.sectionTitle}>Type</Text>
             <div className={styles.fieldRowSegmentControl}>
@@ -444,14 +419,14 @@ function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
             valueSuffix={valueSuffix}
             visible={showLegend}
           />
-        </div>
-        <div className={styles.horizontalBarActions}>
-          <Button fullWidth onClick={handleGenerateButtonClick}>
-            Generate
-          </Button>
-        </div>
-      </div>
-    </div>
+        </Fragment>
+      }
+      actions={
+        <Button fullWidth onClick={handleGenerateButtonClick}>
+          Generate
+        </Button>
+      }
+    />
   );
 }
 
