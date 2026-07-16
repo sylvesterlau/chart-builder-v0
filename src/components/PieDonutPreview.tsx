@@ -141,6 +141,12 @@ function PieDonutPreview({
   const lineExtend = indicatorLineExtend * indicatorScale;
   const labelCenterOffset =
     pieChartConfig.indicator.labelCenterOffset * indicatorScale;
+  const lineOuterGap = numberTokenResolvedValue(
+    pieChartConfig.indicator.lineOuterGap,
+    resolvedNumbers,
+  );
+  const lineStartRadius = pieRadius + lineOuterGap;
+  const lineEndRadius = lineStartRadius + lineExtend;
   const donutInnerRadiusRatio =
     chartKind === "donut"
       ? donutRingWidthPxToRatio(donutRingWidth, chartSize)
@@ -179,11 +185,11 @@ function PieDonutPreview({
   });
 
   let donutStartPercent = 0;
-  const donutSlices = chartItems.map((item, arcIndex) => {
+  const donutSlices = chartItems.map((item) => {
     const exactPercent = (item.value / total) * 100;
-    const adjustedStartPercent = donutStartPercent + donutGapPercent;
-    const endPercent = donutStartPercent + exactPercent;
-    donutStartPercent = endPercent;
+    const adjustedStartPercent = donutStartPercent;
+    const endPercent = donutStartPercent + exactPercent - donutGapPercent;
+    donutStartPercent = donutStartPercent + exactPercent;
     const startAngle = -90 + adjustedStartPercent * 3.6;
     const endAngle = -90 + endPercent * 3.6;
     return {
@@ -223,7 +229,7 @@ function PieDonutPreview({
             flexDirection: "column",
             gap: "16px",
             maxWidth: `${frameWidth}px`,
-            padding: "16px 0",
+            padding: "16px 0 0",
             transform: `scale(${PREVIEW_SCALE})`,
             transformOrigin: "top left",
             width: `${frameWidth}px`,
@@ -284,22 +290,19 @@ function PieDonutPreview({
                 const lineEndPoint = polarToCartesian(
                   centerX,
                   centerY,
-                  pieRadius + lineExtend,
+                  lineEndRadius,
                   midAngle,
                 );
-                const lineStartPoint =
-                  chartKind === "donut"
-                    ? polarToCartesian(
-                        centerX,
-                        centerY,
-                        donutInnerRadius,
-                        midAngle,
-                      )
-                    : { x: centerX, y: centerY };
+                const lineStartPoint = polarToCartesian(
+                  centerX,
+                  centerY,
+                  lineStartRadius,
+                  midAngle,
+                );
                 const labelCenterPoint = polarToCartesian(
                   centerX,
                   centerY,
-                  pieRadius + lineExtend + labelCenterOffset,
+                  lineEndRadius + labelCenterOffset,
                   midAngle,
                 );
                 return (

@@ -19,7 +19,6 @@ import ChartSizeControl, {
 import ChartTitleControl, {
   getEffectiveChartTitle,
 } from "../components/editControl/ChartTitleControl";
-import EditSectionHeader from "../components/editControl/EditSectionHeader";
 import LegendControl, {
   getEffectiveLegendStyle,
 } from "../components/editControl/LegendControl";
@@ -132,7 +131,6 @@ function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
     "none",
   );
   const [showPercentage, setShowPercentage] = useState<boolean>(true);
-  const [showIndicator, setShowIndicator] = useState<boolean>(true);
   const [showIndicatorPercentage, setShowIndicatorPercentage] =
     useState<boolean>(true);
   const [indicatorLineExtend, setIndicatorLineExtend] = useState<number>(
@@ -210,7 +208,7 @@ function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
         pieChartKind: chartKind,
         legendStyle: effectiveLegendStyle,
         showPercentage,
-        showIndicator,
+        showIndicator: true,
         showIndicatorPercentage,
         indicatorLineExtend,
         donutRingWidth: chartKind === "donut" ? donutRingWidth : undefined,
@@ -226,7 +224,6 @@ function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
       effectiveChartTitle,
       effectiveLegendStyle,
       showPercentage,
-      showIndicator,
       showIndicatorPercentage,
       indicatorLineExtend,
       donutRingWidth,
@@ -263,7 +260,7 @@ function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
             chartTitle={effectiveChartTitle}
             items={items}
             legendStyle={effectiveLegendStyle}
-            showIndicator={showIndicator}
+            showIndicator
             showIndicatorPercentage={showIndicatorPercentage}
             indicatorLineExtend={indicatorLineExtend}
             donutRingWidth={donutRingWidth}
@@ -384,50 +381,44 @@ function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
           <div className={styles.divider} />
           <VerticalSpace space="medium" />
           <Stack space="small">
-            <EditSectionHeader
-              hideTitle="Hide indicator"
-              onVisibilityToggle={() => setShowIndicator((current) => !current)}
-              showTitle="Show indicator"
-              title="Indicator"
-              visible={showIndicator}
-            />
-            {showIndicator ? (
-              <Stack space="small">
-                <div className={styles.fieldRow}>
-                  <Text className={styles.fieldLabel}>Line extend</Text>
-                  <TextboxNumeric
-                    onNumericValueInput={(value) => {
-                      if (value === null) {
-                        setIndicatorLineExtendInput("");
-                        return;
-                      }
-                      const nextInput = String(value);
-                      setIndicatorLineExtendInput(nextInput);
-                      if (isValidIndicatorLineExtend(value)) {
-                        setIndicatorLineExtend(Math.round(value));
-                      }
-                    }}
-                    value={indicatorLineExtendInput}
-                  />
+            <div className={styles.editSectionHeader}>
+              <Text className={styles.sectionTitle}>Indicator</Text>
+            </div>
+            <Stack space="small">
+              <div className={styles.fieldRow}>
+                <Text className={styles.fieldLabel}>Line extend</Text>
+                <TextboxNumeric
+                  onNumericValueInput={(value) => {
+                    if (value === null) {
+                      setIndicatorLineExtendInput("");
+                      return;
+                    }
+                    const nextInput = String(value);
+                    setIndicatorLineExtendInput(nextInput);
+                    if (isValidIndicatorLineExtend(value)) {
+                      setIndicatorLineExtend(Math.round(value));
+                    }
+                  }}
+                  value={indicatorLineExtendInput}
+                />
+              </div>
+              {!indicatorLineExtendInputValid ? (
+                <div className={styles.fieldHintError}>
+                  Line extend must be between{" "}
+                  {pieChartConfig.indicator.lineExtendMin} and{" "}
+                  {pieChartConfig.indicator.lineExtendMax}.
                 </div>
-                {!indicatorLineExtendInputValid ? (
-                  <div className={styles.fieldHintError}>
-                    Line extend must be between{" "}
-                    {pieChartConfig.indicator.lineExtendMin} and{" "}
-                    {pieChartConfig.indicator.lineExtendMax}.
-                  </div>
-                ) : null}
-                <div className={styles.fieldRow}>
-                  <Text className={styles.fieldLabel}>Percentage</Text>
-                  <Toggle
-                    onValueChange={setShowIndicatorPercentage}
-                    value={showIndicatorPercentage}
-                  >
-                    {" "}
-                  </Toggle>
-                </div>
-              </Stack>
-            ) : null}
+              ) : null}
+              <div className={styles.fieldRow}>
+                <Text className={styles.fieldLabel}>Percentage</Text>
+                <Toggle
+                  onValueChange={setShowIndicatorPercentage}
+                  value={showIndicatorPercentage}
+                >
+                  {" "}
+                </Toggle>
+              </div>
+            </Stack>
           </Stack>
           <VerticalSpace space="medium" />
           <div className={styles.divider} />

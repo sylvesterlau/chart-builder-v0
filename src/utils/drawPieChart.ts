@@ -26,7 +26,7 @@ import {
   loadTypographyTokenFontsBatch,
 } from "./applyTypographyToken";
 import { createChartTitle, loadChartTitleFont } from "./drawChartTitle";
-import { applyStrokeWeight } from "./applyNumberToken";
+import { applyStrokeWeight, numberTokenValue } from "./applyNumberToken";
 import { createFinalFrame } from "./figmaOperations";
 import { createLegend, createLegendList, loadLegendFonts } from "./drawLegend";
 
@@ -198,7 +198,9 @@ export async function drawPieChart(chartData: ChartData) {
     resolveIndicatorLineExtend(chartData.indicatorLineExtend) * indicatorScale;
   const labelCenterOffset =
     pieChartConfig.indicator.labelCenterOffset * indicatorScale;
-  const donutInnerRadiusPx = pieRadius * innerRadiusRatio;
+  const lineOuterGap = numberTokenValue(pieChartConfig.indicator.lineOuterGap);
+  const lineStartRadius = pieRadius + lineOuterGap;
+  const lineEndRadius = lineStartRadius + lineExtend;
 
   if (chartTitle.trim()) {
     await loadChartTitleFont();
@@ -243,12 +245,12 @@ export async function drawPieChart(chartData: ChartData) {
     let midAngle: number;
 
     if (pieChartKind === "donut") {
-      const adjustedStartPercent = donutStartPercent + donutGapPercent;
-      const endPercent = donutStartPercent + exactPercent;
+      const adjustedStartPercent = donutStartPercent;
+      const endPercent = donutStartPercent + exactPercent - donutGapPercent;
       startAngle = -90 + adjustedStartPercent * 3.6;
       endAngle = -90 + endPercent * 3.6;
       midAngle = (startAngle + endAngle) / 2;
-      donutStartPercent = endPercent;
+      donutStartPercent = donutStartPercent + exactPercent;
       if (endPercent - adjustedStartPercent <= 0) {
         continue;
       }
@@ -264,13 +266,15 @@ export async function drawPieChart(chartData: ChartData) {
       const lineEndPoint = polarToCartesian(
         centerX,
         centerY,
-        pieRadius + lineExtend,
+        lineEndRadius,
         midAngle,
       );
-      const lineStartPoint =
-        pieChartKind === "donut"
-          ? polarToCartesian(centerX, centerY, donutInnerRadiusPx, midAngle)
-          : { x: centerX, y: centerY };
+      const lineStartPoint = polarToCartesian(
+        centerX,
+        centerY,
+        lineStartRadius,
+        midAngle,
+      );
       const line = figma.createVector();
       line.vectorPaths = [
         {
@@ -288,7 +292,7 @@ export async function drawPieChart(chartData: ChartData) {
       const labelCenterPoint = polarToCartesian(
         centerX,
         centerY,
-        pieRadius + lineExtend + labelCenterOffset,
+        lineEndRadius + labelCenterOffset,
         midAngle,
       );
       indicatorText = await createIndicatorTextFrame(

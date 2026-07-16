@@ -1,4 +1,5 @@
 import { chartGeneralConfig, pieChartConfig } from "../../config";
+import { numberTokenValue } from "../applyNumberToken";
 import { getSemiDonutMidRadius } from "./semiDonutCalculate";
 import { getChartSizeBounds } from "./sizeBounds";
 
@@ -74,10 +75,12 @@ export function getPieChartAreaHeight(
 
   const pieRadius = chartSize / 2;
   const indicatorScale = pieRadius / pieChartConfig.radius;
-  const { lineExtend, labelCenterOffset } = pieChartConfig.indicator;
+  const { lineExtend, labelCenterOffset, lineOuterGap } =
+    pieChartConfig.indicator;
   const resolvedLineExtend = resolveIndicatorLineExtend(indicatorLineExtend);
   const outerReach =
     pieRadius +
+    numberTokenValue(lineOuterGap) +
     resolvedLineExtend * indicatorScale +
     labelCenterOffset * indicatorScale;
   const { label, percentage } = pieChartConfig.indicator.typography;
