@@ -270,6 +270,7 @@ export async function measureYAxisLabelGutterFigma(
 export interface CartesianXAxisOptions {
   axisLineVisibility?: CartesianAxisLineVisibility;
   color: CartesianChartColorConfig;
+  continuous?: boolean;
   labels: string[];
   labelYOffset: number;
   rulerY: number;
@@ -295,20 +296,30 @@ export async function drawCartesianXAxis(
     counterAxisAlignItems: "MAX",
     itemSpacing: 0,
   });
+  const isContinuous = options.continuous === true && options.labels.length > 1;
   const groupWidth = width / options.labels.length;
   const xLabelStyle = options.color.typography.xAxisLabel;
   const xTitleStyle = options.color.typography.xAxisTitle;
 
   for (let index = 0; index < options.labels.length; index++) {
     const labelText = options.labels[index];
+    const continuousX = isContinuous
+      ? (index / (options.labels.length - 1)) * Math.max(0, width - 1)
+      : 0;
+    const frameWidth = isContinuous ? 1 : groupWidth;
     const lineFrame = await createCartesianFrameNode(
       axis,
       "X-axis line",
-      groupWidth * index,
+      isContinuous ? continuousX : groupWidth * index,
       0,
-      groupWidth,
+      frameWidth,
       height,
     );
+    if (isContinuous) {
+      lineFrame.layoutPositioning = "ABSOLUTE";
+      lineFrame.x = continuousX;
+      lineFrame.y = 0;
+    }
     Object.assign(lineFrame, {
       layoutMode: "VERTICAL",
       primaryAxisSizingMode: "FIXED",
@@ -321,23 +332,43 @@ export async function drawCartesianXAxis(
     await createCartesianRect(
       lineFrame,
       "Axis line",
-      groupWidth / 2,
+      isContinuous ? 0 : groupWidth / 2,
       0,
       1,
       height,
       options.color.gridLine,
-      isCartesianXAxisLineVisible(options.axisLineVisibility) ? 1 : 0,
+      isCartesianXAxisLineVisible(options.axisLineVisibility) &&
+        !(isContinuous && (index === 0 || index === options.labels.length - 1))
+        ? 1
+        : 0,
     );
 
     if (labelText) {
       const label = await createCartesianText(labelText, xLabelStyle, options.textColor);
-      const labelWidth = Math.max(groupWidth, measureAxisLabelWidth(labelText));
+      const measuredLabelWidth = Math.max(
+        measureAxisLabelWidth(labelText),
+        Math.ceil(label.width) + 2,
+      );
+      const labelWidth = isContinuous
+        ? measuredLabelWidth
+        : Math.max(groupWidth, measuredLabelWidth);
       label.name = "Axis label";
-      label.textAlignHorizontal = "CENTER";
+      label.textAlignHorizontal =
+        isContinuous && index === 0
+          ? "LEFT"
+          : isContinuous && index === options.labels.length - 1
+            ? "RIGHT"
+            : "CENTER";
       setFixedWidthAutoHeight(label, labelWidth, xLabelStyle.lineHeight);
       lineFrame.appendChild(label);
       label.layoutPositioning = "ABSOLUTE";
-      label.x = groupWidth / 2 - labelWidth / 2;
+      label.x = isContinuous
+        ? index === 0
+          ? 0
+          : index === options.labels.length - 1
+            ? -labelWidth
+            : -labelWidth / 2
+        : groupWidth / 2 - labelWidth / 2;
       label.y = height + options.labelYOffset;
     }
   }

@@ -83,6 +83,8 @@ const DATE_INPUT_PATTERN = /^\d{4}-\d{2}$/;
 const TIME_INPUT_PATTERN = /^\d{2}:\d{2}$/;
 const PARTIAL_LINE_RANGE_RATIO = 0.788;
 const DEFAULT_TOOLTIP_PERCENT = 75;
+const TIME_AXIS_LABEL_MIN_SPACING = 52;
+const TIME_AXIS_RESERVED_WIDTH = 120;
 const MIN_DATASETS = 1;
 const MAX_DATASETS = 3;
 
@@ -212,17 +214,23 @@ function createTimePointLabels(
 function createTimeAxisLabels(
   startMinutes: number,
   endMinutes: number,
+  chartWidth: number,
 ): string[] {
-  const midpoint = Math.round((startMinutes + endMinutes) / 2);
-  return [
-    formatAxisTime(startMinutes),
-    "",
-    "",
-    formatAxisTime(midpoint),
-    "",
-    "",
-    formatAxisTime(endMinutes),
-  ];
+  const range = Math.max(1, endMinutes - startMinutes);
+  const estimatedPlotWidth = Math.max(
+    1,
+    chartWidth - TIME_AXIS_RESERVED_WIDTH,
+  );
+  const preferredDivisions =
+    estimatedPlotWidth / 3 >= TIME_AXIS_LABEL_MIN_SPACING ? 3 : 2;
+  const divisions = Math.max(1, Math.min(preferredDivisions, range));
+
+  return Array.from({ length: divisions + 1 }, (_, index) => {
+    const minutes = Math.round(
+      startMinutes + (range * index) / divisions,
+    );
+    return formatAxisTime(minutes);
+  });
 }
 
 function interpolateEndMinutes(
@@ -265,9 +273,16 @@ function formatPointDate(date: Date): string {
 function formatAxisDate(date: Date): string {
   return date.toLocaleDateString("en-US", {
     month: "short",
-    year: "numeric",
     timeZone: "UTC",
   });
+}
+
+function createDateXAxisTitle(startDate: Date, endDate: Date): string {
+  const startYear = startDate.getUTCFullYear();
+  const endYear = endDate.getUTCFullYear();
+  return startYear === endYear
+    ? `Year ${startYear}`
+      : `Year ${startYear}–${endYear}`;
 }
 
 function sampleDates(dates: Date[], pointCount: number): Date[] {
@@ -340,23 +355,30 @@ function interpolateEndDate(
 function createXAxisLabels(startDate: Date, endDate: Date): string[] {
   const monthDistance =
     (endDate.getUTCFullYear() - startDate.getUTCFullYear()) * 12 +
-    (endDate.getUTCMonth() - startDate.getUTCMonth());
-  const midpoint = new Date(
-    Date.UTC(
-      startDate.getUTCFullYear(),
-      startDate.getUTCMonth() + Math.round(monthDistance / 2),
-      1,
-    ),
-  );
-  return [
-    formatAxisDate(startDate),
-    "",
-    "",
-    formatAxisDate(midpoint),
-    "",
-    "",
-    formatAxisDate(endDate),
-  ];
+    endDate.getUTCMonth() -
+    startDate.getUTCMonth();
+  if (monthDistance <= 0) {
+    return [formatAxisDate(startDate)];
+  }
+  const divisions =
+    [3, 2, 1].find(
+      (candidate) =>
+        candidate <= monthDistance && monthDistance % candidate === 0,
+    ) ?? 1;
+  const monthStep = monthDistance / divisions;
+
+  return Array.from({ length: divisions + 1 }, (_, index) => {
+    const monthOffset = index * monthStep;
+    return formatAxisDate(
+      new Date(
+        Date.UTC(
+          startDate.getUTCFullYear(),
+          startDate.getUTCMonth() + monthOffset,
+          1,
+        ),
+      ),
+    );
+  });
 }
 
 function createLineValues(
@@ -639,9 +661,20 @@ function LineChartPage({ onBack }: LineChartPageProps) {
       yAxisDataType,
       yAxisDivisions: effectiveYAxisDivisions,
       yAxisTitle: effectiveYAxisTitle,
+      xAxisTitle:
+        xAxisMode === "time"
+          ? ""
+          : createDateXAxisTitle(
+              effectiveXAxisStartDate,
+              effectiveXAxisEndDate,
+            ),
       xAxisLabels:
         xAxisMode === "time"
-          ? createTimeAxisLabels(effectiveXAxisStartTime, effectiveXAxisEndTime)
+          ? createTimeAxisLabels(
+              effectiveXAxisStartTime,
+              effectiveXAxisEndTime,
+              width,
+            )
           : createXAxisLabels(effectiveXAxisStartDate, effectiveXAxisEndDate),
       pointLabels:
         xAxisMode === "time"

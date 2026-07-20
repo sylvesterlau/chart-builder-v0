@@ -144,6 +144,7 @@ export interface VerticalBarChartConfig {
   selectedIndex: number;
   width: number;
   height: number;
+  yAxisDivisions?: number;
   yAxisTitle: string;
   xAxisTitle: string;
   labels: string[];
@@ -151,6 +152,7 @@ export interface VerticalBarChartConfig {
 }
 
 export interface NormalizedVerticalBarChartConfig extends VerticalBarChartConfig {
+  minValue: number;
   maxValue: number;
   yTicks: number[];
 }
@@ -172,6 +174,7 @@ export interface LineChartConfig {
   yAxisDataType?: YAxisDataType;
   yAxisDivisions?: number;
   yAxisTitle: string;
+  xAxisTitle?: string;
   xAxisLabels: string[];
   pointLabels: string[];
   series: LineChartSeries[];
