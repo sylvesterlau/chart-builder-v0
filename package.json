@@ -11,11 +11,16 @@
     "@create-figma-plugin/build": "^4.0.3",
     "@create-figma-plugin/tsconfig": "^4.0.3",
     "@figma/plugin-typings": "1.109.0",
-    "typescript": ">=5"
+    "typescript": ">=5",
+    "vitest": "^4.1.10"
   },
   "scripts": {
     "build": "build-figma-plugin --typecheck --minify",
+    "check": "npm run build && npm run test",
     "dev": "build-figma-plugin --typecheck --watch",
+    "test": "vitest run",
+    "test:unit": "vitest run tests/unit",
+    "test:watch": "vitest",
     "watch": "build-figma-plugin --typecheck --watch"
   },
   "figma-plugin": {
