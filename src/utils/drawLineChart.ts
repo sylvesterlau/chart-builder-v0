@@ -5,7 +5,11 @@ import {
   textColor,
 } from "../config";
 import { dataVisAt } from "./dataVisAt";
-import { clamp, normalizeLineChartConfig } from "../helpers";
+import {
+  cartesianRulerY,
+  clamp,
+  normalizeLineChartConfig,
+} from "../helpers";
 import {
   ColorToken,
   LineChartConfig,
@@ -475,7 +479,8 @@ async function drawChart(parent: FrameNode, config: NormalizedLineChartConfig) {
   const plotY = 9;
   const yAxisWidth = contentFrame.width - labelGutter;
   const xAxisWidth = yAxisWidth - 1;
-  const plotHeight = contentFrame.height - 30;
+  const xAxisTitle = String(config.xAxisTitle ?? "").trim();
+  const plotHeight = contentFrame.height - (xAxisTitle ? 54 : 30);
   const lineWidth =
     config.lineRange === "full" ? xAxisWidth : Math.round(yAxisWidth * 0.788);
   const selectedIndicatorX =
@@ -511,10 +516,17 @@ async function drawChart(parent: FrameNode, config: NormalizedLineChartConfig) {
     {
       axisLineVisibility: config.axisLineVisibility,
       color: config.color,
+      continuous: true,
       labelYOffset: 4,
       labels: config.xAxisLabels,
-      rulerY: plotHeight - 1,
+      rulerY: cartesianRulerY(
+        config.minValue,
+        config.maxValue,
+        plotHeight,
+      ),
       textColor: textColor.primary,
+      titleText: xAxisTitle,
+      titleYOffset: 28,
     },
     plotX,
     plotY,

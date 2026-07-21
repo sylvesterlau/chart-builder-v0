@@ -329,6 +329,242 @@ export function buildRangeTicks(
   return ticks;
 }
 
+interface NumericDomain {
+  minValue: number;
+  maxValue: number;
+}
+
+interface NumericScale extends NumericDomain {
+  ticks: number[];
+}
+
+function finiteValueExtent(values: number[]): NumericDomain | null {
+  let minValue = Infinity;
+  let maxValue = -Infinity;
+
+  values.forEach((value) => {
+    const number = Number(value);
+    if (!Number.isFinite(number)) return;
+    minValue = Math.min(minValue, number);
+    maxValue = Math.max(maxValue, number);
+  });
+
+  return Number.isFinite(minValue) && Number.isFinite(maxValue)
+    ? { minValue, maxValue }
+    : null;
+}
+
+export function resolveLineDomain(
+  values: number[],
+  requestedMinValue: number,
+  requestedMaxValue: number,
+): NumericDomain {
+  const extent = finiteValueExtent(values);
+  const finiteRequestedMin = Number.isFinite(requestedMinValue)
+    ? requestedMinValue
+    : extent?.minValue ?? 0;
+  const finiteRequestedMax =
+    Number.isFinite(requestedMaxValue) &&
+    requestedMaxValue > finiteRequestedMin
+      ? requestedMaxValue
+      : extent?.maxValue ?? finiteRequestedMin + 1;
+  const minValue = Math.min(
+    finiteRequestedMin,
+    extent?.minValue ?? finiteRequestedMin,
+  );
+  const maxValue = Math.max(
+    finiteRequestedMax,
+    extent?.maxValue ?? finiteRequestedMax,
+  );
+
+  return maxValue > minValue
+    ? { minValue, maxValue }
+    : { minValue, maxValue: minValue + 1 };
+}
+
+export function resolveBarDomain(values: number[]): NumericDomain {
+  const extent = finiteValueExtent(values);
+  const minValue = Math.min(0, extent?.minValue ?? 0);
+  const maxValue = Math.max(0, extent?.maxValue ?? 0);
+
+  if (minValue === maxValue) {
+    return { minValue: 0, maxValue: 10 };
+  }
+  return { minValue, maxValue };
+}
+
+export function resolveBarScale(
+  values: number[],
+  targetSteps: number,
+): NumericScale {
+  const domain = resolveBarDomain(values);
+  return buildZeroAnchoredScale(
+    domain.minValue,
+    domain.maxValue,
+    targetSteps,
+  );
+}
+
+export function valueToY(
+  value: number,
+  minValue: number,
+  maxValue: number,
+  height: number,
+): number {
+  const range = Math.max(1, maxValue - minValue);
+  const boundedValue = clamp(Number(value) || 0, minValue, maxValue);
+  return clamp(1 - (boundedValue - minValue) / range, 0, 1) * height;
+}
+
+function domainCrossesZero(
+  minValue: number,
+  maxValue: number,
+): boolean {
+  return minValue < 0 && maxValue > 0;
+}
+
+function niceTickStep(range: number, targetSteps: number): number {
+  const rawStep = range / Math.max(1, Math.round(targetSteps));
+  if (!Number.isFinite(rawStep) || rawStep <= 0) return 1;
+  const magnitude = Math.pow(10, Math.floor(Math.log10(rawStep)));
+  const scaledStep = rawStep / magnitude;
+  const niceScaledStep =
+    scaledStep <= 1
+      ? 1
+      : scaledStep <= 1.5
+        ? 1.5
+        : scaledStep <= 2
+          ? 2
+          : scaledStep <= 2.5
+            ? 2.5
+            : scaledStep <= 5
+              ? 5
+              : 10;
+  return niceScaledStep * magnitude;
+}
+
+function roundTickToStep(value: number, step: number): number {
+  const decimalPlaces = Math.min(
+    12,
+    Math.max(0, -Math.floor(Math.log10(step)) + 1),
+  );
+  const rounded = Number(value.toFixed(decimalPlaces));
+  return Object.is(rounded, -0) ? 0 : rounded;
+}
+
+export function buildZeroAnchoredScale(
+  minValue: number,
+  maxValue: number,
+  targetSteps: number,
+): NumericScale {
+  const maximumIntervals = Math.max(1, Math.round(targetSteps));
+  const hasNegativeValues = minValue < 0;
+  const hasPositiveValues = maxValue > 0;
+  let bestScale:
+    | {
+        expansion: number;
+        negativeIntervals: number;
+        positiveIntervals: number;
+        step: number;
+      }
+    | undefined;
+
+  for (
+    let negativeIntervals = 0;
+    negativeIntervals <= maximumIntervals;
+    negativeIntervals += 1
+  ) {
+    const positiveIntervals = maximumIntervals - negativeIntervals;
+    if (hasNegativeValues && negativeIntervals === 0) continue;
+    if (hasPositiveValues && positiveIntervals === 0) continue;
+    if (!hasNegativeValues && negativeIntervals > 0) continue;
+    if (!hasPositiveValues && positiveIntervals > 0) continue;
+
+    const negativeStep =
+      negativeIntervals > 0
+        ? Math.abs(minValue) / negativeIntervals
+        : 0;
+    const positiveStep =
+      positiveIntervals > 0 ? maxValue / positiveIntervals : 0;
+    const step = niceTickStep(Math.max(negativeStep, positiveStep), 1);
+    const scaleMin = -negativeIntervals * step;
+    const scaleMax = positiveIntervals * step;
+    const expansion =
+      minValue - scaleMin + scaleMax - maxValue;
+
+    if (
+      bestScale === undefined ||
+      expansion < bestScale.expansion ||
+      (expansion === bestScale.expansion && step < bestScale.step)
+    ) {
+      bestScale = {
+        expansion,
+        negativeIntervals,
+        positiveIntervals,
+        step,
+      };
+    }
+  }
+
+  const step =
+    bestScale?.step ??
+    niceTickStep(maxValue - minValue, maximumIntervals);
+  const negativeIntervals = bestScale?.negativeIntervals ?? 0;
+  const positiveIntervals =
+    bestScale?.positiveIntervals ?? maximumIntervals;
+  const scaleMin = roundTickToStep(-negativeIntervals * step, step);
+  const scaleMax = roundTickToStep(positiveIntervals * step, step);
+  const ticks: number[] = [];
+
+  for (let index = 0; index <= maximumIntervals; index += 1) {
+    ticks.push(roundTickToStep(scaleMax - step * index, step));
+  }
+
+  return { minValue: scaleMin, maxValue: scaleMax, ticks };
+}
+
+export function resolveLineScale(
+  values: number[],
+  requestedMinValue: number,
+  requestedMaxValue: number,
+  targetSteps: number,
+): NumericScale {
+  const domain = resolveLineDomain(
+    values,
+    requestedMinValue,
+    requestedMaxValue,
+  );
+  if (domainCrossesZero(domain.minValue, domain.maxValue)) {
+    return buildZeroAnchoredScale(
+      domain.minValue,
+      domain.maxValue,
+      targetSteps,
+    );
+  }
+  return {
+    ...domain,
+    ticks: buildRangeTicks(
+      domain.minValue,
+      domain.maxValue,
+      targetSteps,
+    ),
+  };
+}
+
+export function cartesianRulerY(
+  minValue: number,
+  maxValue: number,
+  height: number,
+): number {
+  if (minValue <= 0 && maxValue >= 0) {
+    return Math.min(
+      height - 1,
+      valueToY(0, minValue, maxValue, height),
+    );
+  }
+  return height - 1;
+}
+
 export function normalizeHexColor(value: unknown, fallback: string): string {
   const text = String(value || "").trim();
   return /^#[0-9a-f]{6}$/i.test(text) ? text : fallback;
@@ -576,7 +812,7 @@ export function normalizeVerticalBarChartConfig(
         inputValues[valueIndex] !== undefined
           ? inputValues[valueIndex]
           : fallbackValue;
-      values.push(Math.max(0, Number(nextValue) || 0));
+      values.push(Number(nextValue) || 0);
     }
 
     series.push({
@@ -591,7 +827,21 @@ export function normalizeVerticalBarChartConfig(
     });
   }
 
-  const maxValue = niceMax(maxSeriesValue(series));
+  const yAxisDivisions = normalizeYAxisDivisions(
+    input.yAxisDivisions,
+    normalizeYAxisDivisions(fallback.yAxisDivisions),
+  );
+  const {
+    minValue,
+    maxValue,
+    ticks: yTicks,
+  } = resolveBarScale(
+    series.reduce<number[]>(
+      (values, item) => values.concat(item.values),
+      [],
+    ),
+    yAxisDivisions,
+  );
   const selectedIndex = Math.round(
     clampNumber(
       input.selectedIndex,
@@ -648,12 +898,14 @@ export function normalizeVerticalBarChartConfig(
     selectedIndex,
     width: Math.round(clampNumber(input.width, 260, 1200, fallback.width)),
     height: Math.round(clampNumber(input.height, 220, 900, fallback.height)),
+    yAxisDivisions,
     yAxisTitle: String(input.yAxisTitle || "").trim() || fallback.yAxisTitle,
     xAxisTitle: String(input.xAxisTitle || "").trim() || fallback.xAxisTitle,
     labels,
     series,
+    minValue,
     maxValue,
-    yTicks: buildTicks(maxValue, 3),
+    yTicks,
   };
 }
 
@@ -730,17 +982,38 @@ export function normalizeLineChartConfig(
   const rawMaxValue = Number(input.maxValue);
   const fallbackMinValue = Number(fallback.minValue);
   const fallbackMaxValue = Number(fallback.maxValue);
-  const minValue = Number.isFinite(rawMinValue)
+  const requestedMinValue = Number.isFinite(rawMinValue)
     ? rawMinValue
     : Number.isFinite(fallbackMinValue)
       ? fallbackMinValue
       : 0;
-  const maxValue =
-    Number.isFinite(rawMaxValue) && rawMaxValue > minValue
+  const requestedMaxValue =
+    Number.isFinite(rawMaxValue) && rawMaxValue > requestedMinValue
       ? rawMaxValue
-      : Number.isFinite(fallbackMaxValue) && fallbackMaxValue > minValue
+      : Number.isFinite(fallbackMaxValue) &&
+          fallbackMaxValue > requestedMinValue
         ? fallbackMaxValue
-        : Math.max(minValue + 1, niceMax(maxSeriesValue(series)));
+        : Math.max(
+            requestedMinValue + 1,
+            niceMax(maxSeriesValue(series)),
+          );
+  const yAxisDivisions = normalizeYAxisDivisions(
+    input.yAxisDivisions,
+    normalizeYAxisDivisions(fallback.yAxisDivisions),
+  );
+  const {
+    minValue,
+    maxValue,
+    ticks: yTicks,
+  } = resolveLineScale(
+    series.reduce<number[]>(
+      (values, item) => values.concat(item.values),
+      [],
+    ),
+    requestedMinValue,
+    requestedMaxValue,
+    yAxisDivisions,
+  );
   const selectedIndex = Math.round(
     clampNumber(
       input.selectedIndex,
@@ -752,10 +1025,6 @@ export function normalizeLineChartConfig(
   const fallbackColor = fallback.color;
   const inputColor = input.color;
   const yAxisDataType = normalizeYAxisDataType(input.yAxisDataType);
-  const yAxisDivisions = normalizeYAxisDivisions(
-    input.yAxisDivisions,
-    normalizeYAxisDivisions(fallback.yAxisDivisions),
-  );
   const hasYAxisTitleInput = input.yAxisTitle !== undefined;
   const inputYAxisTitle = String(input.yAxisTitle ?? "").trim();
   const yAxisTitle =
@@ -764,6 +1033,10 @@ export function normalizeLineChartConfig(
       : hasYAxisTitleInput
         ? inputYAxisTitle
         : fallback.yAxisTitle;
+  const xAxisTitle =
+    input.xAxisTitle !== undefined
+      ? String(input.xAxisTitle).trim()
+      : String(fallback.xAxisTitle ?? "").trim();
 
   return {
     chartType: "lineChart",
@@ -815,9 +1088,10 @@ export function normalizeLineChartConfig(
     yAxisDataType,
     yAxisDivisions,
     yAxisTitle,
+    xAxisTitle,
     xAxisLabels,
     pointLabels,
     series,
-    yTicks: buildRangeTicks(minValue, maxValue, yAxisDivisions),
+    yTicks,
   };
 }

@@ -11,20 +11,20 @@ import DesignSystemConfigPage from "./pages/DesignSystemConfigPage";
 import { ColorTokenSwatchProvider } from "./components/ColorChips/colorTokenSwatchContext";
 import { NumberTokenValueProvider } from "./components/NumChips/numberTokenValueContext";
 import { TypographyTokenValueProvider } from "./components/TypographyChips/typographyTokenValueContext";
+import {
+  PluginWindowResizeManager,
+  usePluginWindowSize,
+} from "./hooks/usePluginWindowSize";
+import type { PluginPageId } from "./utils/pluginUiSize";
 
-export type Pages =
-  | "home"
-  | "horizontalBar"
-  | "pieDonutChart"
-  | "semiDonutChart"
-  | "verticalBar"
-  | "lineChart"
-  | "designSystemConfig";
+export type Pages = PluginPageId;
 
 function Plugin() {
   const [page, setPage] = useState<Pages>("home");
-  const navigateToPage = (page: Pages) => {
-    setPage(page);
+  const { handleUserResize, isWindowResizable } = usePluginWindowSize(page);
+
+  const navigateToPage = (nextPage: Pages) => {
+    setPage(nextPage);
   };
   const navigateToHome = () => {
     setPage("home");
@@ -53,6 +53,12 @@ function Plugin() {
     <ColorTokenSwatchProvider>
       <NumberTokenValueProvider>
         <TypographyTokenValueProvider>
+          {isWindowResizable ? (
+            <PluginWindowResizeManager
+              page={page}
+              onUserResize={handleUserResize}
+            />
+          ) : null}
           {renderPage()}
         </TypographyTokenValueProvider>
       </NumberTokenValueProvider>

@@ -11,10 +11,11 @@ import {
   VerticalSpace,
 } from "@create-figma-plugin/ui";
 import { emit } from "@create-figma-plugin/utilities";
-import { h } from "preact";
-import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
+import { Fragment, h } from "preact";
+import { useCallback, useMemo, useState } from "preact/hooks";
 import VerticalBarChartPreview from "../components/VerticalBarChartPreview";
-import { dataVisColor, pluginUISize, verticalBarChartConfig } from "../config";
+import { EditChartPageLayout } from "../components/EditChartPageLayout";
+import { dataVisColor, verticalBarChartConfig } from "../config";
 import {
   VerticalBarChartConfig,
   VerticalBarChartSeries,
@@ -45,6 +46,9 @@ const AXIS_LINE_VISIBILITY_OPTIONS: Array<DropdownOption> = [
 ];
 const MIN_DATA_ITEMS = 1;
 const MAX_DATA_ITEMS = 10;
+const MIN_Y_AXIS_DIVISIONS = 2;
+const MAX_Y_AXIS_DIVISIONS = 10;
+const DEFAULT_Y_AXIS_DIVISIONS = 3;
 const MONTH_LABELS = [
   "Jan",
   "Feb",
@@ -71,10 +75,16 @@ interface VerticalBarDataItem {
 function sanitizeDecimalInput(value: string) {
   let sanitizedValue = "";
   let hasDecimalPoint = false;
+  let hasSign = false;
   for (let i = 0; i < value.length; i++) {
     const character = value[i];
     if (character >= "0" && character <= "9") {
       sanitizedValue += character;
+      continue;
+    }
+    if (character === "-" && !hasSign && sanitizedValue.length === 0) {
+      sanitizedValue += character;
+      hasSign = true;
       continue;
     }
     if (character === "." && !hasDecimalPoint) {
@@ -139,6 +149,18 @@ function VerticalBarPage({ onBack }: VerticalBarPageProps) {
   const [chartTitle, setChartTitle] = useState<string>(sample.chartTitle);
   const [yAxisTitle, setYAxisTitle] = useState<string>(sample.yAxisTitle);
   const [xAxisTitle, setXAxisTitle] = useState<string>(sample.xAxisTitle);
+  const [yAxisDivisionsInput, setYAxisDivisionsInput] = useState<string>(
+    String(sample.yAxisDivisions ?? DEFAULT_Y_AXIS_DIVISIONS),
+  );
+  const parsedYAxisDivisions = Number(yAxisDivisionsInput);
+  const isYAxisDivisionsValid =
+    yAxisDivisionsInput.trim() !== "" &&
+    Number.isInteger(parsedYAxisDivisions) &&
+    parsedYAxisDivisions >= MIN_Y_AXIS_DIVISIONS &&
+    parsedYAxisDivisions <= MAX_Y_AXIS_DIVISIONS;
+  const effectiveYAxisDivisions = isYAxisDivisionsValid
+    ? parsedYAxisDivisions
+    : DEFAULT_Y_AXIS_DIVISIONS;
   const [items, setItems] = useState<VerticalBarDataItem[]>(
     sample.labels.map((label, index) =>
       createDataItem(
@@ -149,19 +171,6 @@ function VerticalBarPage({ onBack }: VerticalBarPageProps) {
       ),
     ),
   );
-
-  useEffect(() => {
-    emit("RESIZE_PLUGIN_UI_WINDOW", {
-      width: pluginUISize.verticalBarPage.width,
-      height: pluginUISize.verticalBarPage.height,
-    });
-    return () => {
-      emit("RESIZE_PLUGIN_UI_WINDOW", {
-        width: pluginUISize.homePage.width,
-        height: pluginUISize.homePage.height,
-      });
-    };
-  }, []);
 
   const chartConfig = useMemo<VerticalBarChartConfig>(() => {
     const labels = items.map((item, index) => item.label.trim() || `Item ${index + 1}`);
@@ -189,6 +198,7 @@ function VerticalBarPage({ onBack }: VerticalBarPageProps) {
         selectedIndex === null ? -1 : Math.min(selectedIndex, items.length - 1),
       width,
       height,
+      yAxisDivisions: effectiveYAxisDivisions,
       yAxisTitle,
       xAxisTitle,
       labels,
@@ -200,6 +210,7 @@ function VerticalBarPage({ onBack }: VerticalBarPageProps) {
     chartTitle,
     height,
     items,
+    effectiveYAxisDivisions,
     selectedIndex,
     width,
     xAxisTitle,
@@ -285,27 +296,13 @@ function VerticalBarPage({ onBack }: VerticalBarPageProps) {
   );
 
   return (
-    <div className={styles.verticalBarPage}>
-      <div className={styles.verticalBarLeftPanel}>
-        <div className={styles.horizontalBarHeader}>
-          <button
-            className={styles.horizontalBarBackButton}
-            onClick={onBack}
-            title="Back"
-            type="button"
-          >
-            ←
-          </button>
-          <Text className={styles.horizontalBarTypeTitle}>
-            Vertical bar chart
-          </Text>
-        </div>
-        <div className={styles.verticalBarPreviewPanel}>
-          <VerticalBarChartPreview config={chartConfig} />
-        </div>
-      </div>
-      <div className={styles.horizontalBarRightPanel}>
-        <div className={styles.horizontalBarControls}>
+    <EditChartPageLayout
+      onBack={onBack}
+      title="Vertical bar chart"
+      previewVariant="vertical"
+      preview={<VerticalBarChartPreview config={chartConfig} />}
+      controls={
+        <Fragment>
           <Stack space="small">
             <Text className={styles.sectionTitle}>Chart</Text>
             <div className={styles.fieldRow}>
@@ -366,6 +363,20 @@ function VerticalBarPage({ onBack }: VerticalBarPageProps) {
               <Text className={styles.fieldLabel}>Y title</Text>
               <Textbox onValueInput={setYAxisTitle} value={yAxisTitle} />
             </div>
+            <div className={styles.fieldRow}>
+              <Text className={styles.fieldLabel}>Y divisions</Text>
+              <Textbox
+                onValueInput={(value) =>
+                  setYAxisDivisionsInput(value.replace(/[^\d]/g, ""))
+                }
+                value={yAxisDivisionsInput}
+              />
+            </div>
+            {!isYAxisDivisionsValid ? (
+              <div className={styles.fieldHintError}>
+                Use {MIN_Y_AXIS_DIVISIONS}-{MAX_Y_AXIS_DIVISIONS}.
+              </div>
+            ) : null}
             <div className={styles.fieldRow}>
               <Text className={styles.fieldLabel}>X title</Text>
               <Textbox onValueInput={setXAxisTitle} value={xAxisTitle} />
@@ -453,14 +464,18 @@ function VerticalBarPage({ onBack }: VerticalBarPageProps) {
               </div>
             </Stack>
           </div>
-        </div>
-        <div className={styles.horizontalBarActions}>
-          <Button fullWidth onClick={handleGenerateButtonClick}>
+        </Fragment>
+      }
+      actions={
+          <Button
+            disabled={!isYAxisDivisionsValid}
+            fullWidth
+            onClick={handleGenerateButtonClick}
+          >
             Generate
           </Button>
-        </div>
-      </div>
-    </div>
+      }
+    />
   );
 }
 

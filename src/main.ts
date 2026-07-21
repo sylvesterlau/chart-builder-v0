@@ -1,5 +1,14 @@
 import { emit, on, showUI } from "@create-figma-plugin/utilities";
 import { pluginUISize } from "./config";
+import {
+  EDIT_CONTROLS_PANEL_WIDTH_STORAGE_KEY,
+  type SetEditControlsPanelWidthPayload,
+} from "./utils/editControlsPanelSize";
+import {
+  PLUGIN_UI_USER_SIZE_STORAGE_KEY,
+  type PluginWindowSize,
+  type ResizePluginUiWindowPayload,
+} from "./utils/pluginUiSize";
 import { ChartData, LineChartConfig, VerticalBarChartConfig } from "./types";
 import { lookupTokenVarKeys, readSelectedTextLayerStyleKey } from "./helpers";
 import { drawHorBarChart } from "./utils/drawHorBarChart";
@@ -12,8 +21,42 @@ import { resolveNumberTokenPayload } from "./utils/resolveNumberTokenValues";
 import { resolveTypographyTokenPayload } from "./utils/resolveTypographyTokenValues";
 
 export default function () {
-  function handleResizePluginUiWindow(size: { width: number; height: number }) {
-    figma.ui.resize(size.width, size.height);
+  function handleResizePluginUiWindow(payload: ResizePluginUiWindowPayload) {
+    figma.ui.resize(payload.width, payload.height);
+    if (payload.persist) {
+      void figma.clientStorage.setAsync(PLUGIN_UI_USER_SIZE_STORAGE_KEY, {
+        width: payload.width,
+        height: payload.height,
+      });
+    }
+  }
+
+  async function handleRequestPluginUiUserSize() {
+    const savedSize = (await figma.clientStorage.getAsync(
+      PLUGIN_UI_USER_SIZE_STORAGE_KEY,
+    )) as PluginWindowSize | null | undefined;
+    emit("PLUGIN_UI_USER_SIZE", savedSize ?? null);
+  }
+
+  function handleSetEditControlsPanelWidth(
+    payload: SetEditControlsPanelWidthPayload,
+  ) {
+    if (payload.persist) {
+      void figma.clientStorage.setAsync(
+        EDIT_CONTROLS_PANEL_WIDTH_STORAGE_KEY,
+        payload.width,
+      );
+    }
+  }
+
+  async function handleRequestEditControlsPanelWidth() {
+    const savedWidth = (await figma.clientStorage.getAsync(
+      EDIT_CONTROLS_PANEL_WIDTH_STORAGE_KEY,
+    )) as number | null | undefined;
+    emit(
+      "EDIT_CONTROLS_PANEL_WIDTH",
+      typeof savedWidth === "number" ? savedWidth : null,
+    );
   }
 
   async function handleSemiDonutChartData(chartData: ChartData) {
@@ -104,6 +147,13 @@ export default function () {
   on("LOOKUP_TOKEN_VAR_KEYS", handleLookupTokenVarKeys);
   on("READ_SELECTED_TEXT_STYLE_KEY", handleReadSelectedTextStyleKey);
   on("RESIZE_PLUGIN_UI_WINDOW", handleResizePluginUiWindow);
+  on("REQUEST_PLUGIN_UI_USER_SIZE", function () {
+    void handleRequestPluginUiUserSize();
+  });
+  on("SET_EDIT_CONTROLS_PANEL_WIDTH", handleSetEditControlsPanelWidth);
+  on("REQUEST_EDIT_CONTROLS_PANEL_WIDTH", function () {
+    void handleRequestEditControlsPanelWidth();
+  });
   on("REQUEST_COLOR_TOKEN_SWATCH_VALUES", publishColorTokenSwatchValues);
   on("REQUEST_NUMBER_TOKEN_RESOLVED_VALUES", publishNumberTokenResolvedValues);
   on(

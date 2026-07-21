@@ -19,20 +19,35 @@ export const sampleData = {
   },
 };
 
-/** Plugin panel window sizes */
+/** Plugin panel window sizes and resize bounds. */
 export const pluginUISize = {
   homePage: {
-    width: 348,
+    width: 346,
     height: 490,
   },
   editPage: {
-    width: 640,
-    height: 490,
-  },
-  verticalBarPage: {
     width: 680,
     height: 560,
+    minWidth: 680,
+    minHeight: 500,
+    maxWidth: 1200,
+    maxHeight: 900,
   },
+  designSystemPage: {
+    width: 490,
+    height: 490,
+    minWidth: 460,
+    minHeight: 460,
+    maxWidth: 1200,
+    maxHeight: 900,
+  },
+} as const;
+
+/** Edit chart pages: right-side controls panel width (px). */
+export const editControlsPanelWidth = {
+  width: 260,
+  minWidth: 240,
+  maxWidth: 400,
 } as const;
 
 /** Shared type scale; component typography references these tokens. */
@@ -400,6 +415,7 @@ export const verticalBarChartConfig = {
   selectedIndex: 3,
   width: 390,
   height: 280,
+  yAxisDivisions: 3,
   yAxisTitle: "USD",
   xAxisTitle: "Year 2026",
   labels: ["Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
@@ -433,7 +449,8 @@ export const lineChartConfig = {
   maxValue: 250,
   yAxisDivisions: 3,
   yAxisTitle: "HKD",
-  xAxisLabels: ["Jan 2026", "", "", "Feb 2026", "", "", "Mar 2026"],
+  xAxisTitle: "Year 2026",
+  xAxisLabels: ["Jan", "", "", "Feb", "", "", "Mar"],
   pointLabels: createLinePointLabels(100),
   series: [
     {

@@ -7,8 +7,8 @@ import {
   VerticalSpace,
 } from "@create-figma-plugin/ui";
 import { emit } from "@create-figma-plugin/utilities";
-import { h } from "preact";
-import { useCallback, useEffect, useState } from "preact/hooks";
+import { Fragment, h } from "preact";
+import { useCallback, useState } from "preact/hooks";
 import ChartItemInput, { ChartItem } from "../components/ChartItemInput";
 import ChartSizeControl, {
   useChartSizeControl,
@@ -20,9 +20,9 @@ import LegendControl, {
   getEffectiveLegendStyle,
 } from "../components/editControl/LegendControl";
 import SemiDonutChartPreview from "../components/SemiDonutChartPreview";
+import { EditChartPageLayout } from "../components/EditChartPageLayout";
 import {
   chartGeneralConfig,
-  pluginUISize,
   sampleData,
   semiDonutChartConfig,
   semiDonutChartLayout,
@@ -115,19 +115,6 @@ function SemiDonutChartPage({ onBack }: SemiDonutChartPageProps) {
   const [valueSuffix, setValueSuffix] = useState<string>("HKD");
   const [showPercentage, setShowPercentage] = useState<boolean>(true);
 
-  useEffect(() => {
-    emit("RESIZE_PLUGIN_UI_WINDOW", {
-      width: pluginUISize.editPage.width,
-      height: pluginUISize.editPage.height,
-    });
-    return () => {
-      emit("RESIZE_PLUGIN_UI_WINDOW", {
-        width: pluginUISize.homePage.width,
-        height: pluginUISize.homePage.height,
-      });
-    };
-  }, []);
-
   const handleLabelInput = useCallback((index: number, label: string) => {
     setItems((currentItems) =>
       currentItems.map((item, itemIndex) =>
@@ -202,41 +189,27 @@ function SemiDonutChartPage({ onBack }: SemiDonutChartPageProps) {
   );
 
   return (
-    <div className={styles.horizontalBarPage}>
-      <div className={styles.horizontalBarLeftPanel}>
-        <div className={styles.horizontalBarHeader}>
-          <button
-            className={styles.horizontalBarBackButton}
-            onClick={onBack}
-            title="Back"
-            type="button"
-          >
-            ←
-          </button>
-          <Text className={styles.horizontalBarTypeTitle}>
-            Semi-donut chart
-          </Text>
-        </div>
-        <div
-          className={`${styles.horizontalBarPreviewPanel} ${styles.horizontalBarPreviewPanelVariableWidth}`}
-        >
-          <SemiDonutChartPreview
-            frameWidth={sizeControl.frameWidth}
-            chartSize={sizeControl.chartSize}
-            chartTitle={effectiveChartTitle}
-            items={items}
-            legendStyle={effectiveLegendStyle}
-            ringWidth={ringWidth}
-            showPercentage={showPercentage}
-            valuePrefix={valuePrefix}
-            valueSuffix={valueSuffix}
-            showTotalValue
-            totalValueTitle={totalValueTitle}
-          />
-        </div>
-      </div>
-      <div className={styles.horizontalBarRightPanel}>
-        <div className={styles.horizontalBarControls}>
+    <EditChartPageLayout
+      onBack={onBack}
+      title="Semi-donut chart"
+      previewVariant="horizontal"
+      preview={
+        <SemiDonutChartPreview
+          frameWidth={sizeControl.frameWidth}
+          chartSize={sizeControl.chartSize}
+          chartTitle={effectiveChartTitle}
+          items={items}
+          legendStyle={effectiveLegendStyle}
+          ringWidth={ringWidth}
+          showPercentage={showPercentage}
+          valuePrefix={valuePrefix}
+          valueSuffix={valueSuffix}
+          showTotalValue
+          totalValueTitle={totalValueTitle}
+        />
+      }
+      controls={
+        <Fragment>
           <ChartTitleControl
             onTitleChange={setChartTitle}
             onVisibleChange={setShowChartTitle}
@@ -346,14 +319,14 @@ function SemiDonutChartPage({ onBack }: SemiDonutChartPageProps) {
             valueSuffix={valueSuffix}
             visible={showLegend}
           />
-        </div>
-        <div className={styles.horizontalBarActions}>
-          <Button fullWidth onClick={handleGenerateButtonClick}>
-            Generate
-          </Button>
-        </div>
-      </div>
-    </div>
+        </Fragment>
+      }
+      actions={
+        <Button fullWidth onClick={handleGenerateButtonClick}>
+          Generate
+        </Button>
+      }
+    />
   );
 }
 

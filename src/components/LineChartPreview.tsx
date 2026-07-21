@@ -1,7 +1,7 @@
 import { h } from "preact";
 import { chartBackground, dataVisColor, textColor } from "../config";
 import {
-  buildRangeTicks,
+  cartesianRulerY,
   clamp,
   formatAxisTickLabel,
   isCartesianXAxisLineVisible,
@@ -10,6 +10,8 @@ import {
   measureYAxisLabelGutter,
   measureYAxisTickLabelWidth,
   normalizeYAxisDivisions,
+  resolveLineScale,
+  valueToY,
   Y_AXIS_LABEL_AXIS_GAP,
 } from "../helpers";
 import { LineChartConfig } from "../types";
@@ -41,12 +43,10 @@ function createLinePath(
   height: number,
 ): string {
   if (values.length === 0) return "";
-  const range = Math.max(1, maxValue - minValue);
   return values
     .map((rawValue, index) => {
       const x = values.length === 1 ? 0 : (index / (values.length - 1)) * width;
-      const value = clamp(Number(rawValue) || 0, minValue, maxValue);
-      const y = clamp(1 - (value - minValue) / range, 0, 1) * height;
+      const y = valueToY(rawValue, minValue, maxValue, height);
       return `${index === 0 ? "M" : "L"} ${x.toFixed(2)} ${y.toFixed(2)}`;
     })
     .join(" ");
@@ -84,26 +84,37 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
   const { values: resolvedTypography } = useTypographyTokenResolved();
 
   const visibleSeries = config.series;
-  const minValue = Number(config.minValue) || 0;
-  const maxValue =
-    Number(config.maxValue) > minValue ? Number(config.maxValue) : minValue + 1;
-  const valueRange = Math.max(1, maxValue - minValue);
   const yAxisDivisions = normalizeYAxisDivisions(config.yAxisDivisions);
-  const ticks =
-    config.maxValue > config.minValue
-      ? buildRangeTicks(minValue, maxValue, yAxisDivisions)
-      : [maxValue, minValue];
+  const {
+    minValue,
+    maxValue,
+    ticks,
+  } = resolveLineScale(
+    visibleSeries.reduce<number[]>(
+      (values, series) => values.concat(series.values),
+      [],
+    ),
+    Number(config.minValue),
+    Number(config.maxValue),
+    yAxisDivisions,
+  );
+  const valueRange = Math.max(1, maxValue - minValue);
   const { labelBg } = config.color.selected;
   const { typography: ty, yAxisLabel: yLab } = config.color;
   const yAxisDataType = config.yAxisDataType ?? "number";
   const showYAxisTitle =
     yAxisDataType !== "percentage" && config.yAxisTitle.trim().length > 0;
+  const xAxisTitle = String(config.xAxisTitle ?? "").trim();
   const yTitleRowHeight = showYAxisTitle
     ? typographyResolvedLineHeight(ty.yAxisTitle, resolvedTypography)
     : 0;
   const contentWidth = Math.max(1, config.width - 32);
   const contentHeight = Math.max(1, config.height - 24 - yTitleRowHeight);
-  const plotHeight = Math.max(1, contentHeight - 30);
+  const plotHeight = Math.max(
+    1,
+    contentHeight - (xAxisTitle ? 54 : 30),
+  );
+  const rulerY = cartesianRulerY(minValue, maxValue, plotHeight);
   const yAxisLabelCss = typographyTokenToPreviewCss(yLab, resolvedTypography);
   const measureYAxisLabelWidth = (text: string) =>
     measurePreviewTextWidth(text, yAxisLabelCss);
@@ -121,7 +132,6 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
   const xAxisLabels = config.xAxisLabels.length
     ? config.xAxisLabels
     : ["", "", "", "", "", "", ""];
-  const xGroupWidth = xAxisWidth / xAxisLabels.length;
   const showXAxisLine = isCartesianXAxisLineVisible(config.axisLineVisibility);
   const showYAxisLine = isCartesianYAxisLineVisible(config.axisLineVisibility);
   const axisLineColor = colorTokenPreviewBackground(
@@ -142,6 +152,10 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
   );
   const xAxisLabelCss = typographyTokenToPreviewCss(
     ty.xAxisLabel,
+    resolvedTypography,
+  );
+  const xAxisTitleCss = typographyTokenToPreviewCss(
+    ty.xAxisTitle,
     resolvedTypography,
   );
   const defaultFontFamily = typographyTokenToPreviewCss(
@@ -292,22 +306,33 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
               zIndex: 1,
             }}
           >
-            {xAxisLabels.map((label, index) => (
-              <div
-                key={`${label}-${index}`}
-                style={{
-                  height: `${plotHeight}px`,
-                  left: `${xGroupWidth * index}px`,
-                  position: "absolute",
-                  top: 0,
-                  width: `${xGroupWidth}px`,
-                }}
-              >
+            {xAxisLabels.map((label, index) => {
+              const labelPosition =
+                xAxisLabels.length <= 1
+                  ? 0
+                  : (index / (xAxisLabels.length - 1)) *
+                    Math.max(0, xAxisWidth - 1);
+              const isFirstLabel = index === 0;
+              const isLastLabel = index === xAxisLabels.length - 1;
+              return (
                 <div
+                  key={`${label}-${index}`}
                   style={{
-                    background: showXAxisLine ? gridLineColor : "transparent",
                     height: `${plotHeight}px`,
-                    left: `${xGroupWidth / 2}px`,
+                    left: `${labelPosition}px`,
+                    position: "absolute",
+                    top: 0,
+                    width: "1px",
+                  }}
+                >
+                  <div
+                  style={{
+                    background:
+                      showXAxisLine && !isFirstLabel && !isLastLabel
+                        ? gridLineColor
+                        : "transparent",
+                    height: `${plotHeight}px`,
+                    left: 0,
                     position: "absolute",
                     top: 0,
                     width: "1px",
@@ -317,10 +342,18 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
                   <div
                     style={{
                       bottom: "-22px",
-                      left: "50%",
+                      left: isLastLabel ? undefined : 0,
                       position: "absolute",
-                      textAlign: "center",
-                      transform: "translateX(-50%)",
+                      right: isLastLabel ? 0 : undefined,
+                      textAlign: isFirstLabel
+                        ? "left"
+                        : isLastLabel
+                          ? "right"
+                          : "center",
+                      transform:
+                        isFirstLabel || isLastLabel
+                          ? undefined
+                          : "translateX(-50%)",
                       whiteSpace: "nowrap",
                       ...xAxisLabelCss,
                     }}
@@ -328,18 +361,33 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
                     {label}
                   </div>
                 ) : null}
-              </div>
-            ))}
+                </div>
+              );
+            })}
             <div
               style={{
                 background: axisLineColor,
                 height: "1px",
                 left: 0,
                 position: "absolute",
-                top: `${plotHeight - 1}px`,
+                top: `${rulerY}px`,
                 width: `${xAxisWidth}px`,
               }}
             />
+            {xAxisTitle ? (
+              <div
+                style={{
+                  bottom: "-44px",
+                  left: 0,
+                  position: "absolute",
+                  textAlign: "center",
+                  width: `${xAxisWidth}px`,
+                  ...xAxisTitleCss,
+                }}
+              >
+                {xAxisTitle}
+              </div>
+            ) : null}
           </div>
           <div
             style={{
@@ -424,8 +472,7 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
                 minValue,
                 maxValue,
               );
-              const y =
-                clamp(1 - (value - minValue) / valueRange, 0, 1) * plotHeight;
+              const y = valueToY(value, minValue, maxValue, plotHeight);
               const seriesColor = colorTokenSwatchHex(
                 dataVisColor.general[seriesIndex],
                 resolvedColors,
