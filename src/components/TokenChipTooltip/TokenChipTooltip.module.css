@@ -16,6 +16,36 @@
   z-index: 10000;
 }
 
+.tooltipTop {
+  transform: translate(-50%, -100%);
+}
+
+.tooltipTop .panel::before {
+  border-color: #2c2c2c transparent transparent transparent;
+  border-width: 5px 5px 0;
+  bottom: auto;
+  top: 100%;
+}
+
+.tooltipLarge {
+  max-width: 220px;
+}
+
+.tooltipLarge .panel {
+  max-width: 220px;
+  padding: 6px 10px;
+}
+
+.tooltipLarge .tokenName {
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.tooltipLarge .meta {
+  font-size: 12px;
+  line-height: 18px;
+}
+
 .panel {
   background-color: #2c2c2c;
   border-radius: 4px;

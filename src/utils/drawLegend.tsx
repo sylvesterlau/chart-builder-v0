@@ -22,9 +22,19 @@ import {
   applyTypographyTokenToText,
   loadTypographyTokenFontsBatch,
 } from "./applyTypographyToken";
+import { dataVisAt } from "./dataVisAt";
+import {
+  buildLegendEntries,
+  type LegendSourceItem,
+} from "./legendAggregate";
 
 const legendTextColor = textColor.primary;
 const legendDividerColor = dividerColor;
+
+export interface CreateLegendOptions {
+  showValue?: boolean;
+  transparentSwatch?: boolean;
+}
 
 function formatLegendValue(value: number, prefix: string, suffix: string) {
   const formattedValue = value.toFixed(2);
@@ -48,13 +58,18 @@ export async function createLegend(
   valueSuffix: string = "HKD",
   tileLayout: "leftAndRight" | "topAndBottom" = "leftAndRight",
   frameWidth: number = 390,
+  options: CreateLegendOptions = {},
 ): Promise<FrameNode | null> {
+  const showValue = options.showValue !== false;
+  const transparentSwatch = options.transparentSwatch === true;
+
   const legend = figma.createFrame();
   const legendLabel = label.trim() || "Item";
   const shapeNode = figma.createRectangle();
   shapeNode.name = "Color";
   const shapeSize = legendShapeConfig.size.value;
   shapeNode.resize(shapeSize, shapeSize);
+  shapeNode.fills = [];
 
   const indicatorFrame = figma.createFrame();
   indicatorFrame.fills = [];
@@ -110,38 +125,6 @@ export async function createLegend(
     Object.assign(labelNode, { layoutAlign: "STRETCH" });
     textNodes.push(labelNode);
 
-    const valueNode = figma.createText();
-    valueNode.name = "Value";
-    await applyTypographyTokenToText(valueNode, typography.legend.value);
-    valueNode.characters = valueTextInline;
-    Object.assign(valueNode, { layoutAlign: "MIN" });
-    textNodes.push(valueNode);
-
-    const valueRow = figma.createFrame();
-    valueRow.fills = [];
-    Object.assign(valueRow, {
-      name: "Value",
-      layoutMode: "HORIZONTAL",
-      primaryAxisSizingMode: "AUTO",
-      counterAxisSizingMode: "AUTO",
-      itemSpacing: 0,
-      counterAxisAlignItems: "CENTER",
-      layoutAlign: "STRETCH",
-    });
-    valueRow.appendChild(valueNode);
-    if (percentText !== null) {
-      const percentNode = figma.createText();
-      percentNode.name = percentText;
-      await applyTypographyTokenToText(
-        percentNode,
-        typography.legend.percentage,
-      );
-      percentNode.characters = percentText;
-      Object.assign(percentNode, { layoutAlign: "MIN" });
-      textNodes.push(percentNode);
-      valueRow.appendChild(percentNode);
-    }
-
     const textStack = figma.createFrame();
     textStack.fills = [];
     Object.assign(textStack, {
@@ -155,7 +138,41 @@ export async function createLegend(
     });
 
     textStack.appendChild(labelNode);
-    textStack.appendChild(valueRow);
+
+    if (showValue) {
+      const valueNode = figma.createText();
+      valueNode.name = "Value";
+      await applyTypographyTokenToText(valueNode, typography.legend.value);
+      valueNode.characters = valueTextInline;
+      Object.assign(valueNode, { layoutAlign: "MIN" });
+      textNodes.push(valueNode);
+
+      const valueRow = figma.createFrame();
+      valueRow.fills = [];
+      Object.assign(valueRow, {
+        name: "Value",
+        layoutMode: "HORIZONTAL",
+        primaryAxisSizingMode: "AUTO",
+        counterAxisSizingMode: "AUTO",
+        itemSpacing: 0,
+        counterAxisAlignItems: "CENTER",
+        layoutAlign: "STRETCH",
+      });
+      valueRow.appendChild(valueNode);
+      if (percentText !== null) {
+        const percentNode = figma.createText();
+        percentNode.name = percentText;
+        await applyTypographyTokenToText(
+          percentNode,
+          typography.legend.percentage,
+        );
+        percentNode.characters = percentText;
+        Object.assign(percentNode, { layoutAlign: "MIN" });
+        textNodes.push(percentNode);
+        valueRow.appendChild(percentNode);
+      }
+      textStack.appendChild(valueRow);
+    }
 
     legend.appendChild(indicatorFrame);
     legend.appendChild(textStack);
@@ -193,18 +210,22 @@ export async function createLegend(
     }
     await applyItemSpacing(labelRow, legendSpacingConfig.leftRightItemSpacing);
 
-    const valueNode = figma.createText();
-    valueNode.name = "Value";
-    await applyTypographyTokenToText(valueNode, typography.legend.value);
-    valueNode.characters = valueTextInline;
-    textNodes.push(valueNode);
-
     legend.appendChild(indicatorFrame);
     legend.appendChild(labelRow);
-    legend.appendChild(valueNode);
+
+    if (showValue) {
+      const valueNode = figma.createText();
+      valueNode.name = "Value";
+      await applyTypographyTokenToText(valueNode, typography.legend.value);
+      valueNode.characters = valueTextInline;
+      textNodes.push(valueNode);
+      legend.appendChild(valueNode);
+    }
   }
 
-  await applyColorTokenToFills(shapeNode, shapeColor);
+  if (!transparentSwatch) {
+    await applyColorTokenToFills(shapeNode, shapeColor);
+  }
   await applyColorTokenToStrokes(legend, legendDividerColor);
   for (const textNode of textNodes) {
     await applyColorTokenToFills(textNode, legendTextColor);
@@ -223,4 +244,37 @@ export function createLegendList(name: string = "Legends") {
     layoutAlign: "STRETCH",
   });
   return legendList;
+}
+
+export async function appendAggregatedLegends(
+  legendList: FrameNode,
+  items: LegendSourceItem[],
+  showPercentage: boolean,
+  valuePrefix: string,
+  valueSuffix: string,
+  tileLayout: "leftAndRight" | "topAndBottom",
+  frameWidth: number,
+): Promise<void> {
+  const entries = buildLegendEntries(items);
+  for (const entry of entries) {
+    const rowShowPercentage = showPercentage && entry.showPercentage;
+    const legend = await createLegend(
+      entry.label,
+      entry.value,
+      entry.percentage,
+      dataVisAt(entry.colorIndex),
+      rowShowPercentage,
+      valuePrefix,
+      valueSuffix,
+      tileLayout,
+      frameWidth,
+      {
+        showValue: entry.showValue,
+        transparentSwatch: entry.transparentSwatch,
+      },
+    );
+    if (legend) {
+      legendList.appendChild(legend);
+    }
+  }
 }

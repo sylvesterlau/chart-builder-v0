@@ -9,7 +9,10 @@ import {
 import { emit } from "@create-figma-plugin/utilities";
 import { h, Fragment } from "preact";
 import { useCallback, useState } from "preact/hooks";
-import ChartItemInput, { ChartItem } from "../components/ChartItemInput";
+import {
+  ChartDataItemsList,
+  ChartItem,
+} from "../components/ChartItemInput";
 import ChartTitleControl, {
   getEffectiveChartTitle,
 } from "../components/editControl/ChartTitleControl";
@@ -218,17 +221,13 @@ function HorizontalBarPage({ onBack }: HorizontalBarPageProps) {
                 {items.length}/{MAX_ITEMS} items
               </Text>
             </div>
-            {items.map((item, index) => (
-              <ChartItemInput
-                key={index}
-                index={index}
-                item={item}
-                canDelete={items.length > MIN_ITEMS}
-                onDelete={handleDeleteItem}
-                onLabelInput={handleLabelInput}
-                onValueInput={handleValueInput}
-              />
-            ))}
+            <ChartDataItemsList
+              items={items}
+              canDelete={items.length > MIN_ITEMS}
+              onDelete={handleDeleteItem}
+              onLabelInput={handleLabelInput}
+              onValueInput={handleValueInput}
+            />
             <Button
               secondary
               disabled={items.length >= MAX_ITEMS}

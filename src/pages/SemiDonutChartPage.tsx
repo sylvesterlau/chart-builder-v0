@@ -9,7 +9,10 @@ import {
 import { emit } from "@create-figma-plugin/utilities";
 import { Fragment, h } from "preact";
 import { useCallback, useState } from "preact/hooks";
-import ChartItemInput, { ChartItem } from "../components/ChartItemInput";
+import {
+  ChartDataItemsList,
+  ChartItem,
+} from "../components/ChartItemInput";
 import ChartSizeControl, {
   useChartSizeControl,
 } from "../components/editControl/ChartSizeControl";
@@ -258,17 +261,13 @@ function SemiDonutChartPage({ onBack }: SemiDonutChartPageProps) {
                 {items.length}/{MAX_ITEMS} items
               </Text>
             </div>
-            {items.map((item, index) => (
-              <ChartItemInput
-                key={index}
-                index={index}
-                item={item}
-                canDelete={items.length > MIN_ITEMS}
-                onDelete={handleDeleteItem}
-                onLabelInput={handleLabelInput}
-                onValueInput={handleValueInput}
-              />
-            ))}
+            <ChartDataItemsList
+              items={items}
+              canDelete={items.length > MIN_ITEMS}
+              onDelete={handleDeleteItem}
+              onLabelInput={handleLabelInput}
+              onValueInput={handleValueInput}
+            />
             <Button
               secondary
               disabled={items.length >= MAX_ITEMS}

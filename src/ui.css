@@ -370,6 +370,34 @@
   width: 100%;
 }
 
+.chartDataItemsList {
+  display: contents;
+}
+
+.chartOthersLabelRow {
+  align-items: center;
+  display: inline-flex;
+  gap: 4px;
+  min-width: 0;
+}
+
+.chartOthersInfoIcon {
+  align-items: center;
+  color: var(--figma-color-icon-secondary);
+  cursor: default;
+  display: inline-flex;
+  flex-shrink: 0;
+  height: 16px;
+  justify-content: center;
+  width: 16px;
+}
+
+.chartOthersInfoIcon:hover,
+.chartOthersInfoIcon:focus-visible {
+  color: var(--figma-color-icon);
+  outline: none;
+}
+
 .chartItemInputField {
   flex: 1;
   min-width: 0;

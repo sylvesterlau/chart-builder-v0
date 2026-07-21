@@ -1,10 +1,13 @@
 declare const styles: {
   readonly "chartColorSwatchGrid": string;
+  readonly "chartDataItemsList": string;
   readonly "chartDimensionInputs": string;
   readonly "chartItemDeleteButton": string;
   readonly "chartItemDeleteButtonWrap": string;
   readonly "chartItemInput": string;
   readonly "chartItemInputField": string;
+  readonly "chartOthersInfoIcon": string;
+  readonly "chartOthersLabelRow": string;
   readonly "chartWidthControl": string;
   readonly "colorColumn": string;
   readonly "colorGrid": string;

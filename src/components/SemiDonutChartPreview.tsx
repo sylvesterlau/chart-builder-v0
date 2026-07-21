@@ -10,6 +10,7 @@ import {
   semiDonutRingWidthPxToRatio,
 } from "../utils/chart/semiDonutCalculate";
 import { dataVisAt } from "../utils/dataVisAt";
+import { buildChartSegments, toLegendSourceItems } from "../utils/legendAggregate";
 import { LegendStyle } from "../types";
 import { ChartItem } from "./ChartItemInput";
 import ChartTitlePreview from "./ChartTitlePreview";
@@ -91,12 +92,10 @@ function SemiDonutChartPreview({
     resolvedColors,
   );
 
-  const legendItems = items
-    .map((item, index) => ({ ...item, index }))
-    .filter((item) => item.label.trim() !== "" || item.value > 0);
-  const chartItems = legendItems.filter((item) => item.value > 0);
-  const total = chartItems.reduce((sum, item) => sum + item.value, 0);
-  const totalOfLegends = legendItems.reduce((sum, item) => sum + item.value, 0);
+  const legendItems = toLegendSourceItems(items);
+  const chartItems = buildChartSegments(legendItems);
+  const total = legendItems.reduce((sum, item) => sum + item.value, 0);
+  const totalOfLegends = total;
 
   if (legendItems.length === 0 || total <= 0) {
     return null;
@@ -174,7 +173,7 @@ function SemiDonutChartPreview({
             >
               {chartItems.map((item, arcIndex) => {
                 const color = colorTokenSwatchHex(
-                  dataVisAt(item.index),
+                  dataVisAt(item.colorIndex),
                   resolvedColors,
                 );
                 const exactPercent = (item.value / total) * 100;
@@ -190,7 +189,7 @@ function SemiDonutChartPreview({
                 const endAngle = 180 + endPercent * 1.8;
                 return (
                   <path
-                    key={`${item.label}-${item.index}`}
+                    key={`${item.label}-${item.colorIndex}`}
                     d={describeArc(
                       chartCenterX,
                       chartCenterY,

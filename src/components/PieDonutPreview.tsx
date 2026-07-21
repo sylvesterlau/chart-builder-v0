@@ -11,6 +11,7 @@ import {
   getPieChartAreaHeight,
 } from "../utils/chart/pieDonutCalculate";
 import { dataVisAt } from "../utils/dataVisAt";
+import { buildChartSegments, toLegendSourceItems } from "../utils/legendAggregate";
 import { formatLegendPercentageDisplay } from "../helpers";
 import { LegendStyle, PiePageChartKind } from "../types";
 import { ChartItem } from "./ChartItemInput";
@@ -159,11 +160,9 @@ function PieDonutPreview({
       ? donutGapPxToPercent(sliceGap, chartSize, donutInnerRadiusRatio)
       : 0;
   const previewLayoutWidth = Math.round(frameWidth * PREVIEW_SCALE);
-  const legendItems = items
-    .map((item, index) => ({ ...item, index }))
-    .filter((item) => item.label.trim() !== "" || item.value > 0);
-  const chartItems = legendItems.filter((item) => item.value > 0);
-  const total = chartItems.reduce((sum, item) => sum + item.value, 0);
+  const legendItems = toLegendSourceItems(items);
+  const chartItems = buildChartSegments(legendItems);
+  const total = legendItems.reduce((sum, item) => sum + item.value, 0);
 
   if (legendItems.length === 0 || total <= 0) {
     return null;
@@ -255,7 +254,7 @@ function PieDonutPreview({
                 const { item, startAngle, endAngle, midAngle, percentage } =
                   slice;
                 const color = colorTokenSwatchHex(
-                  dataVisAt(item.index),
+                  dataVisAt(item.colorIndex),
                   resolvedColors,
                 );
                 const sliceMarkup =
@@ -306,7 +305,7 @@ function PieDonutPreview({
                   midAngle,
                 );
                 return (
-                  <g key={`${item.label}-${item.index}`}>
+                  <g key={`${item.label}-${item.colorIndex}`}>
                     {showIndicator ? (
                       <line
                         x1={lineStartPoint.x}
@@ -333,7 +332,7 @@ function PieDonutPreview({
                           dy={showIndicatorPercentage ? "-0.6em" : "0"}
                           fontWeight={indicatorLabelMetrics.fontWeight}
                         >
-                          {item.label || `Item ${item.index + 1}`}
+                          {item.label}
                         </tspan>
                         {showIndicatorPercentage ? (
                           <tspan

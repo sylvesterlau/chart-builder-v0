@@ -7,6 +7,7 @@ import {
   typography,
 } from "../config";
 import { dataVisAt } from "../utils/dataVisAt";
+import { buildLegendEntries } from "../utils/legendAggregate";
 import { useColorTokenResolved } from "./ColorChips/colorTokenSwatchContext";
 import { useNumberTokenResolved } from "./NumChips/numberTokenValueContext";
 import { useTypographyTokenResolved } from "./TypographyChips/typographyTokenValueContext";
@@ -91,12 +92,21 @@ function LegendPreview({
     resolvedTypography,
   );
 
+  const entries = buildLegendEntries(items);
+
   return (
     <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
-      {items.map((item, index) => {
-        const color = colorTokenSwatchHex(dataVisAt(item.index), resolvedColors);
-        const percent = total > 0 ? (item.value / total) * 100 : 0;
-        const label = item.label || `Item ${item.index + 1}`;
+      {entries.map((entry, index) => {
+        const color = entry.transparentSwatch
+          ? "transparent"
+          : colorTokenSwatchHex(dataVisAt(entry.colorIndex), resolvedColors);
+        const percent =
+          entry.percentage !== null
+            ? entry.percentage
+            : total > 0
+              ? (entry.value / total) * 100
+              : 0;
+        const rowShowPercentage = showPercentage && entry.showPercentage;
         const rowBase = {
           borderBottom: `1px solid ${legendDivider}`,
           boxSizing: "border-box" as const,
@@ -107,7 +117,7 @@ function LegendPreview({
         if (legendStyle === "topAndBottom") {
           return (
             <div
-              key={`${label}-${index}`}
+              key={`${entry.kind}-${entry.label}-${index}`}
               style={{
                 alignItems: "flex-start",
                 display: "flex",
@@ -139,40 +149,46 @@ function LegendPreview({
                     ...labelCss,
                   }}
                 >
-                  {label}
+                  {entry.label}
                 </div>
-                <div
-                  style={{
-                    alignItems: "center",
-                    color: chartTextPrimary,
-                    display: "flex",
-                    flexWrap: "wrap",
-                    gap: "4px",
-                    width: "100%",
-                    ...labelCss,
-                  }}
-                >
-                  <span
+                {entry.showValue ? (
+                  <div
                     style={{
-                      flexShrink: 0,
-                      fontWeight: valueCss.fontWeight,
-                      whiteSpace: "nowrap",
+                      alignItems: "center",
+                      color: chartTextPrimary,
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: "4px",
+                      width: "100%",
+                      ...labelCss,
                     }}
                   >
-                    {formatLegendValue(item.value, valuePrefix, valueSuffix)}
-                  </span>
-                  {showPercentage ? (
                     <span
                       style={{
                         flexShrink: 0,
-                        fontWeight: typography.legend.percentage.fontWeight,
+                        fontWeight: valueCss.fontWeight,
                         whiteSpace: "nowrap",
                       }}
                     >
-                      ({formatLegendPercentageDisplay(percent)}%)
+                      {formatLegendValue(
+                        entry.value,
+                        valuePrefix,
+                        valueSuffix,
+                      )}
                     </span>
-                  ) : null}
-                </div>
+                    {rowShowPercentage ? (
+                      <span
+                        style={{
+                          flexShrink: 0,
+                          fontWeight: typography.legend.percentage.fontWeight,
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        ({formatLegendPercentageDisplay(percent)}%)
+                      </span>
+                    ) : null}
+                  </div>
+                ) : null}
               </div>
             </div>
           );
@@ -180,7 +196,7 @@ function LegendPreview({
 
         return (
           <div
-            key={`${label}-${index}`}
+            key={`${entry.kind}-${entry.label}-${index}`}
             style={{
               alignItems: "center",
               display: "flex",
@@ -204,20 +220,22 @@ function LegendPreview({
                 ...labelCss,
               }}
             >
-              {showPercentage
-                ? `${label} (${inlinePercentageFormatter(percent)}%)`
-                : label}
+              {rowShowPercentage
+                ? `${entry.label} (${inlinePercentageFormatter(percent)}%)`
+                : entry.label}
             </div>
-            <div
-              style={{
-                color: chartTextPrimary,
-                flexShrink: 0,
-                whiteSpace: "nowrap",
-                ...valueCss,
-              }}
-            >
-              {formatLegendValue(item.value, valuePrefix, valueSuffix)}
-            </div>
+            {entry.showValue ? (
+              <div
+                style={{
+                  color: chartTextPrimary,
+                  flexShrink: 0,
+                  whiteSpace: "nowrap",
+                  ...valueCss,
+                }}
+              >
+                {formatLegendValue(entry.value, valuePrefix, valueSuffix)}
+              </div>
+            ) : null}
           </div>
         );
       })}

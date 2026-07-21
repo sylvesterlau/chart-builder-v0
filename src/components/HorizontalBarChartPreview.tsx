@@ -1,6 +1,7 @@
 import { h } from "preact";
 import { chartBackground, horizontalBarChartLayout } from "../config";
 import { dataVisAt } from "../utils/dataVisAt";
+import { buildChartSegments, toLegendSourceItems } from "../utils/legendAggregate";
 import { LegendStyle } from "../types";
 import { ChartItem } from "./ChartItemInput";
 import ChartTitlePreview from "./ChartTitlePreview";
@@ -52,11 +53,9 @@ function HorizontalBarChartPreview({
     resolvedNumbers,
   );
 
-  const legendItems = items
-    .map((item, index) => ({ ...item, index }))
-    .filter((item) => item.label.trim() !== "" || item.value > 0);
-  const chartItems = legendItems.filter((item) => item.value > 0);
-  const total = chartItems.reduce((sum, item) => sum + item.value, 0);
+  const legendItems = toLegendSourceItems(items);
+  const chartItems = buildChartSegments(legendItems);
+  const total = legendItems.reduce((sum, item) => sum + item.value, 0);
 
   if (legendItems.length === 0 || total <= 0) {
     return null;
@@ -93,7 +92,10 @@ function HorizontalBarChartPreview({
         }}
       >
         {chartItems.map((item, index) => {
-          const color = colorTokenSwatchHex(dataVisAt(item.index), resolvedColors);
+          const color = colorTokenSwatchHex(
+            dataVisAt(item.colorIndex),
+            resolvedColors,
+          );
           return (
             <div
               key={`${item.label}-${index}`}

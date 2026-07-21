@@ -22,7 +22,12 @@ import {
 } from "./applyTypographyToken";
 import { createChartTitle, loadChartTitleFont } from "./drawChartTitle";
 import { createFinalFrame } from "./figmaOperations";
-import { createLegend, createLegendList, loadLegendFonts } from "./drawLegend";
+import {
+  appendAggregatedLegends,
+  createLegendList,
+  loadLegendFonts,
+} from "./drawLegend";
+import { buildChartSegments, toLegendSourceItems } from "./legendAggregate";
 
 function resolveSemiDonutFrameWidth(frameWidth: number | undefined): number {
   const { frameWidthMin, frameWidthMax } = semiDonutChartLayout;
@@ -124,9 +129,10 @@ export async function drawSemiDonutChart(chartData: ChartData) {
   }
 
   await figma.currentPage.loadAsync();
-  const transformedData: TransformedChartItem[] = transformToPercents(
-    chartData.data,
-  );
+  const sourceItems = toLegendSourceItems(chartData.data);
+  const chartSegments = buildChartSegments(sourceItems);
+  const transformedData: TransformedChartItem[] =
+    transformToPercents(chartSegments);
   const shouldShowLegend = chartData.legendStyle !== "none";
   const showPercentage = chartData.showPercentage !== false;
   const chartTitle = chartData.chartTitle ?? "";
@@ -170,42 +176,42 @@ export async function drawSemiDonutChart(chartData: ChartData) {
 
   for (let i = 0; i < transformedData.length; i++) {
     const item = transformedData[i];
+    const segment = chartSegments[i];
     const layerName = `${item.label} (${item.value})`;
     const isFirstSlice = i === 0;
-    const sliceColor = dataVisAt(i);
-    if (item.value > 0) {
-      const slice = await createSemiDonutSlice(
-        item.startPercent,
-        item.endPercent,
-        layerName,
-        sliceColor,
-        chartSize,
-        innerRadiusRatio,
-        gapPercent,
-        isFirstSlice,
-      );
-      if (slice) {
-        slice.x = 0;
-        slice.y = 0;
-        chartFrame.appendChild(slice);
-      }
-      if (legendList) {
-        const legend = await createLegend(
-          item.label,
-          item.value,
-          item.exactPercent,
-          sliceColor,
-          showPercentage,
-          valuePrefix,
-          valueSuffix,
-          legendTileLayout,
-          frameWidth,
-        );
-        if (legend) {
-          legendList.appendChild(legend);
-        }
-      }
+    const sliceColor = dataVisAt(segment.colorIndex);
+    const slice = await createSemiDonutSlice(
+      item.startPercent,
+      item.endPercent,
+      layerName,
+      sliceColor,
+      chartSize,
+      innerRadiusRatio,
+      gapPercent,
+      isFirstSlice,
+    );
+    if (slice) {
+      slice.x = 0;
+      slice.y = 0;
+      chartFrame.appendChild(slice);
     }
+  }
+
+  if (legendList) {
+    await appendAggregatedLegends(
+      legendList,
+      sourceItems.map((item) => ({
+        index: item.index,
+        label: item.label,
+        value: item.value,
+        percentage: (item.value / sum) * 100,
+      })),
+      showPercentage,
+      valuePrefix,
+      valueSuffix,
+      legendTileLayout,
+      frameWidth,
+    );
   }
 
   const totalValFrame = showTotalValue
