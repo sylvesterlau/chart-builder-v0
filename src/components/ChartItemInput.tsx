@@ -72,26 +72,47 @@ function NestedItemMarker() {
   );
 }
 
-function ChartOthersRow({ colorIndex }: { colorIndex: number }) {
+function ChartAggregationHeader() {
+  return (
+    <div className={styles.chartAggregationHeader}>
+      <Text className={styles.sectionTitle}>Aggregation</Text>
+      <TokenChipTooltip
+        large
+        placement="top"
+        tokenName="Items from the 6th onward are combined into one group."
+      >
+        <span
+          aria-label="About Aggregation"
+          className={styles.chartOthersInfoIcon}
+          tabIndex={0}
+        >
+          <IconInfo16 />
+        </span>
+      </TokenChipTooltip>
+    </div>
+  );
+}
+
+function ChartOthersLabelInput({
+  colorIndex,
+  label,
+  onLabelInput,
+}: {
+  colorIndex: number;
+  label: string;
+  onLabelInput: (label: string) => void;
+}) {
   return (
     <div className={styles.chartItemInput}>
       <ColorSwatch colorIndex={colorIndex} />
-      <div className={styles.chartOthersLabelRow}>
-        <Text className={styles.sectionTitle}>{LEGEND_OTHERS_LABEL}</Text>
-        <TokenChipTooltip
-          large
-          placement="top"
-          tokenName='Items below are combined into "Others" in the chart.'
-        >
-          <span
-            aria-label="About Others aggregation"
-            className={styles.chartOthersInfoIcon}
-            tabIndex={0}
-          >
-            <IconInfo16 />
-          </span>
-        </TokenChipTooltip>
+      <div className={styles.chartOthersInputField}>
+        <Textbox
+          onValueInput={onLabelInput}
+          placeholder={LEGEND_OTHERS_LABEL}
+          value={label}
+        />
       </div>
+      <div className={styles.chartItemDeleteButtonWrap} />
     </div>
   );
 }
@@ -114,7 +135,7 @@ function ChartItemInput({
       )}
       <div className={styles.chartItemInputField}>
         <Textbox
-          onValueInput={(label) => onLabelInput(index, label)}
+          onValueInput={(nextLabel) => onLabelInput(index, nextLabel)}
           value={item.label}
           placeholder={`Label ${String.fromCharCode(65 + index)}`}
         />
@@ -152,6 +173,8 @@ function ChartItemInput({
 interface ChartDataItemsListProps {
   items: ChartItem[];
   canDelete: boolean;
+  othersLabel: string;
+  onOthersLabelInput: (label: string) => void;
   onDelete: (index: number) => void;
   onLabelInput: (index: number, label: string) => void;
   onValueInput: (index: number, valueInput: string) => void;
@@ -161,6 +184,8 @@ interface ChartDataItemsListProps {
 export function ChartDataItemsList({
   items,
   canDelete,
+  othersLabel,
+  onOthersLabelInput,
   onDelete,
   onLabelInput,
   onValueInput,
@@ -174,10 +199,13 @@ export function ChartDataItemsList({
       aggregation.othersInsertBeforeIndex === index &&
       aggregation.othersColorIndex !== null
     ) {
+      rows.push(<ChartAggregationHeader key="aggregation-header" />);
       rows.push(
-        <ChartOthersRow
-          key="others"
+        <ChartOthersLabelInput
+          key="others-label"
           colorIndex={aggregation.othersColorIndex}
+          label={othersLabel}
+          onLabelInput={onOthersLabelInput}
         />,
       );
     }

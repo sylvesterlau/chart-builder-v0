@@ -38,6 +38,7 @@ import {
   isValidDonutRingWidth,
 } from "../utils/chart/pieDonutCalculate";
 import { LegendStyle } from "../types";
+import { LEGEND_OTHERS_LABEL } from "../utils/legendAggregate";
 import { useRefreshDesignTokensOnMount } from "../utils/useRefreshDesignTokens";
 import styles from "../ui.css";
 
@@ -146,6 +147,7 @@ function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
   );
   const [valuePrefix, setValuePrefix] = useState<string>("");
   const [valueSuffix, setValueSuffix] = useState<string>("HKD");
+  const [othersLabel, setOthersLabel] = useState<string>(LEGEND_OTHERS_LABEL);
 
   const handleLabelInput = useCallback((index: number, label: string) => {
     setItems((currentItems) =>
@@ -204,6 +206,7 @@ function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
         donutRingWidth: chartKind === "donut" ? donutRingWidth : undefined,
         valuePrefix,
         valueSuffix,
+        othersLabel,
         frameWidth: sizeControl.frameWidth,
         semiDonutSize: sizeControl.chartSize,
       });
@@ -219,6 +222,7 @@ function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
       donutRingWidth,
       valuePrefix,
       valueSuffix,
+      othersLabel,
       sizeControl.frameWidth,
       sizeControl.chartSize,
     ],
@@ -246,6 +250,7 @@ function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
           showPercentage={showPercentage}
           valuePrefix={valuePrefix}
           valueSuffix={valueSuffix}
+          othersLabel={othersLabel}
         />
       }
       controls={
@@ -328,6 +333,8 @@ function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
             <ChartDataItemsList
               items={items}
               canDelete={items.length > MIN_ITEMS}
+              othersLabel={othersLabel}
+              onOthersLabelInput={setOthersLabel}
               onDelete={handleDeleteItem}
               onLabelInput={handleLabelInput}
               onValueInput={handleValueInput}

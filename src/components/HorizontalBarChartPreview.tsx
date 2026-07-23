@@ -19,6 +19,7 @@ interface HorizontalBarChartPreviewProps {
   showPercentage: boolean;
   valuePrefix: string;
   valueSuffix: string;
+  othersLabel?: string;
 }
 
 function formatPercent(value: number) {
@@ -33,6 +34,7 @@ function HorizontalBarChartPreview({
   showPercentage,
   valuePrefix,
   valueSuffix,
+  othersLabel,
 }: HorizontalBarChartPreviewProps) {
   const { values: resolvedColors } = useColorTokenResolved();
   const { values: resolvedNumbers } = useNumberTokenResolved();
@@ -54,7 +56,7 @@ function HorizontalBarChartPreview({
   );
 
   const legendItems = toLegendSourceItems(items);
-  const chartItems = buildChartSegments(legendItems);
+  const chartItems = buildChartSegments(legendItems, othersLabel);
   const total = legendItems.reduce((sum, item) => sum + item.value, 0);
 
   if (legendItems.length === 0 || total <= 0) {
@@ -115,6 +117,7 @@ function HorizontalBarChartPreview({
         showPercentage={showPercentage}
         valuePrefix={valuePrefix}
         valueSuffix={valueSuffix}
+        othersLabel={othersLabel}
         inlinePercentageFormatter={formatPercent}
       />
     </div>

@@ -33,6 +33,7 @@ interface LegendPreviewProps {
   showPercentage: boolean;
   valuePrefix: string;
   valueSuffix: string;
+  othersLabel?: string;
   inlinePercentageFormatter?: (value: number) => string;
 }
 
@@ -50,6 +51,7 @@ function LegendPreview({
   showPercentage,
   valuePrefix,
   valueSuffix,
+  othersLabel,
   inlinePercentageFormatter = formatLegendPercentageDisplay,
 }: LegendPreviewProps) {
   if (legendStyle !== "leftAndRight" && legendStyle !== "topAndBottom") {
@@ -92,7 +94,7 @@ function LegendPreview({
     resolvedTypography,
   );
 
-  const entries = buildLegendEntries(items);
+  const entries = buildLegendEntries(items, othersLabel);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>

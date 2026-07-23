@@ -1,4 +1,5 @@
 declare const styles: {
+  readonly "chartAggregationHeader": string;
   readonly "chartColorSwatchGrid": string;
   readonly "chartDataItemsList": string;
   readonly "chartDimensionInputs": string;
@@ -7,6 +8,8 @@ declare const styles: {
   readonly "chartItemInput": string;
   readonly "chartItemInputField": string;
   readonly "chartOthersInfoIcon": string;
+  readonly "chartOthersInputField": string;
+  readonly "chartOthersLabelInput": string;
   readonly "chartOthersLabelRow": string;
   readonly "chartWidthControl": string;
   readonly "colorColumn": string;

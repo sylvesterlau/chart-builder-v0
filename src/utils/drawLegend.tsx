@@ -254,8 +254,9 @@ export async function appendAggregatedLegends(
   valueSuffix: string,
   tileLayout: "leftAndRight" | "topAndBottom",
   frameWidth: number,
+  othersLabel?: string,
 ): Promise<void> {
-  const entries = buildLegendEntries(items);
+  const entries = buildLegendEntries(items, othersLabel);
   for (const entry of entries) {
     const rowShowPercentage = showPercentage && entry.showPercentage;
     const legend = await createLegend(

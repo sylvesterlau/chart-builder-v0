@@ -10,6 +10,11 @@ export function shouldAggregateLegendItems(itemCount: number): boolean {
   return itemCount > LEGEND_AGGREGATE_THRESHOLD;
 }
 
+export function resolveOthersLabel(label?: string | null): string {
+  const trimmed = label?.trim();
+  return trimmed || LEGEND_OTHERS_LABEL;
+}
+
 /** Same inclusion rule used by preview, draw, and config aggregation cues. */
 export function isLegendSourceItem(item: {
   label: string;
@@ -104,7 +109,9 @@ function defaultLabel(item: { index: number; label: string }): string {
  */
 export function buildChartSegments(
   items: Array<{ index: number; label: string; value: number }>,
+  othersLabel: string = LEGEND_OTHERS_LABEL,
 ): ChartSegmentItem[] {
+  const resolvedOthersLabel = resolveOthersLabel(othersLabel);
   const segments =
     items.length <= LEGEND_AGGREGATE_THRESHOLD
       ? items.map((item) => ({
@@ -123,7 +130,7 @@ export function buildChartSegments(
             })),
             {
               colorIndex: nested[0].index,
-              label: LEGEND_OTHERS_LABEL,
+              label: resolvedOthersLabel,
               value: nested.reduce((sum, item) => sum + item.value, 0),
             },
           ];
@@ -139,7 +146,9 @@ export function buildChartSegments(
  */
 export function buildLegendEntries(
   items: LegendSourceItem[],
+  othersLabel: string = LEGEND_OTHERS_LABEL,
 ): LegendEntry[] {
+  const resolvedOthersLabel = resolveOthersLabel(othersLabel);
   if (items.length <= LEGEND_AGGREGATE_THRESHOLD) {
     return items.map((item) => ({
       kind: "item" as const,
@@ -174,7 +183,7 @@ export function buildLegendEntries(
   entries.push({
     kind: "others",
     colorIndex: othersColorIndex,
-    label: LEGEND_OTHERS_LABEL,
+    label: resolvedOthersLabel,
     value: 0,
     percentage: null,
     showValue: false,

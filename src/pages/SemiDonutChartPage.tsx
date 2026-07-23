@@ -36,6 +36,7 @@ import {
   isValidSemiDonutRingWidth,
 } from "../utils/chart/semiDonutCalculate";
 import { LegendStyle } from "../types";
+import { LEGEND_OTHERS_LABEL } from "../utils/legendAggregate";
 import { useRefreshDesignTokensOnMount } from "../utils/useRefreshDesignTokens";
 import styles from "../ui.css";
 
@@ -117,6 +118,7 @@ function SemiDonutChartPage({ onBack }: SemiDonutChartPageProps) {
   const [valuePrefix, setValuePrefix] = useState<string>("");
   const [valueSuffix, setValueSuffix] = useState<string>("HKD");
   const [showPercentage, setShowPercentage] = useState<boolean>(true);
+  const [othersLabel, setOthersLabel] = useState<string>(LEGEND_OTHERS_LABEL);
 
   const handleLabelInput = useCallback((index: number, label: string) => {
     setItems((currentItems) =>
@@ -172,6 +174,7 @@ function SemiDonutChartPage({ onBack }: SemiDonutChartPageProps) {
         valueSuffix,
         showTotalValue: true,
         totalValueTitle,
+        othersLabel,
         frameWidth: sizeControl.frameWidth,
         semiDonutSize: sizeControl.chartSize,
         semiDonutRingWidth: ringWidth,
@@ -188,6 +191,7 @@ function SemiDonutChartPage({ onBack }: SemiDonutChartPageProps) {
       valuePrefix,
       valueSuffix,
       totalValueTitle,
+      othersLabel,
     ],
   );
 
@@ -209,6 +213,7 @@ function SemiDonutChartPage({ onBack }: SemiDonutChartPageProps) {
           valueSuffix={valueSuffix}
           showTotalValue
           totalValueTitle={totalValueTitle}
+          othersLabel={othersLabel}
         />
       }
       controls={
@@ -264,6 +269,8 @@ function SemiDonutChartPage({ onBack }: SemiDonutChartPageProps) {
             <ChartDataItemsList
               items={items}
               canDelete={items.length > MIN_ITEMS}
+              othersLabel={othersLabel}
+              onOthersLabelInput={setOthersLabel}
               onDelete={handleDeleteItem}
               onLabelInput={handleLabelInput}
               onValueInput={handleValueInput}

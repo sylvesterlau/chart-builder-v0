@@ -43,6 +43,7 @@ interface PieDonutPreviewProps {
   showPercentage: boolean;
   valuePrefix: string;
   valueSuffix: string;
+  othersLabel?: string;
 }
 
 function polarToCartesian(
@@ -103,6 +104,7 @@ function PieDonutPreview({
   showPercentage,
   valuePrefix,
   valueSuffix,
+  othersLabel,
 }: PieDonutPreviewProps) {
   const { values: resolvedNumbers } = useNumberTokenResolved();
   const { values: resolvedColors } = useColorTokenResolved();
@@ -161,7 +163,7 @@ function PieDonutPreview({
       : 0;
   const previewLayoutWidth = Math.round(frameWidth * PREVIEW_SCALE);
   const legendItems = toLegendSourceItems(items);
-  const chartItems = buildChartSegments(legendItems);
+  const chartItems = buildChartSegments(legendItems, othersLabel);
   const total = legendItems.reduce((sum, item) => sum + item.value, 0);
 
   if (legendItems.length === 0 || total <= 0) {
@@ -357,6 +359,7 @@ function PieDonutPreview({
             showPercentage={showPercentage}
             valuePrefix={valuePrefix}
             valueSuffix={valueSuffix}
+            othersLabel={othersLabel}
           />
         </div>
       </div>

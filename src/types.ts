@@ -85,6 +85,8 @@ export interface ChartData {
   valueSuffix?: string;
   showTotalValue?: boolean;
   totalValueTitle?: string;
+  /** Custom label for the aggregated legend/chart group. Defaults to "Others". */
+  othersLabel?: string;
   /** Semi-donut outer frame width (px). */
   frameWidth?: number;
   /** Semi-donut ring diameter (px). */

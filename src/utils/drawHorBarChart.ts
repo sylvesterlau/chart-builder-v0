@@ -67,7 +67,10 @@ export async function drawHorBarChart(chartData: ChartData) {
   }
   await figma.currentPage.loadAsync();
   const sourceItems = toLegendSourceItems(chartData.data);
-  const chartSegments = buildChartSegments(sourceItems);
+  const chartSegments = buildChartSegments(
+    sourceItems,
+    chartData.othersLabel,
+  );
   const transformedData: TransformedChartItem[] =
     transformToPercents(chartSegments);
   const shouldShowLegend = chartData.legendStyle !== "none";
@@ -138,6 +141,7 @@ export async function drawHorBarChart(chartData: ChartData) {
       valueSuffix,
       legendTileLayout,
       frameWidth,
+      chartData.othersLabel,
     );
   }
   const finalFrame = await createFinalFrame(frameWidth, "Horizontal Bar Chart");

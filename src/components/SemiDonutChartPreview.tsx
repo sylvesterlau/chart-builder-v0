@@ -37,6 +37,7 @@ interface SemiDonutChartPreviewProps {
   valueSuffix: string;
   showTotalValue: boolean;
   totalValueTitle: string;
+  othersLabel?: string;
 }
 
 function polarToCartesian(
@@ -84,6 +85,7 @@ function SemiDonutChartPreview({
   valueSuffix,
   showTotalValue,
   totalValueTitle,
+  othersLabel,
 }: SemiDonutChartPreviewProps) {
   const { values: resolvedColors } = useColorTokenResolved();
   const { values: resolvedTypography } = useTypographyTokenResolved();
@@ -93,7 +95,7 @@ function SemiDonutChartPreview({
   );
 
   const legendItems = toLegendSourceItems(items);
-  const chartItems = buildChartSegments(legendItems);
+  const chartItems = buildChartSegments(legendItems, othersLabel);
   const total = legendItems.reduce((sum, item) => sum + item.value, 0);
   const totalOfLegends = total;
 
@@ -254,6 +256,7 @@ function SemiDonutChartPreview({
             showPercentage={showPercentage}
             valuePrefix={valuePrefix}
             valueSuffix={valueSuffix}
+            othersLabel={othersLabel}
           />
         </div>
       </div>

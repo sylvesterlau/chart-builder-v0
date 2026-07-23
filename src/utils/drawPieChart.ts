@@ -222,7 +222,10 @@ export async function drawPieChart(chartData: ChartData) {
   }
 
   const sourceItems = toLegendSourceItems(chartData.data);
-  const chartSegments = buildChartSegments(sourceItems);
+  const chartSegments = buildChartSegments(
+    sourceItems,
+    chartData.othersLabel,
+  );
 
   const chartFrame = figma.createFrame();
   chartFrame.fills = [];
@@ -350,6 +353,7 @@ export async function drawPieChart(chartData: ChartData) {
       valueSuffix,
       legendTileLayout,
       frameWidth,
+      chartData.othersLabel,
     );
   }
 

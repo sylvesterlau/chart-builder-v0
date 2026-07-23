@@ -27,6 +27,7 @@ import {
   sampleData,
 } from "../config";
 import { LegendStyle } from "../types";
+import { LEGEND_OTHERS_LABEL } from "../utils/legendAggregate";
 import { useRefreshDesignTokensOnMount } from "../utils/useRefreshDesignTokens";
 import styles from "../ui.css";
 interface HorizontalBarPageProps {
@@ -88,6 +89,7 @@ function HorizontalBarPage({ onBack }: HorizontalBarPageProps) {
   const [showPercentage, setShowPercentage] = useState<boolean>(true);
   const [valuePrefix, setValuePrefix] = useState<string>("");
   const [valueSuffix, setValueSuffix] = useState<string>("HKD");
+  const [othersLabel, setOthersLabel] = useState<string>(LEGEND_OTHERS_LABEL);
   const [frameWidth, setFrameWidth] = useState<number>(
     chartGeneralConfig.frameWidth,
   );
@@ -155,6 +157,7 @@ function HorizontalBarPage({ onBack }: HorizontalBarPageProps) {
         showPercentage,
         valuePrefix,
         valueSuffix,
+        othersLabel,
       };
       // send form data to main.ts
       emit("SUBMIT_HORIZONTAL_BAR_CHART_DATA", formData);
@@ -167,6 +170,7 @@ function HorizontalBarPage({ onBack }: HorizontalBarPageProps) {
       showPercentage,
       valuePrefix,
       valueSuffix,
+      othersLabel,
     ],
   );
   return (
@@ -183,6 +187,7 @@ function HorizontalBarPage({ onBack }: HorizontalBarPageProps) {
           showPercentage={showPercentage}
           valuePrefix={valuePrefix}
           valueSuffix={valueSuffix}
+          othersLabel={othersLabel}
         />
       }
       controls={
@@ -224,6 +229,8 @@ function HorizontalBarPage({ onBack }: HorizontalBarPageProps) {
             <ChartDataItemsList
               items={items}
               canDelete={items.length > MIN_ITEMS}
+              othersLabel={othersLabel}
+              onOthersLabelInput={setOthersLabel}
               onDelete={handleDeleteItem}
               onLabelInput={handleLabelInput}
               onValueInput={handleValueInput}

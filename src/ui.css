@@ -374,10 +374,30 @@
   display: contents;
 }
 
+.chartAggregationHeader {
+  align-items: center;
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+  min-width: 0;
+  width: 100%;
+}
+
 .chartOthersLabelRow {
   align-items: center;
-  display: inline-flex;
+  display: flex;
   gap: 4px;
+  min-width: 0;
+  width: 100%;
+}
+
+.chartOthersLabelInput {
+  flex: 1;
+  min-width: 0;
+}
+
+.chartOthersInputField {
+  flex: 2 1 0;
   min-width: 0;
 }
 
@@ -407,7 +427,9 @@
   align-items: center;
   display: flex;
   flex-shrink: 0;
+  height: 24px;
   justify-content: center;
+  width: 24px;
 }
 
 .chartItemDeleteButton {
