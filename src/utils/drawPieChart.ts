@@ -26,9 +26,14 @@ import {
   loadTypographyTokenFontsBatch,
 } from "./applyTypographyToken";
 import { createChartTitle, loadChartTitleFont } from "./drawChartTitle";
-import { applyStrokeWeight } from "./applyNumberToken";
+import { applyStrokeWeight, numberTokenValue } from "./applyNumberToken";
 import { createFinalFrame } from "./figmaOperations";
-import { createLegend, createLegendList, loadLegendFonts } from "./drawLegend";
+import {
+  appendAggregatedLegends,
+  createLegendList,
+  loadLegendFonts,
+} from "./drawLegend";
+import { buildChartSegments, toLegendSourceItems } from "./legendAggregate";
 
 function resolvePieFrameWidth(frameWidth: number | undefined): number {
   const { frameWidthMin, frameWidthMax } = pieChartConfig;
@@ -198,7 +203,9 @@ export async function drawPieChart(chartData: ChartData) {
     resolveIndicatorLineExtend(chartData.indicatorLineExtend) * indicatorScale;
   const labelCenterOffset =
     pieChartConfig.indicator.labelCenterOffset * indicatorScale;
-  const donutInnerRadiusPx = pieRadius * innerRadiusRatio;
+  const lineOuterGap = numberTokenValue(pieChartConfig.indicator.lineOuterGap);
+  const lineStartRadius = pieRadius + lineOuterGap;
+  const lineEndRadius = lineStartRadius + lineExtend;
 
   if (chartTitle.trim()) {
     await loadChartTitleFont();
@@ -214,9 +221,11 @@ export async function drawPieChart(chartData: ChartData) {
     await loadTypographyTokenFontsBatch(tokens);
   }
 
-  const chartItems = chartData.data
-    .map((item, index) => ({ ...item, index }))
-    .filter((item) => item.value > 0);
+  const sourceItems = toLegendSourceItems(chartData.data);
+  const chartSegments = buildChartSegments(
+    sourceItems,
+    chartData.othersLabel,
+  );
 
   const chartFrame = figma.createFrame();
   chartFrame.fills = [];
@@ -233,9 +242,9 @@ export async function drawPieChart(chartData: ChartData) {
 
   let currentStartAngle = -90;
   let donutStartPercent = 0;
-  for (let i = 0; i < chartItems.length; i++) {
-    const item = chartItems[i];
-    const sliceColor = dataVisAt(item.index);
+  for (let i = 0; i < chartSegments.length; i++) {
+    const item = chartSegments[i];
+    const sliceColor = dataVisAt(item.colorIndex);
     const exactPercent = (item.value / sum) * 100;
     const sweepAngle = (item.value / sum) * 360;
     let startAngle: number;
@@ -243,12 +252,12 @@ export async function drawPieChart(chartData: ChartData) {
     let midAngle: number;
 
     if (pieChartKind === "donut") {
-      const adjustedStartPercent = donutStartPercent + donutGapPercent;
-      const endPercent = donutStartPercent + exactPercent;
+      const adjustedStartPercent = donutStartPercent;
+      const endPercent = donutStartPercent + exactPercent - donutGapPercent;
       startAngle = -90 + adjustedStartPercent * 3.6;
       endAngle = -90 + endPercent * 3.6;
       midAngle = (startAngle + endAngle) / 2;
-      donutStartPercent = endPercent;
+      donutStartPercent = donutStartPercent + exactPercent;
       if (endPercent - adjustedStartPercent <= 0) {
         continue;
       }
@@ -264,13 +273,15 @@ export async function drawPieChart(chartData: ChartData) {
       const lineEndPoint = polarToCartesian(
         centerX,
         centerY,
-        pieRadius + lineExtend,
+        lineEndRadius,
         midAngle,
       );
-      const lineStartPoint =
-        pieChartKind === "donut"
-          ? polarToCartesian(centerX, centerY, donutInnerRadiusPx, midAngle)
-          : { x: centerX, y: centerY };
+      const lineStartPoint = polarToCartesian(
+        centerX,
+        centerY,
+        lineStartRadius,
+        midAngle,
+      );
       const line = figma.createVector();
       line.vectorPaths = [
         {
@@ -288,12 +299,12 @@ export async function drawPieChart(chartData: ChartData) {
       const labelCenterPoint = polarToCartesian(
         centerX,
         centerY,
-        pieRadius + lineExtend + labelCenterOffset,
+        lineEndRadius + labelCenterOffset,
         midAngle,
       );
       indicatorText = await createIndicatorTextFrame(
-        item.label || `Item ${item.index + 1}`,
-        (item.value / sum) * 100,
+        item.label,
+        exactPercent,
         labelCenterPoint.x,
         labelCenterPoint.y,
         showIndicatorPercentage,
@@ -326,23 +337,24 @@ export async function drawPieChart(chartData: ChartData) {
     if (indicatorText) {
       chartFrame.appendChild(indicatorText);
     }
+  }
 
-    if (legendList) {
-      const legend = await createLegend(
-        item.label || `Item ${item.index + 1}`,
-        item.value,
-        (item.value / sum) * 100,
-        sliceColor,
-        showPercentage,
-        valuePrefix,
-        valueSuffix,
-        legendTileLayout,
-        frameWidth,
-      );
-      if (legend) {
-        legendList.appendChild(legend);
-      }
-    }
+  if (legendList) {
+    await appendAggregatedLegends(
+      legendList,
+      sourceItems.map((item) => ({
+        index: item.index,
+        label: item.label || `Item ${item.index + 1}`,
+        value: item.value,
+        percentage: (item.value / sum) * 100,
+      })),
+      showPercentage,
+      valuePrefix,
+      valueSuffix,
+      legendTileLayout,
+      frameWidth,
+      chartData.othersLabel,
+    );
   }
 
   const finalFrame = await createFinalFrame(

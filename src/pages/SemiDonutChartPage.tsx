@@ -9,14 +9,16 @@ import {
 import { emit } from "@create-figma-plugin/utilities";
 import { Fragment, h } from "preact";
 import { useCallback, useState } from "preact/hooks";
-import ChartItemInput, { ChartItem } from "../components/ChartItemInput";
+import {
+  ChartDataItemsList,
+  ChartItem,
+} from "../components/ChartItemInput";
 import ChartSizeControl, {
   useChartSizeControl,
 } from "../components/editControl/ChartSizeControl";
 import ChartTitleControl, {
   getEffectiveChartTitle,
 } from "../components/editControl/ChartTitleControl";
-import EditSectionHeader from "../components/editControl/EditSectionHeader";
 import LegendControl, {
   getEffectiveLegendStyle,
 } from "../components/editControl/LegendControl";
@@ -34,6 +36,7 @@ import {
   isValidSemiDonutRingWidth,
 } from "../utils/chart/semiDonutCalculate";
 import { LegendStyle } from "../types";
+import { LEGEND_OTHERS_LABEL } from "../utils/legendAggregate";
 import { useRefreshDesignTokensOnMount } from "../utils/useRefreshDesignTokens";
 import styles from "../ui.css";
 
@@ -104,8 +107,6 @@ function SemiDonutChartPage({ onBack }: SemiDonutChartPageProps) {
   const [showChartTitle, setShowChartTitle] = useState<boolean>(false);
   const effectiveChartTitle = getEffectiveChartTitle(showChartTitle, chartTitle);
   const [items, setItems] = useState<ChartItem[]>(createSampleItems);
-  const [showTotalValueInput, setShowTotalValueInput] = useState<boolean>(true);
-  const effectiveShowTotalValue = showTotalValueInput;
   const [totalValueTitle, setTotalValueTitle] = useState<string>("Total value");
   const [showLegend, setShowLegend] = useState<boolean>(true);
   const [legendStyle, setLegendStyle] = useState<LegendStyle>("leftAndRight");
@@ -117,6 +118,7 @@ function SemiDonutChartPage({ onBack }: SemiDonutChartPageProps) {
   const [valuePrefix, setValuePrefix] = useState<string>("");
   const [valueSuffix, setValueSuffix] = useState<string>("HKD");
   const [showPercentage, setShowPercentage] = useState<boolean>(true);
+  const [othersLabel, setOthersLabel] = useState<string>(LEGEND_OTHERS_LABEL);
 
   const handleLabelInput = useCallback((index: number, label: string) => {
     setItems((currentItems) =>
@@ -170,8 +172,9 @@ function SemiDonutChartPage({ onBack }: SemiDonutChartPageProps) {
         showPercentage,
         valuePrefix,
         valueSuffix,
-        showTotalValue: effectiveShowTotalValue,
+        showTotalValue: true,
         totalValueTitle,
+        othersLabel,
         frameWidth: sizeControl.frameWidth,
         semiDonutSize: sizeControl.chartSize,
         semiDonutRingWidth: ringWidth,
@@ -187,8 +190,8 @@ function SemiDonutChartPage({ onBack }: SemiDonutChartPageProps) {
       showPercentage,
       valuePrefix,
       valueSuffix,
-      effectiveShowTotalValue,
       totalValueTitle,
+      othersLabel,
     ],
   );
 
@@ -208,8 +211,9 @@ function SemiDonutChartPage({ onBack }: SemiDonutChartPageProps) {
           showPercentage={showPercentage}
           valuePrefix={valuePrefix}
           valueSuffix={valueSuffix}
-          showTotalValue={effectiveShowTotalValue}
+          showTotalValue
           totalValueTitle={totalValueTitle}
+          othersLabel={othersLabel}
         />
       }
       controls={
@@ -262,17 +266,15 @@ function SemiDonutChartPage({ onBack }: SemiDonutChartPageProps) {
                 {items.length}/{MAX_ITEMS} items
               </Text>
             </div>
-            {items.map((item, index) => (
-              <ChartItemInput
-                key={index}
-                index={index}
-                item={item}
-                canDelete={items.length > MIN_ITEMS}
-                onDelete={handleDeleteItem}
-                onLabelInput={handleLabelInput}
-                onValueInput={handleValueInput}
-              />
-            ))}
+            <ChartDataItemsList
+              items={items}
+              canDelete={items.length > MIN_ITEMS}
+              othersLabel={othersLabel}
+              onOthersLabelInput={setOthersLabel}
+              onDelete={handleDeleteItem}
+              onLabelInput={handleLabelInput}
+              onValueInput={handleValueInput}
+            />
             <Button
               secondary
               disabled={items.length >= MAX_ITEMS}
@@ -296,25 +298,17 @@ function SemiDonutChartPage({ onBack }: SemiDonutChartPageProps) {
           <div className={styles.divider} />
           <VerticalSpace space="medium" />
           <Stack space="small">
-            <EditSectionHeader
-              hideTitle="Hide total value"
-              onVisibilityToggle={() =>
-                setShowTotalValueInput((current) => !current)
-              }
-              showTitle="Show total value"
-              title="Total value"
-              visible={showTotalValueInput}
-            />
-            {showTotalValueInput ? (
-              <div className={styles.fieldRow}>
-                <Text className={styles.fieldLabel}>Tile</Text>
-                <Textbox
-                  onValueInput={setTotalValueTitle}
-                  placeholder="Total value title"
-                  value={totalValueTitle}
-                />
-              </div>
-            ) : null}
+            <div className={styles.editSectionHeader}>
+              <Text className={styles.sectionTitle}>Total value</Text>
+            </div>
+            <div className={styles.fieldRow}>
+              <Text className={styles.fieldLabel}>Tile</Text>
+              <Textbox
+                onValueInput={setTotalValueTitle}
+                placeholder="Total value title"
+                value={totalValueTitle}
+              />
+            </div>
           </Stack>
           <VerticalSpace space="medium" />
           <div className={styles.divider} />

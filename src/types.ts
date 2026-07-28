@@ -85,6 +85,8 @@ export interface ChartData {
   valueSuffix?: string;
   showTotalValue?: boolean;
   totalValueTitle?: string;
+  /** Custom label for the aggregated legend/chart group. Defaults to "Others". */
+  othersLabel?: string;
   /** Semi-donut outer frame width (px). */
   frameWidth?: number;
   /** Semi-donut ring diameter (px). */
@@ -95,8 +97,6 @@ export interface ChartData {
   indicatorLineExtend?: number;
   /** Donut ring radial thickness (px). */
   donutRingWidth?: number;
-  /** Horizontal bar gap between segments (px). */
-  horBarSliceGap?: number;
 }
 
 export type VerticalBarMode = "single" | "dual";

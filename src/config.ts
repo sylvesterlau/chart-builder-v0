@@ -350,6 +350,10 @@ export const ds = {
         lineExtend: 8,
         lineExtendMin: 0,
         lineExtendMax: 20,
+        lineOuterGap: {
+          value: 1.5,
+          key: "e7a7a7e1c7572287d371c5fb928b4cac8879bda6",
+        } satisfies NumberToken,
         labelCenterOffset: 30,
         sliceStrokeWeight: {
           value: 1.5,

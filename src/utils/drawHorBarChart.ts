@@ -18,7 +18,12 @@ import {
 import type { NumberToken } from "../types";
 import { createChartTitle, loadChartTitleFont } from "./drawChartTitle";
 import { createFinalFrame } from "./figmaOperations";
-import { createLegend, createLegendList, loadLegendFonts } from "./drawLegend";
+import {
+  appendAggregatedLegends,
+  createLegendList,
+  loadLegendFonts,
+} from "./drawLegend";
+import { buildChartSegments, toLegendSourceItems } from "./legendAggregate";
 
 async function createHorBar(
   exactPercent: number,
@@ -48,9 +53,9 @@ function resolveHorBarFrameWidth(frameWidth: number | undefined): number {
   return Math.round(Math.min(frameWidthMax, Math.max(frameWidthMin, value)));
 }
 
-function resolveHorBarSliceGap(gapPx: number | undefined): number {
+function resolveHorBarSliceGap(): number {
   const { sliceGap, sliceGapMin, sliceGapMax } = horizontalBarChartLayout;
-  const value = gapPx ?? numberTokenValue(sliceGap);
+  const value = numberTokenValue(sliceGap);
   return Math.min(sliceGapMax, Math.max(sliceGapMin, value));
 }
 
@@ -61,9 +66,13 @@ export async function drawHorBarChart(chartData: ChartData) {
     return;
   }
   await figma.currentPage.loadAsync();
-  const transformedData: TransformedChartItem[] = transformToPercents(
-    chartData.data,
+  const sourceItems = toLegendSourceItems(chartData.data);
+  const chartSegments = buildChartSegments(
+    sourceItems,
+    chartData.othersLabel,
   );
+  const transformedData: TransformedChartItem[] =
+    transformToPercents(chartSegments);
   const shouldShowLegend = chartData.legendStyle !== "none";
   const showPercentage = chartData.showPercentage !== false;
   const chartTitle = chartData.chartTitle ?? "";
@@ -75,8 +84,8 @@ export async function drawHorBarChart(chartData: ChartData) {
   const barHeightPx = numberTokenValue(barHeight);
   const horizontalPaddingPx = numberTokenValue(horizontalPadding);
   const chartAreaWidth = frameWidth - horizontalPaddingPx * 2;
-  const sliceGapPx = resolveHorBarSliceGap(chartData.horBarSliceGap);
-  const segmentCount = transformedData.filter((item) => item.value > 0).length;
+  const sliceGapPx = resolveHorBarSliceGap();
+  const segmentCount = chartSegments.length;
   const barTrackWidth =
     chartAreaWidth - Math.max(0, segmentCount - 1) * sliceGapPx;
   if (chartTitle.trim()) {
@@ -90,7 +99,7 @@ export async function drawHorBarChart(chartData: ChartData) {
     chartData.legendStyle === "topAndBottom" ? "topAndBottom" : "leftAndRight";
   const chartContainerFrame = figma.createFrame();
   chartContainerFrame.fills = [];
-  chartContainerFrame.resize(frameWidth, 44);
+  chartContainerFrame.resize(frameWidth, barHeightPx);
   Object.assign(chartContainerFrame, {
     name: "Horizontal Bar Chart container",
     layoutMode: "HORIZONTAL",
@@ -101,64 +110,45 @@ export async function drawHorBarChart(chartData: ChartData) {
   });
   await applyHorizontalPadding(chartContainerFrame, horizontalPadding);
   await applyVerticalPadding(chartContainerFrame, verticalPadding);
-  const chartFrame = figma.createFrame();
-  chartFrame.fills = [];
-  chartFrame.resize(chartAreaWidth, barHeightPx);
-  Object.assign(chartFrame, {
-    name: "Horizontal Bar Chart area",
-    layoutMode: "HORIZONTAL",
-    primaryAxisSizingMode: "FIXED",
-    counterAxisSizingMode: "AUTO",
-    itemSpacing: sliceGapPx,
-    layoutAlign: "STRETCH",
-  });
-  await applyHeight(chartFrame, barHeight);
-  const tokenSliceGapPx = numberTokenValue(sliceGap);
-  if (
-    chartData.horBarSliceGap === undefined ||
-    chartData.horBarSliceGap === tokenSliceGapPx
-  ) {
-    await applyItemSpacing(chartFrame, sliceGap);
-  }
+  await applyItemSpacing(chartContainerFrame, sliceGap);
   for (let i = 0; i < transformedData.length; i++) {
     const item = transformedData[i];
+    const segment = chartSegments[i];
     const layerName = `${item.label} (${item.value})`;
-    const barColor = dataVisAt(i);
-    if (item.value > 0) {
-      const bar = await createHorBar(
-        item.exactPercent,
-        layerName,
-        barColor,
-        barTrackWidth,
-        barHeight,
-      );
-      if (bar) {
-        chartFrame.appendChild(bar);
-      }
-      if (legendList) {
-        const legend = await createLegend(
-          item.label,
-          item.value,
-          item.exactPercent,
-          barColor,
-          showPercentage,
-          valuePrefix,
-          valueSuffix,
-          legendTileLayout,
-          frameWidth,
-        );
-        if (legend) {
-          legendList.appendChild(legend);
-        }
-      }
+    const barColor = dataVisAt(segment.colorIndex);
+    const bar = await createHorBar(
+      item.exactPercent,
+      layerName,
+      barColor,
+      barTrackWidth,
+      barHeight,
+    );
+    if (bar) {
+      chartContainerFrame.appendChild(bar);
     }
+  }
+  if (legendList) {
+    await appendAggregatedLegends(
+      legendList,
+      sourceItems.map((item) => ({
+        index: item.index,
+        label: item.label,
+        value: item.value,
+        percentage: (item.value / sum) * 100,
+      })),
+      showPercentage,
+      valuePrefix,
+      valueSuffix,
+      legendTileLayout,
+      frameWidth,
+      chartData.othersLabel,
+    );
   }
   const finalFrame = await createFinalFrame(frameWidth, "Horizontal Bar Chart");
   const titleFrame = await createChartTitle(chartTitle, frameWidth);
   if (titleFrame) {
     finalFrame.appendChild(titleFrame);
   }
-  chartContainerFrame.appendChild(chartFrame);
   finalFrame.appendChild(chartContainerFrame);
   if (legendList) {
     finalFrame.appendChild(legendList);

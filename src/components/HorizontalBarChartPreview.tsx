@@ -1,6 +1,7 @@
 import { h } from "preact";
 import { chartBackground, horizontalBarChartLayout } from "../config";
 import { dataVisAt } from "../utils/dataVisAt";
+import { buildChartSegments, toLegendSourceItems } from "../utils/legendAggregate";
 import { LegendStyle } from "../types";
 import { ChartItem } from "./ChartItemInput";
 import ChartTitlePreview from "./ChartTitlePreview";
@@ -14,11 +15,11 @@ interface HorizontalBarChartPreviewProps {
   chartTitle: string;
   frameWidth: number;
   items: ChartItem[];
-  sliceGap: number;
   legendStyle: LegendStyle;
   showPercentage: boolean;
   valuePrefix: string;
   valueSuffix: string;
+  othersLabel?: string;
 }
 
 function formatPercent(value: number) {
@@ -29,11 +30,11 @@ function HorizontalBarChartPreview({
   chartTitle,
   frameWidth,
   items,
-  sliceGap,
   legendStyle,
   showPercentage,
   valuePrefix,
   valueSuffix,
+  othersLabel,
 }: HorizontalBarChartPreviewProps) {
   const { values: resolvedColors } = useColorTokenResolved();
   const { values: resolvedNumbers } = useNumberTokenResolved();
@@ -49,12 +50,14 @@ function HorizontalBarChartPreview({
     horizontalBarChartLayout.barHeight,
     resolvedNumbers,
   );
+  const sliceGap = numberTokenResolvedValue(
+    horizontalBarChartLayout.sliceGap,
+    resolvedNumbers,
+  );
 
-  const legendItems = items
-    .map((item, index) => ({ ...item, index }))
-    .filter((item) => item.label.trim() !== "" || item.value > 0);
-  const chartItems = legendItems.filter((item) => item.value > 0);
-  const total = chartItems.reduce((sum, item) => sum + item.value, 0);
+  const legendItems = toLegendSourceItems(items);
+  const chartItems = buildChartSegments(legendItems, othersLabel);
+  const total = legendItems.reduce((sum, item) => sum + item.value, 0);
 
   if (legendItems.length === 0 || total <= 0) {
     return null;
@@ -82,17 +85,19 @@ function HorizontalBarChartPreview({
       <ChartTitlePreview title={chartTitle} />
       <div
         style={{
+          alignItems: "center",
           boxSizing: "border-box",
           display: "flex",
           gap: `${sliceGap}px`,
-          height: `${barHeight}px`,
           padding: `${verticalPadding}px ${horizontalPadding}px`,
-          overflow: "hidden",
           width: "100%",
         }}
       >
         {chartItems.map((item, index) => {
-          const color = colorTokenSwatchHex(dataVisAt(item.index), resolvedColors);
+          const color = colorTokenSwatchHex(
+            dataVisAt(item.colorIndex),
+            resolvedColors,
+          );
           return (
             <div
               key={`${item.label}-${index}`}
@@ -112,6 +117,7 @@ function HorizontalBarChartPreview({
         showPercentage={showPercentage}
         valuePrefix={valuePrefix}
         valueSuffix={valueSuffix}
+        othersLabel={othersLabel}
         inlinePercentageFormatter={formatPercent}
       />
     </div>

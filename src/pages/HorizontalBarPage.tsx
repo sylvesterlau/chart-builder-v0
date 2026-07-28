@@ -3,14 +3,16 @@ import {
   IconPlus16,
   Stack,
   Text,
-  Textbox,
   TextboxNumeric,
   VerticalSpace,
 } from "@create-figma-plugin/ui";
 import { emit } from "@create-figma-plugin/utilities";
 import { h, Fragment } from "preact";
 import { useCallback, useState } from "preact/hooks";
-import ChartItemInput, { ChartItem } from "../components/ChartItemInput";
+import {
+  ChartDataItemsList,
+  ChartItem,
+} from "../components/ChartItemInput";
 import ChartTitleControl, {
   getEffectiveChartTitle,
 } from "../components/editControl/ChartTitleControl";
@@ -21,11 +23,11 @@ import HorizontalBarChartPreview from "../components/HorizontalBarChartPreview";
 import { EditChartPageLayout } from "../components/EditChartPageLayout";
 import {
   chartGeneralConfig,
-  horizontalBarChartLayout,
   pieChartConfig,
   sampleData,
 } from "../config";
 import { LegendStyle } from "../types";
+import { LEGEND_OTHERS_LABEL } from "../utils/legendAggregate";
 import { useRefreshDesignTokensOnMount } from "../utils/useRefreshDesignTokens";
 import styles from "../ui.css";
 interface HorizontalBarPageProps {
@@ -35,17 +37,11 @@ const MIN_ITEMS = 2;
 const MAX_ITEMS = 10;
 const DEFAULT_ITEM_COUNT = 4;
 const { frameWidthMin, frameWidthMax } = pieChartConfig;
-const { sliceGapMin, sliceGapMax } = horizontalBarChartLayout;
-const defaultSliceGap = horizontalBarChartLayout.sliceGap.value;
 
 function isValidFrameWidth(value: number) {
   return (
     Number.isFinite(value) && value >= frameWidthMin && value <= frameWidthMax
   );
-}
-
-function isValidSliceGap(value: number) {
-  return Number.isFinite(value) && value >= sliceGapMin && value <= sliceGapMax;
 }
 
 function createEmptyItem(index: number): ChartItem {
@@ -93,6 +89,7 @@ function HorizontalBarPage({ onBack }: HorizontalBarPageProps) {
   const [showPercentage, setShowPercentage] = useState<boolean>(true);
   const [valuePrefix, setValuePrefix] = useState<string>("");
   const [valueSuffix, setValueSuffix] = useState<string>("HKD");
+  const [othersLabel, setOthersLabel] = useState<string>(LEGEND_OTHERS_LABEL);
   const [frameWidth, setFrameWidth] = useState<number>(
     chartGeneralConfig.frameWidth,
   );
@@ -111,11 +108,6 @@ function HorizontalBarPage({ onBack }: HorizontalBarPageProps) {
       setFrameWidth(Math.round(value));
     }
   }, []);
-  const [sliceGap, setSliceGap] = useState<number>(defaultSliceGap);
-  const [sliceGapInput, setSliceGapInput] = useState<string>(
-    String(defaultSliceGap),
-  );
-  const sliceGapInputValid = isValidSliceGap(Number(sliceGapInput));
   const handleLabelInput = useCallback((index: number, label: string) => {
     setItems((currentItems) =>
       currentItems.map((item, itemIndex) =>
@@ -161,11 +153,11 @@ function HorizontalBarPage({ onBack }: HorizontalBarPageProps) {
           value: item.value,
         })),
         frameWidth,
-        horBarSliceGap: sliceGap,
         legendStyle: effectiveLegendStyle,
         showPercentage,
         valuePrefix,
         valueSuffix,
+        othersLabel,
       };
       // send form data to main.ts
       emit("SUBMIT_HORIZONTAL_BAR_CHART_DATA", formData);
@@ -174,11 +166,11 @@ function HorizontalBarPage({ onBack }: HorizontalBarPageProps) {
       effectiveChartTitle,
       frameWidth,
       items,
-      sliceGap,
       effectiveLegendStyle,
       showPercentage,
       valuePrefix,
       valueSuffix,
+      othersLabel,
     ],
   );
   return (
@@ -191,11 +183,11 @@ function HorizontalBarPage({ onBack }: HorizontalBarPageProps) {
           chartTitle={effectiveChartTitle}
           frameWidth={frameWidth}
           items={items}
-          sliceGap={sliceGap}
           legendStyle={effectiveLegendStyle}
           showPercentage={showPercentage}
           valuePrefix={valuePrefix}
           valueSuffix={valueSuffix}
+          othersLabel={othersLabel}
         />
       }
       controls={
@@ -223,25 +215,6 @@ function HorizontalBarPage({ onBack }: HorizontalBarPageProps) {
                 Width must be between {frameWidthMin} and {frameWidthMax}.
               </div>
             ) : null}
-            <div className={styles.fieldRow}>
-              <Text className={styles.fieldLabel}>Slice gap</Text>
-              <Textbox
-                onValueInput={(value) => {
-                  const sanitizedValue = sanitizeDecimalInput(value);
-                  setSliceGapInput(sanitizedValue);
-                  const numericValue = Number(sanitizedValue);
-                  if (sanitizedValue !== "" && isValidSliceGap(numericValue)) {
-                    setSliceGap(numericValue);
-                  }
-                }}
-                value={sliceGapInput}
-              />
-            </div>
-            {!sliceGapInputValid ? (
-              <div className={styles.fieldHintError}>
-                Gap must be between {sliceGapMin} and {sliceGapMax}.
-              </div>
-            ) : null}
           </Stack>
           <VerticalSpace space="medium" />
           <div className={styles.divider} />
@@ -253,17 +226,15 @@ function HorizontalBarPage({ onBack }: HorizontalBarPageProps) {
                 {items.length}/{MAX_ITEMS} items
               </Text>
             </div>
-            {items.map((item, index) => (
-              <ChartItemInput
-                key={index}
-                index={index}
-                item={item}
-                canDelete={items.length > MIN_ITEMS}
-                onDelete={handleDeleteItem}
-                onLabelInput={handleLabelInput}
-                onValueInput={handleValueInput}
-              />
-            ))}
+            <ChartDataItemsList
+              items={items}
+              canDelete={items.length > MIN_ITEMS}
+              othersLabel={othersLabel}
+              onOthersLabelInput={setOthersLabel}
+              onDelete={handleDeleteItem}
+              onLabelInput={handleLabelInput}
+              onValueInput={handleValueInput}
+            />
             <Button
               secondary
               disabled={items.length >= MAX_ITEMS}

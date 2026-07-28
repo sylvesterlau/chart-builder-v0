@@ -12,14 +12,16 @@ import {
 import { emit } from "@create-figma-plugin/utilities";
 import { Fragment, h } from "preact";
 import { useCallback, useState } from "preact/hooks";
-import ChartItemInput, { ChartItem } from "../components/ChartItemInput";
+import {
+  ChartDataItemsList,
+  ChartItem,
+} from "../components/ChartItemInput";
 import ChartSizeControl, {
   useChartSizeControl,
 } from "../components/editControl/ChartSizeControl";
 import ChartTitleControl, {
   getEffectiveChartTitle,
 } from "../components/editControl/ChartTitleControl";
-import EditSectionHeader from "../components/editControl/EditSectionHeader";
 import LegendControl, {
   getEffectiveLegendStyle,
 } from "../components/editControl/LegendControl";
@@ -36,6 +38,7 @@ import {
   isValidDonutRingWidth,
 } from "../utils/chart/pieDonutCalculate";
 import { LegendStyle } from "../types";
+import { LEGEND_OTHERS_LABEL } from "../utils/legendAggregate";
 import { useRefreshDesignTokensOnMount } from "../utils/useRefreshDesignTokens";
 import styles from "../ui.css";
 
@@ -132,7 +135,6 @@ function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
     "none",
   );
   const [showPercentage, setShowPercentage] = useState<boolean>(true);
-  const [showIndicator, setShowIndicator] = useState<boolean>(true);
   const [showIndicatorPercentage, setShowIndicatorPercentage] =
     useState<boolean>(true);
   const [indicatorLineExtend, setIndicatorLineExtend] = useState<number>(
@@ -145,6 +147,7 @@ function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
   );
   const [valuePrefix, setValuePrefix] = useState<string>("");
   const [valueSuffix, setValueSuffix] = useState<string>("HKD");
+  const [othersLabel, setOthersLabel] = useState<string>(LEGEND_OTHERS_LABEL);
 
   const handleLabelInput = useCallback((index: number, label: string) => {
     setItems((currentItems) =>
@@ -197,12 +200,13 @@ function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
         pieChartKind: chartKind,
         legendStyle: effectiveLegendStyle,
         showPercentage,
-        showIndicator,
+        showIndicator: true,
         showIndicatorPercentage,
         indicatorLineExtend,
         donutRingWidth: chartKind === "donut" ? donutRingWidth : undefined,
         valuePrefix,
         valueSuffix,
+        othersLabel,
         frameWidth: sizeControl.frameWidth,
         semiDonutSize: sizeControl.chartSize,
       });
@@ -213,12 +217,12 @@ function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
       effectiveChartTitle,
       effectiveLegendStyle,
       showPercentage,
-      showIndicator,
       showIndicatorPercentage,
       indicatorLineExtend,
       donutRingWidth,
       valuePrefix,
       valueSuffix,
+      othersLabel,
       sizeControl.frameWidth,
       sizeControl.chartSize,
     ],
@@ -239,13 +243,14 @@ function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
           chartTitle={effectiveChartTitle}
           items={items}
           legendStyle={effectiveLegendStyle}
-          showIndicator={showIndicator}
+          showIndicator
           showIndicatorPercentage={showIndicatorPercentage}
           indicatorLineExtend={indicatorLineExtend}
           donutRingWidth={donutRingWidth}
           showPercentage={showPercentage}
           valuePrefix={valuePrefix}
           valueSuffix={valueSuffix}
+          othersLabel={othersLabel}
         />
       }
       controls={
@@ -325,17 +330,15 @@ function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
                 {items.length}/{MAX_ITEMS} items
               </Text>
             </div>
-            {items.map((item, index) => (
-              <ChartItemInput
-                key={index}
-                index={index}
-                item={item}
-                canDelete={items.length > MIN_ITEMS}
-                onDelete={handleDeleteItem}
-                onLabelInput={handleLabelInput}
-                onValueInput={handleValueInput}
-              />
-            ))}
+            <ChartDataItemsList
+              items={items}
+              canDelete={items.length > MIN_ITEMS}
+              othersLabel={othersLabel}
+              onOthersLabelInput={setOthersLabel}
+              onDelete={handleDeleteItem}
+              onLabelInput={handleLabelInput}
+              onValueInput={handleValueInput}
+            />
             <Button
               secondary
               disabled={items.length >= MAX_ITEMS}
@@ -359,50 +362,44 @@ function PieDonutChartPage({ onBack }: PieDonutChartPageProps) {
           <div className={styles.divider} />
           <VerticalSpace space="medium" />
           <Stack space="small">
-            <EditSectionHeader
-              hideTitle="Hide indicator"
-              onVisibilityToggle={() => setShowIndicator((current) => !current)}
-              showTitle="Show indicator"
-              title="Indicator"
-              visible={showIndicator}
-            />
-            {showIndicator ? (
-              <Stack space="small">
-                <div className={styles.fieldRow}>
-                  <Text className={styles.fieldLabel}>Line extend</Text>
-                  <TextboxNumeric
-                    onNumericValueInput={(value) => {
-                      if (value === null) {
-                        setIndicatorLineExtendInput("");
-                        return;
-                      }
-                      const nextInput = String(value);
-                      setIndicatorLineExtendInput(nextInput);
-                      if (isValidIndicatorLineExtend(value)) {
-                        setIndicatorLineExtend(Math.round(value));
-                      }
-                    }}
-                    value={indicatorLineExtendInput}
-                  />
+            <div className={styles.editSectionHeader}>
+              <Text className={styles.sectionTitle}>Indicator</Text>
+            </div>
+            <Stack space="small">
+              <div className={styles.fieldRow}>
+                <Text className={styles.fieldLabel}>Line extend</Text>
+                <TextboxNumeric
+                  onNumericValueInput={(value) => {
+                    if (value === null) {
+                      setIndicatorLineExtendInput("");
+                      return;
+                    }
+                    const nextInput = String(value);
+                    setIndicatorLineExtendInput(nextInput);
+                    if (isValidIndicatorLineExtend(value)) {
+                      setIndicatorLineExtend(Math.round(value));
+                    }
+                  }}
+                  value={indicatorLineExtendInput}
+                />
+              </div>
+              {!indicatorLineExtendInputValid ? (
+                <div className={styles.fieldHintError}>
+                  Line extend must be between{" "}
+                  {pieChartConfig.indicator.lineExtendMin} and{" "}
+                  {pieChartConfig.indicator.lineExtendMax}.
                 </div>
-                {!indicatorLineExtendInputValid ? (
-                  <div className={styles.fieldHintError}>
-                    Line extend must be between{" "}
-                    {pieChartConfig.indicator.lineExtendMin} and{" "}
-                    {pieChartConfig.indicator.lineExtendMax}.
-                  </div>
-                ) : null}
-                <div className={styles.fieldRow}>
-                  <Text className={styles.fieldLabel}>Percentage</Text>
-                  <Toggle
-                    onValueChange={setShowIndicatorPercentage}
-                    value={showIndicatorPercentage}
-                  >
-                    {" "}
-                  </Toggle>
-                </div>
-              </Stack>
-            ) : null}
+              ) : null}
+              <div className={styles.fieldRow}>
+                <Text className={styles.fieldLabel}>Percentage</Text>
+                <Toggle
+                  onValueChange={setShowIndicatorPercentage}
+                  value={showIndicatorPercentage}
+                >
+                  {" "}
+                </Toggle>
+              </div>
+            </Stack>
           </Stack>
           <VerticalSpace space="medium" />
           <div className={styles.divider} />
