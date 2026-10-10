@@ -1,3 +1,4 @@
+import ChartJsonDebug from "../components/ChartJsonDebug";
 import {
   Button,
   Checkbox,
@@ -14,7 +15,7 @@ import {
   VerticalSpace,
   Divider,
 } from "@create-figma-plugin/ui";
-import { emit } from "@create-figma-plugin/utilities";
+import { emit, on } from "@create-figma-plugin/utilities";
 import { Fragment, h } from "preact";
 import {
   useCallback,
@@ -46,7 +47,10 @@ import {
 import styles from "../ui.css";
 import { useRefreshDesignTokensOnMount } from "../utils/useRefreshDesignTokens";
 
+import type { ChartEditSession, LineChartDraft } from "../utils/chartPersistence";
+
 interface LineChartPageProps {
+  session?: ChartEditSession | null;
   onBack: () => void;
 }
 
@@ -480,19 +484,23 @@ function createRandomSeriesInRange(
   );
 }
 
-function LineChartPage({ onBack }: LineChartPageProps) {
-  const sample = lineChartConfig;
+function LineChartPage({ onBack, session }: LineChartPageProps) {
+  const initial = session?.record.chartType === "lineChart" ? session.record.draft : undefined;
+  const editor = initial?.editor;
+  const sample = initial ? { ...lineChartConfig, ...initial.config } : lineChartConfig;
+  const [saving, setSaving] = useState(false);
+  useEffect(() => on("SPIKE_SAVE_FINISHED", () => setSaving(false)), []);
   const initialDatasetCount = sample.lineMode === "single" ? 1 : MAX_DATASETS;
   useRefreshDesignTokensOnMount();
   const [yAxisPosition, setYAxisPosition] = useState<CartesianYAxisPosition>(
-    sample.yAxisPosition,
+    sample.yAxisPosition ?? "left",
   );
   const [axisLineVisibility, setAxisLineVisibility] =
     useState<CartesianAxisLineVisibility>(sample.axisLineVisibility ?? "y");
   const [tooltipPercent, setTooltipPercent] = useState<number>(
-    DEFAULT_TOOLTIP_PERCENT,
+    editor?.tooltipPercent ?? DEFAULT_TOOLTIP_PERCENT,
   );
-  const [showTooltip, setShowTooltip] = useState<boolean>(false);
+  const [showTooltip, setShowTooltip] = useState<boolean>(editor?.showTooltip ?? false);
   const tooltipRangeInputRef = useRef<HTMLInputElement>(null);
   const [lineRange, setLineRange] = useState<LineChartRange>(sample.lineRange);
   const [pointCountInput, setPointCountInput] = useState<string>(
@@ -507,20 +515,20 @@ function LineChartPage({ onBack }: LineChartPageProps) {
   const [maxValueInput, setMaxValueInput] = useState<string>(
     String(sample.maxValue),
   );
-  const [xAxisMode, setXAxisMode] = useState<XAxisMode>("date");
+  const [xAxisMode, setXAxisMode] = useState<XAxisMode>(editor?.xAxisMode ?? "date");
   const [xAxisStartInput, setXAxisStartInput] =
-    useState<string>(DEFAULT_START_DATE);
-  const [xAxisEndInput, setXAxisEndInput] = useState<string>(DEFAULT_END_DATE);
+    useState<string>(editor?.xAxisStartInput ?? DEFAULT_START_DATE);
+  const [xAxisEndInput, setXAxisEndInput] = useState<string>(editor?.xAxisEndInput ?? DEFAULT_END_DATE);
   const [width, setWidth] = useState<number>(sample.width);
   const [height, setHeight] = useState<number>(sample.height);
-  const [chartTitle, setChartTitle] = useState<string>(sample.chartTitle);
-  const [showChartTitle, setShowChartTitle] = useState<boolean>(false);
+  const [chartTitle, setChartTitle] = useState<string>(editor?.chartTitle ?? sample.chartTitle);
+  const [showChartTitle, setShowChartTitle] = useState<boolean>(editor?.showChartTitle ?? false);
   const effectiveChartTitle = getEffectiveChartTitle(
     showChartTitle,
     chartTitle,
   );
-  const [yAxisDataType, setYAxisDataType] = useState<YAxisDataType>("number");
-  const [yAxisUnit, setYAxisUnit] = useState<string>(sample.yAxisTitle);
+  const [yAxisDataType, setYAxisDataType] = useState<YAxisDataType>(initial?.config.yAxisDataType ?? "number");
+  const [yAxisUnit, setYAxisUnit] = useState<string>(editor?.yAxisUnit ?? sample.yAxisTitle);
   const effectiveYAxisTitle = yAxisDataType === "number" ? yAxisUnit : "";
   const yAxisValueSuffix = yAxisDataType === "percentage" ? "%" : yAxisUnit;
   const [series, setSeries] = useState<LineChartSeries[]>(() => {
@@ -612,7 +620,9 @@ function LineChartPage({ onBack }: LineChartPageProps) {
     ? parsedXAxisEndTime
     : (parseTimeInput(DEFAULT_END_TIME) as number);
   const isDataConfigValid =
-    isPointCountValid && isValueRangeValid && isXAxisRangeValid;
+    isPointCountValid && isValueRangeValid && isXAxisRangeValid && isYAxisDivisionsValid &&
+    Number.isFinite(width) && width >= 260 && width <= 1200 &&
+    Number.isFinite(height) && height >= 260 && height <= 900;
 
   const chartConfig = useMemo<LineChartConfig>(() => {
     const boundedPointCount = clampPointCount(effectivePointCount);
@@ -833,18 +843,22 @@ function LineChartPage({ onBack }: LineChartPageProps) {
     ],
   );
 
-  const handleGenerateButtonClick = useCallback(
-    function () {
-      if (!isDataConfigValid) return;
-      emit("SUBMIT_LINE_CHART_DATA", chartConfig);
-    },
-    [chartConfig, isDataConfigValid],
-  );
+  const handleSave = (insertCopy = false) => {
+    if (!isDataConfigValid || saving) return;
+    const { color, ...config } = chartConfig;
+    const draft: LineChartDraft = {
+      config,
+      editor: { chartTitle, showChartTitle, xAxisMode, xAxisStartInput,
+        xAxisEndInput, yAxisUnit, tooltipPercent, showTooltip },
+    };
+    setSaving(true);
+    emit("SPIKE_SAVE_LINE_CHART", draft, insertCopy ? null : session ?? null);
+  };
 
   return (
     <EditChartPageLayout
       onBack={onBack}
-      title="Line chart"
+      title={session ? "Edit saved line chart" : "Line chart · JSON spike"}
       previewVariant="vertical"
       preview={<LineChartPreview config={chartConfig} />}
       controls={
@@ -1188,13 +1202,15 @@ function LineChartPage({ onBack }: LineChartPageProps) {
         </Fragment>
       }
       actions={
-        <Button
-          disabled={!isDataConfigValid}
-          fullWidth
-          onClick={handleGenerateButtonClick}
-        >
-          Generate
-        </Button>
+        <Stack space="small">
+          {!isDataConfigValid ? <Text>Check data settings. Size must be 260–1200 × 260–900.</Text> : null}
+          {session ? <Text>Spike: updating rebuilds inner layers. Manual edits inside the chart are replaced. Use Insert copy to keep the original.</Text> : null}
+          <Button disabled={saving || !isDataConfigValid} fullWidth onClick={() => handleSave()}>
+            {saving ? "Saving…" : session ? "Update chart (rebuild layers)" : "Generate & save configuration"}
+          </Button>
+          {session ? <Button secondary disabled={saving || !isDataConfigValid} fullWidth onClick={() => handleSave(true)}>Insert copy</Button> : null}
+          {session ? <ChartJsonDebug session={session} /> : null}
+        </Stack>
       }
     />
   );

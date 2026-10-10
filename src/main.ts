@@ -1,5 +1,5 @@
 import { emit, on, showUI } from "@create-figma-plugin/utilities";
-import { pluginUISize } from "./config";
+import { lineChartConfig, pluginUISize } from "./config";
 import {
   EDIT_CONTROLS_PANEL_WIDTH_STORAGE_KEY,
   type SetEditControlsPanelWidthPayload,
@@ -19,6 +19,9 @@ import { drawVerticalBarChart } from "./utils/drawVerticalBarChart";
 import { resolveColorTokenPayload } from "./utils/resolveColorTokenSwatches";
 import { resolveNumberTokenPayload } from "./utils/resolveNumberTokenValues";
 import { resolveTypographyTokenPayload } from "./utils/resolveTypographyTokenValues";
+
+import { CHART_CONFIG_KEY, assertUnchanged, findChartSession, parseChartRecord,
+  serializeChartRecord, serializeLineChartRecord, toChartData, type HorizontalBarDraft, type LineChartDraft, type ChartEditSession } from "./utils/chartPersistence";
 
 export default function () {
   function handleResizePluginUiWindow(payload: ResizePluginUiWindowPayload) {
@@ -57,6 +60,81 @@ export default function () {
       "EDIT_CONTROLS_PANEL_WIDTH",
       typeof savedWidth === "number" ? savedWidth : null,
     );
+  }
+
+  let savingChart = false;
+  function requestSavedChart(silent = false) {
+    try {
+      const selected = figma.currentPage.selection;
+      const session = selected.length === 1 ? findChartSession(selected[0]) : null;
+      if (session) emit("SPIKE_CHART_OPENED", session);
+      else if (!silent) figma.notify("Select one chart created by this spike (or a layer inside it).");
+    } catch (error) {
+      figma.notify(error instanceof Error ? error.message : "Cannot read saved chart.", { error: true });
+    }
+  }
+
+  async function saveSpikeChart(draft: HorizontalBarDraft | LineChartDraft, session: ChartEditSession | null, chartType: "horizontalBar" | "lineChart" = "horizontalBar") {
+    if (savingChart) return;
+    savingChart = true;
+    let generated: FrameNode | undefined;
+    try {
+      let target: FrameNode | null = null;
+      let revision = 1;
+      if (session) {
+        const node = await figma.getNodeByIdAsync(session.nodeId);
+        if (!node || node.type !== "FRAME" || node.removed) throw new Error("Original chart is missing. Insert a copy instead.");
+        target = node;
+        assertUnchanged(session.savedJson, target.getPluginData(CHART_CONFIG_KEY));
+        const previous = parseChartRecord(session.savedJson);
+        if (previous.chartType !== chartType) throw new Error("Chart type does not match the saved chart.");
+        revision = previous.revision + 1;
+      }
+      const raw = chartType === "lineChart"
+        ? serializeLineChartRecord(draft as LineChartDraft, revision)
+        : serializeChartRecord(draft as HorizontalBarDraft, revision);
+      const record = parseChartRecord(raw);
+      generated = record.chartType === "lineChart"
+        ? await drawLineChart({ ...record.draft.config, color: lineChartConfig.color }, false)
+        : await drawHorBarChart(toChartData(record.draft), false);
+      if (!generated) throw new Error("Chart could not be generated.");
+      // Write to the staged frame first: failures leave an existing chart untouched.
+      generated.setPluginData(CHART_CONFIG_KEY, raw);
+      if (target) {
+        if (target.removed) throw new Error("Original chart was deleted while generating.");
+        assertUnchanged(session!.savedJson, target.getPluginData(CHART_CONFIG_KEY));
+        const nextWidth = generated.width;
+        const previousChildren = [...target.children];
+        const replacements = [...generated.children];
+        const previousWidth = target.width;
+        const previousHeight = target.height;
+        try {
+          for (const child of replacements) target.appendChild(child);
+          target.resize(nextWidth, target.height);
+          target.setPluginData(CHART_CONFIG_KEY, raw);
+        } catch (error) {
+          // Keep the old layers until every fallible write has succeeded.
+          for (const child of replacements) if (!child.removed) generated.appendChild(child);
+          target.resize(previousWidth, previousHeight);
+          throw error;
+        }
+        for (const child of previousChildren) child.remove();
+        generated.remove();
+      } else {
+        target = generated;
+      }
+      generated = undefined;
+      figma.currentPage.selection = [target];
+      figma.viewport.scrollAndZoomIntoView([target]);
+      emit("SPIKE_CHART_OPENED", { nodeId: target.id, savedJson: raw, record: parseChartRecord(raw) });
+      figma.notify(session ? "Updated original chart; JSON revision " + revision : "Chart created with embedded JSON.");
+    } catch (error) {
+      if (generated && !generated.removed) generated.remove();
+      figma.notify(error instanceof Error ? error.message : "Chart save failed.", { error: true });
+    } finally {
+      savingChart = false;
+      emit("SPIKE_SAVE_FINISHED");
+    }
   }
 
   async function handleSemiDonutChartData(chartData: ChartData) {
@@ -139,6 +217,20 @@ export default function () {
     }, 200);
   }
 
+  on("SPIKE_OPEN_SELECTED_CHART", requestSavedChart);
+  on("SPIKE_READ_CHART_JSON", async (nodeId: string) => {
+    try {
+      const node = await figma.getNodeByIdAsync(nodeId);
+      if (!node || node.type !== "FRAME" || node.removed) throw new Error("图表 Frame 已不存在。");
+      const raw = node.getPluginData(CHART_CONFIG_KEY);
+      if (!raw) throw new Error("这个 Frame 没有已保存的图表 JSON。");
+      emit("SPIKE_CHART_JSON", { nodeId, raw });
+    } catch (error) {
+      emit("SPIKE_CHART_JSON", { nodeId, error: error instanceof Error ? error.message : "读取失败。" });
+    }
+  });
+  on("SPIKE_SAVE_CHART", saveSpikeChart);
+  on("SPIKE_SAVE_LINE_CHART", (draft: LineChartDraft, session: ChartEditSession | null) => saveSpikeChart(draft, session, "lineChart"));
   on("SUBMIT_SEMI_DONUT_CHART_DATA", handleSemiDonutChartData);
   on("SUBMIT_HORIZONTAL_BAR_CHART_DATA", handleHorizontalBarChartData);
   on("SUBMIT_PIE_CHART_DATA", handlePieChartData);

@@ -5,18 +5,19 @@
   "dependencies": {
     "@create-figma-plugin/ui": "^4.0.3",
     "@create-figma-plugin/utilities": "^4.0.3",
-    "preact": ">=10"
+    "preact": "^10.29.8"
   },
   "devDependencies": {
     "@create-figma-plugin/build": "^4.0.3",
     "@create-figma-plugin/tsconfig": "^4.0.3",
     "@figma/plugin-typings": "1.109.0",
-    "typescript": ">=5"
+    "typescript": "~6.0.3"
   },
   "scripts": {
     "build": "build-figma-plugin --typecheck --minify",
     "dev": "build-figma-plugin --typecheck --watch",
-    "watch": "build-figma-plugin --typecheck --watch"
+    "watch": "build-figma-plugin --typecheck --watch",
+    "test:spike": "node --experimental-strip-types --test tests/chartPersistence.test.mjs"
   },
   "figma-plugin": {
     "editorType": [

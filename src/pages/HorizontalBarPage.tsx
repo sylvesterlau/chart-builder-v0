@@ -1,3 +1,4 @@
+import ChartJsonDebug from "../components/ChartJsonDebug";
 import {
   Button,
   IconPlus16,
@@ -6,9 +7,9 @@ import {
   TextboxNumeric,
   VerticalSpace,
 } from "@create-figma-plugin/ui";
-import { emit } from "@create-figma-plugin/utilities";
+import { emit, on } from "@create-figma-plugin/utilities";
 import { h, Fragment } from "preact";
-import { useCallback, useState } from "preact/hooks";
+import { useCallback, useEffect, useState } from "preact/hooks";
 import {
   ChartDataItemsList,
   ChartItem,
@@ -30,7 +31,9 @@ import { LegendStyle } from "../types";
 import { LEGEND_OTHERS_LABEL } from "../utils/legendAggregate";
 import { useRefreshDesignTokensOnMount } from "../utils/useRefreshDesignTokens";
 import styles from "../ui.css";
+import type { ChartEditSession, HorizontalBarDraft } from "../utils/chartPersistence";
 interface HorizontalBarPageProps {
+  session?: ChartEditSession | null;
   onBack: () => void;
 }
 const MIN_ITEMS = 2;
@@ -70,31 +73,34 @@ function sanitizeDecimalInput(value: string) {
   }
   return sanitizedValue;
 }
-function HorizontalBarPage({ onBack }: HorizontalBarPageProps) {
+function HorizontalBarPage({ onBack, session }: HorizontalBarPageProps) {
+  const initial = session?.record.chartType === "horizontalBar" ? session.record.draft : undefined;
+  const [saving, setSaving] = useState(false);
+  useEffect(() => on("SPIKE_SAVE_FINISHED", () => setSaving(false)), []);
   useRefreshDesignTokensOnMount();
-  const [chartTitle, setChartTitle] = useState<string>("Chart title");
-  const [showChartTitle, setShowChartTitle] = useState<boolean>(false);
+  const [chartTitle, setChartTitle] = useState<string>(initial?.chartTitle ?? "Chart title");
+  const [showChartTitle, setShowChartTitle] = useState<boolean>(initial?.showChartTitle ?? false);
   const effectiveChartTitle = getEffectiveChartTitle(
     showChartTitle,
     chartTitle,
   );
-  const [items, setItems] = useState<ChartItem[]>(createSampleItems);
-  const [showLegend, setShowLegend] = useState<boolean>(true);
-  const [legendStyle, setLegendStyle] = useState<LegendStyle>("leftAndRight");
+  const [items, setItems] = useState<ChartItem[]>(() => initial ? initial.data.map(item => ({...item, valueInput: String(item.value)})) : createSampleItems());
+  const [showLegend, setShowLegend] = useState<boolean>(initial?.showLegend ?? true);
+  const [legendStyle, setLegendStyle] = useState<LegendStyle>(initial?.legendStyle ?? "leftAndRight");
   const effectiveLegendStyle = getEffectiveLegendStyle(
     showLegend,
     legendStyle,
     "none",
   );
-  const [showPercentage, setShowPercentage] = useState<boolean>(true);
-  const [valuePrefix, setValuePrefix] = useState<string>("");
-  const [valueSuffix, setValueSuffix] = useState<string>("HKD");
-  const [othersLabel, setOthersLabel] = useState<string>(LEGEND_OTHERS_LABEL);
+  const [showPercentage, setShowPercentage] = useState<boolean>(initial?.showPercentage ?? true);
+  const [valuePrefix, setValuePrefix] = useState<string>(initial?.valuePrefix ?? "");
+  const [valueSuffix, setValueSuffix] = useState<string>(initial?.valueSuffix ?? "HKD");
+  const [othersLabel, setOthersLabel] = useState<string>(initial?.othersLabel ?? LEGEND_OTHERS_LABEL);
   const [frameWidth, setFrameWidth] = useState<number>(
-    chartGeneralConfig.frameWidth,
+    initial?.frameWidth ?? chartGeneralConfig.frameWidth,
   );
   const [frameWidthInput, setFrameWidthInput] = useState<string>(
-    String(chartGeneralConfig.frameWidth),
+    String(initial?.frameWidth ?? chartGeneralConfig.frameWidth),
   );
   const frameWidthInputValid = isValidFrameWidth(Number(frameWidthInput));
   const handleFrameWidthInput = useCallback(function (value: number | null) {
@@ -144,39 +150,18 @@ function HorizontalBarPage({ onBack }: HorizontalBarPageProps) {
         : currentItems.filter((_, itemIndex) => itemIndex !== index),
     );
   }, []);
-  const handleGenerateButtonClick = useCallback(
-    function () {
-      const formData = {
-        chartTitle: effectiveChartTitle,
-        data: items.map((item) => ({
-          label: item.label,
-          value: item.value,
-        })),
-        frameWidth,
-        legendStyle: effectiveLegendStyle,
-        showPercentage,
-        valuePrefix,
-        valueSuffix,
-        othersLabel,
-      };
-      // send form data to main.ts
-      emit("SUBMIT_HORIZONTAL_BAR_CHART_DATA", formData);
-    },
-    [
-      effectiveChartTitle,
-      frameWidth,
-      items,
-      effectiveLegendStyle,
-      showPercentage,
-      valuePrefix,
-      valueSuffix,
-      othersLabel,
-    ],
-  );
+  const handleSave = (insertCopy = false) => {
+    const draft: HorizontalBarDraft = {
+      chartTitle, showChartTitle, data: items.map(({ label, value }) => ({ label, value })),
+      frameWidth, showLegend, legendStyle, showPercentage, valuePrefix, valueSuffix, othersLabel,
+    };
+    setSaving(true);
+    emit("SPIKE_SAVE_CHART", draft, insertCopy ? null : session ?? null);
+  };
   return (
     <EditChartPageLayout
       onBack={onBack}
-      title="Horizontal bar chart"
+      title={session ? "Edit saved horizontal bar" : "Horizontal bar · JSON spike"}
       previewVariant="horizontal"
       preview={
         <HorizontalBarChartPreview
@@ -272,9 +257,14 @@ function HorizontalBarPage({ onBack }: HorizontalBarPageProps) {
         </Fragment>
       }
       actions={
-        <Button fullWidth onClick={handleGenerateButtonClick}>
-          Generate
-        </Button>
+        <Stack space="small">
+          {session ? <Text>Spike: updating rebuilds inner layers. Manual edits inside the chart are replaced. Use Insert copy to keep the original.</Text> : null}
+          <Button fullWidth disabled={saving || !frameWidthInputValid} onClick={() => handleSave()}>
+            {saving ? "Saving…" : session ? "Update chart (rebuild layers)" : "Generate & save configuration"}
+          </Button>
+          {session ? <Button secondary fullWidth disabled={saving || !frameWidthInputValid} onClick={() => handleSave(true)}>Insert copy</Button> : null}
+          {session ? <ChartJsonDebug session={session} /> : null}
+        </Stack>
       }
     />
   );

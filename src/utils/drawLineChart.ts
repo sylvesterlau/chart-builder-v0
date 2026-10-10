@@ -537,7 +537,7 @@ async function drawChart(parent: FrameNode, config: NormalizedLineChartConfig) {
   return { chart, indicatorX: selectedIndicatorX };
 }
 
-export async function drawLineChart(chartData: Partial<LineChartConfig>) {
+export async function drawLineChart(chartData: Partial<LineChartConfig>, selectResult = true) {
   const config = normalizeLineChartConfig(
     chartData,
     lineChartConfig as unknown as LineChartConfig,
@@ -561,7 +561,7 @@ export async function drawLineChart(chartData: Partial<LineChartConfig>) {
 
   positionChart(chart);
   figma.currentPage.appendChild(chart);
-  const title = await createChartTitle(config.chartTitle);
+  const title = await createChartTitle(chartData.chartTitle ?? config.chartTitle);
   if (title) {
     chart.appendChild(title);
   }
@@ -577,6 +577,9 @@ export async function drawLineChart(chartData: Partial<LineChartConfig>) {
     drawnChart.chart.y,
   );
 
-  figma.currentPage.selection = [chart];
-  figma.viewport.scrollAndZoomIntoView([chart]);
+  if (selectResult) {
+    figma.currentPage.selection = [chart];
+    figma.viewport.scrollAndZoomIntoView([chart]);
+  }
+  return chart;
 }
