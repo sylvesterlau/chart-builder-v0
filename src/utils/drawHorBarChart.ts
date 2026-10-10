@@ -59,7 +59,7 @@ function resolveHorBarSliceGap(): number {
   return Math.min(sliceGapMax, Math.max(sliceGapMin, value));
 }
 
-export async function drawHorBarChart(chartData: ChartData) {
+export async function drawHorBarChart(chartData: ChartData, selectResult = true) {
   const sum: number = getSum(chartData);
   if (sum <= 0) {
     figma.notify("Please enter correct value for items");
@@ -154,6 +154,9 @@ export async function drawHorBarChart(chartData: ChartData) {
     finalFrame.appendChild(legendList);
   }
   figma.currentPage.appendChild(finalFrame);
-  figma.currentPage.selection = [finalFrame];
-  figma.viewport.scrollAndZoomIntoView([finalFrame]);
+  if (selectResult) {
+    figma.currentPage.selection = [finalFrame];
+    figma.viewport.scrollAndZoomIntoView([finalFrame]);
+  }
+  return finalFrame;
 }
