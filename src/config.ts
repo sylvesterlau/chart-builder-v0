@@ -7,6 +7,12 @@ import {
 // Show design system entry
 export const showDesignSystemEntry = true;
 
+/** Text Resizing collection and mode IDs for fixing chart text at 100%. */
+export const textResizingConfig = {
+  collectionId: "",
+  mode100PercentId: "",
+} as const;
+
 // chart sample data — demo inputs, not visual tokens
 export const sampleData = {
   spending: {

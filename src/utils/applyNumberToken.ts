@@ -5,7 +5,8 @@ export type LayoutNumberField =
   | "paddingRight"
   | "paddingTop"
   | "paddingBottom"
-  | "itemSpacing";
+  | "itemSpacing"
+  | "counterAxisSpacing";
 
 type LayoutBindableNode = FrameNode | ComponentNode | InstanceNode;
 
@@ -149,6 +150,13 @@ export async function applyItemSpacing(
   await applyNumberTokenToField(node, "itemSpacing", token);
 }
 
+export async function applyCounterAxisSpacing(
+  node: LayoutBindableNode,
+  token: NumberToken,
+): Promise<void> {
+  await applyNumberTokenToField(node, "counterAxisSpacing", token);
+}
+
 export async function applyChartTitlePadding(
   node: LayoutBindableNode,
   padding: { horizontal: NumberToken; vertical: NumberToken },
@@ -182,7 +190,6 @@ export async function applyKeyInfoSpacing(
   await applyPaddingTop(node, spacing.topPadding);
   await applyPaddingBottom(node, spacing.bottomPadding);
 }
-
 
 /** Bind `strokeWeight` on geometry nodes (ellipse, vector, line, etc.). */
 export async function applyStrokeWeight(

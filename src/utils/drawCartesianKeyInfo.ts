@@ -5,17 +5,27 @@ import {
   textColor,
 } from "../config";
 import { dataVisAt } from "./dataVisAt";
-import { CartesianKeyInfoData, formatPercentageChange } from "./cartesianKeyInfo";
+import {
+  CartesianKeyInfoData,
+  formatPercentageChange,
+} from "./cartesianKeyInfo";
 import type { ColorToken, TypographyToken } from "../types";
 import {
+  applyCounterAxisSpacing,
   applyHeight,
   applyItemSpacing,
   applyKeyInfoSpacing,
   applyWidth,
   numberTokenValue,
 } from "./applyNumberToken";
-import { applyColorTokenToFills, applyColorTokenToStrokes } from "./applyColorToken";
-import { applyTypographyTokenToText, loadTypographyTokenFontsBatch } from "./applyTypographyToken";
+import {
+  applyColorTokenToFills,
+  applyColorTokenToStrokes,
+} from "./applyColorToken";
+import {
+  applyTypographyTokenToText,
+  loadTypographyTokenFontsBatch,
+} from "./applyTypographyToken";
 
 const keyInfoTextColor = textColor.primary;
 
@@ -61,8 +71,11 @@ async function createBarSwatch(colorToken: ColorToken): Promise<RectangleNode> {
   return shape;
 }
 
-async function createLineSwatch(colorToken: ColorToken, seriesIndex: number): Promise<FrameNode> {
-  const visual = await createFrame(".Legend indicator");
+async function createLineSwatch(
+  colorToken: ColorToken,
+  seriesIndex: number,
+): Promise<FrameNode> {
+  const visual = await createFrame(".Legend indicator_HiveChart");
   await applyWidth(visual, legendIndicatorConfig.size);
   await applyHeight(visual, legendIndicatorConfig.size);
   const indicatorSize = numberTokenValue(legendIndicatorConfig.size);
@@ -103,7 +116,7 @@ async function createVisual(
   kind: CartesianKeyInfoData["kind"],
   colorTokenIndex: number,
 ): Promise<FrameNode> {
-  const visual = await createFrame("Visual");
+  const visual = await createFrame("Visual_HiveChart");
   visual.resize(18, 20);
   Object.assign(visual, {
     layoutMode: "HORIZONTAL",
@@ -112,12 +125,18 @@ async function createVisual(
   });
   const token = dataVisAt(colorTokenIndex);
   visual.appendChild(
-    kind === "line" ? await createLineSwatch(token, colorTokenIndex) : await createBarSwatch(token),
+    kind === "line"
+      ? await createLineSwatch(token, colorTokenIndex)
+      : await createBarSwatch(token),
   );
   return visual;
 }
 
-async function createLabelRow(data: CartesianKeyInfoData, itemIndex: number): Promise<FrameNode> {
+async function createLabelRow(
+  data: CartesianKeyInfoData,
+  itemIndex: number,
+  labelLayoutGrow = 1,
+): Promise<FrameNode> {
   const item = data.items[itemIndex];
   const row = await createFrame("Main");
   row.resize(160, 20);
@@ -135,13 +154,16 @@ async function createLabelRow(data: CartesianKeyInfoData, itemIndex: number): Pr
     cartesianKeyInfoConfig.typography.label,
     keyInfoTextColor,
   );
-  label.layoutGrow = 1;
+  label.layoutGrow = labelLayoutGrow;
   row.appendChild(label);
   await applyItemSpacing(row, cartesianKeyInfoConfig.spacing.itemGap);
   return row;
 }
 
-async function createValueRow(data: CartesianKeyInfoData, itemIndex: number): Promise<FrameNode> {
+async function createValueRow(
+  data: CartesianKeyInfoData,
+  itemIndex: number,
+): Promise<FrameNode> {
   const item = data.items[itemIndex];
   const isRows = data.layout === "rows";
   const row = await createFrame("Data");
@@ -153,6 +175,9 @@ async function createValueRow(data: CartesianKeyInfoData, itemIndex: number): Pr
     counterAxisAlignItems: "BASELINE",
     itemSpacing: numberTokenValue(cartesianKeyInfoConfig.spacing.rowGap),
   });
+  if (isRows) {
+    row.primaryAxisAlignItems = "MAX";
+  }
 
   row.appendChild(
     await createText(
@@ -166,7 +191,11 @@ async function createValueRow(data: CartesianKeyInfoData, itemIndex: number): Pr
     ),
   );
   row.appendChild(
-    await createText(item.unit, cartesianKeyInfoConfig.typography.unit, keyInfoTextColor),
+    await createText(
+      item.unit,
+      cartesianKeyInfoConfig.typography.unit,
+      keyInfoTextColor,
+    ),
   );
 
   if (item.percentageChange !== undefined) {
@@ -187,7 +216,10 @@ async function createValueRow(data: CartesianKeyInfoData, itemIndex: number): Pr
   return row;
 }
 
-async function createInlineItem(data: CartesianKeyInfoData, itemIndex: number): Promise<FrameNode> {
+async function createInlineItem(
+  data: CartesianKeyInfoData,
+  itemIndex: number,
+): Promise<FrameNode> {
   const item = await createFrame("Key info item");
   item.resize(160, data.kind === "line" ? 56 : 47);
   Object.assign(item, {
@@ -219,15 +251,15 @@ async function createRows(data: CartesianKeyInfoData): Promise<FrameNode> {
     row.resize(358, 20);
     Object.assign(row, {
       layoutMode: "HORIZONTAL",
-      primaryAxisSizingMode: "AUTO",
+      layoutWrap: "WRAP",
+      primaryAxisSizingMode: "FIXED",
       counterAxisSizingMode: "AUTO",
+      primaryAxisAlignItems: "SPACE_BETWEEN",
       counterAxisAlignItems: "CENTER",
-      itemSpacing: numberTokenValue(cartesianKeyInfoConfig.spacing.itemGap),
       layoutAlign: "STRETCH",
     });
-    await applyItemSpacing(row, cartesianKeyInfoConfig.spacing.itemGap);
-    const label = await createLabelRow(data, index);
-    label.layoutGrow = 1;
+    await applyCounterAxisSpacing(row, cartesianKeyInfoConfig.spacing.itemGap);
+    const label = await createLabelRow(data, index, 0);
     row.appendChild(label);
     row.appendChild(await createValueRow(data, index));
     rows.appendChild(row);
@@ -251,17 +283,27 @@ export async function createCartesianKeyInfo(
     primaryAxisSizingMode: "AUTO",
     counterAxisSizingMode: "FIXED",
     layoutAlign: "STRETCH",
-    paddingLeft: numberTokenValue(cartesianKeyInfoConfig.spacing.horizontalPadding),
-    paddingRight: numberTokenValue(cartesianKeyInfoConfig.spacing.horizontalPadding),
+    paddingLeft: numberTokenValue(
+      cartesianKeyInfoConfig.spacing.horizontalPadding,
+    ),
+    paddingRight: numberTokenValue(
+      cartesianKeyInfoConfig.spacing.horizontalPadding,
+    ),
     paddingTop: numberTokenValue(cartesianKeyInfoConfig.spacing.topPadding),
-    paddingBottom: numberTokenValue(cartesianKeyInfoConfig.spacing.bottomPadding),
+    paddingBottom: numberTokenValue(
+      cartesianKeyInfoConfig.spacing.bottomPadding,
+    ),
     itemSpacing: 0,
   });
   await applyKeyInfoSpacing(keyInfo, cartesianKeyInfoConfig.spacing);
 
   if (data.rangeLabel) {
     keyInfo.appendChild(
-      await createText(data.rangeLabel, cartesianKeyInfoConfig.typography.range, keyInfoTextColor),
+      await createText(
+        data.rangeLabel,
+        cartesianKeyInfoConfig.typography.range,
+        keyInfoTextColor,
+      ),
     );
   }
 

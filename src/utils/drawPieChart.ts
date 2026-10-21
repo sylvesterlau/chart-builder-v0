@@ -27,7 +27,10 @@ import {
 } from "./applyTypographyToken";
 import { createChartTitle, loadChartTitleFont } from "./drawChartTitle";
 import { applyStrokeWeight, numberTokenValue } from "./applyNumberToken";
-import { createFinalFrame } from "./figmaOperations";
+import {
+  apply100PercentTextResizing,
+  createFinalFrame,
+} from "./figmaOperations";
 import {
   appendAggregatedLegends,
   createLegendList,
@@ -233,6 +236,7 @@ export async function drawPieChart(chartData: ChartData) {
   Object.assign(chartFrame, {
     name: "Pie chart area",
   });
+  await apply100PercentTextResizing(chartFrame);
 
   const legendList = shouldShowLegend ? createLegendList() : null;
   const donutGapPercent =

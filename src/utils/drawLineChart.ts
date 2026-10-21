@@ -47,6 +47,7 @@ import {
   measureYAxisLabelGutterFigma,
 } from "./drawCartesianAxis";
 import { createChartTitle, loadChartTitleFont } from "./drawChartTitle";
+import { apply100PercentTextResizing } from "./figmaOperations";
 
 const ROOT_NAME = "Line chart";
 
@@ -275,7 +276,14 @@ async function drawMarker(
   fillToken: ColorToken,
   seriesIndex: number,
 ) {
-  const marker = await createFrameNode(parent, ".Marker", x - 7, y - 7, 14, 14);
+  const marker = await createFrameNode(
+    parent,
+    ".Marker_HiveChart",
+    x - 7,
+    y - 7,
+    14,
+    14,
+  );
 
   if (seriesIndex === 1) {
     const shape = await createRect(
@@ -342,7 +350,7 @@ async function drawLines(
     const series = visibleSeries[index];
     await createLineVector(
       lineFrame,
-      `_Line-${index + 1}`,
+      `_Line-${index + 1}_HiveChart`,
       createPathFromValues(
         series.values,
         config.minValue,
@@ -429,7 +437,8 @@ async function drawChart(parent: FrameNode, config: NormalizedLineChartConfig) {
   await applyPaddingBottom(chart, spacing.padding.normal);
   await applyItemSpacing(chart, spacing.gap.s);
   chart.layoutSizingHorizontal = "FILL";
-  chart.layoutSizingVertical = "FILL";
+  chart.layoutSizingVertical = "HUG";
+  await apply100PercentTextResizing(chart);
 
   if (showYAxisTitle) {
     const titleFrame = await createFrameNode(
@@ -466,7 +475,7 @@ async function drawChart(parent: FrameNode, config: NormalizedLineChartConfig) {
     config.height - contentStackOffset,
   );
   contentFrame.layoutSizingHorizontal = "FILL";
-  contentFrame.layoutSizingVertical = "FILL";
+  contentFrame.layoutSizingVertical = "FIXED";
 
   const yAxisPosition = config.yAxisPosition ?? "right";
   const labelGutter = await measureYAxisLabelGutterFigma(

@@ -57,7 +57,7 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 async function createLineSwatch(colorTokenIndex: number): Promise<FrameNode> {
-  const visual = await createFrame(".Legend indicator");
+  const visual = await createFrame(".Legend indicator_HiveChart");
   await applyWidth(visual, legendIndicatorConfig.size);
   await applyHeight(visual, legendIndicatorConfig.size);
   const indicatorSize = numberTokenValue(legendIndicatorConfig.size);
@@ -101,7 +101,7 @@ async function createSwatch(
   kind: CartesianTooltipData["kind"],
   colorTokenIndex: number,
 ): Promise<FrameNode> {
-  const visual = await createFrame("Visual");
+  const visual = await createFrame("Visual_HiveChart");
   visual.resize(18, 20);
   Object.assign(visual, {
     layoutMode: "HORIZONTAL",

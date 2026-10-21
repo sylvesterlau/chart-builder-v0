@@ -76,7 +76,7 @@ export async function createLegend(
   await applyWidth(indicatorFrame, legendIndicatorConfig.size);
   await applyHeight(indicatorFrame, legendIndicatorConfig.size);
   Object.assign(indicatorFrame, {
-    name: ".Legend indicator",
+    name: ".Legend indicator_HiveChart",
     layoutMode: "VERTICAL",
     primaryAxisSizingMode: "FIXED",
     counterAxisSizingMode: "FIXED",
@@ -188,6 +188,7 @@ export async function createLegend(
     Object.assign(labelRow, {
       name: "Label",
       layoutMode: "HORIZONTAL",
+      layoutWrap: "WRAP",
       primaryAxisSizingMode: "AUTO",
       counterAxisSizingMode: "AUTO",
       itemSpacing: legendSpacingConfig.leftRightItemSpacing.value,

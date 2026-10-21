@@ -48,6 +48,7 @@ import {
   measureYAxisLabelGutterFigma,
 } from "./drawCartesianAxis";
 import { createChartTitle, loadChartTitleFont } from "./drawChartTitle";
+import { apply100PercentTextResizing } from "./figmaOperations";
 
 const ROOT_NAME = "Vertical bar chart";
 
@@ -383,7 +384,8 @@ async function drawBarChart(
   await applyPaddingBottom(chart, spacing.padding.normal);
   await applyItemSpacing(chart, spacing.gap.s);
   chart.layoutSizingHorizontal = "FILL";
-  chart.layoutSizingVertical = "FILL";
+  chart.layoutSizingVertical = "HUG";
+  await apply100PercentTextResizing(chart);
 
   const titleFrame = await createFrameNode(
     chart,

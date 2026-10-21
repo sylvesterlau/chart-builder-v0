@@ -21,7 +21,10 @@ import {
   loadTypographyTokenFontsBatch,
 } from "./applyTypographyToken";
 import { createChartTitle, loadChartTitleFont } from "./drawChartTitle";
-import { createFinalFrame } from "./figmaOperations";
+import {
+  apply100PercentTextResizing,
+  createFinalFrame,
+} from "./figmaOperations";
 import {
   appendAggregatedLegends,
   createLegendList,
@@ -236,6 +239,7 @@ export async function drawSemiDonutChart(chartData: ChartData) {
     counterAxisSizingMode: "AUTO",
     counterAxisAlignItems: "CENTER",
   });
+  await apply100PercentTextResizing(chartValueFrame);
   chartValueFrame.appendChild(chartFrame);
   if (totalValFrame) {
     chartValueFrame.appendChild(totalValFrame);

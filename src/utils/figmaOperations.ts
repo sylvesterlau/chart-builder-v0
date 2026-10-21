@@ -1,5 +1,9 @@
 // Figma operations
-import { chartBackground, chartGeneralConfig } from "../config";
+import {
+  chartBackground,
+  chartGeneralConfig,
+  textResizingConfig,
+} from "../config";
 import { applyColorTokenToFills } from "./applyColorToken";
 
 // check Theme collection by ID
@@ -38,4 +42,31 @@ export async function createFinalFrame(
   });
   await applyColorTokenToFills(finalFrame, chartBackground);
   return finalFrame;
+}
+
+// Fix text resizing at 100% for the frame and its inheriting children.
+export async function apply100PercentTextResizing(
+  frame: FrameNode,
+): Promise<void> {
+  try {
+    const collection = await figma.variables.getVariableCollectionByIdAsync(
+      textResizingConfig.collectionId,
+    );
+    if (!collection) {
+      throw new Error("Text Resizing collection is unavailable");
+    }
+    if (
+      !collection.modes.some(
+        (mode) => mode.modeId === textResizingConfig.mode100PercentId,
+      )
+    ) {
+      throw new Error("Text Resizing 100% mode is unavailable");
+    }
+    frame.setExplicitVariableModeForCollection(
+      collection,
+      textResizingConfig.mode100PercentId,
+    );
+  } catch (error) {
+    console.warn(`Could not set ${frame.name} to 100% text resizing:`, error);
+  }
 }
