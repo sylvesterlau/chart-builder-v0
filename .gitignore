@@ -34,3 +34,29 @@ yarn-error.log*
 
 # TypeScript cache
 *.tsbuildinfo
+
+# Local agent instructions and workspace state (never publish)
+AGENTS.md
+.codex/
+.agents/
+
+# Local Obsidian vaults and settings (project records stay outside Git)
+.obsidian/
+obsidian/
+Obsidian/
+
+# Local browser evidence and test artifacts (keep test source tracked)
+.playwright-mcp/
+playwright-report/
+test-results/
+/screenshots/
+/spike/ui3/output/
+
+# Credential files and local-only evidence
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+*.mobileprovision
+/spike/ui3/local/

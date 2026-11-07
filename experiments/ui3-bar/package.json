@@ -1,0 +1,21 @@
+{
+  "name": "hive-ui3-bar-plugin",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "preview": "python3 -m http.server 4174 --bind 127.0.0.1 --directory dist",
+    "test": "node test.mjs"
+  },
+  "engines": {
+    "node": ">=22 <26"
+  },
+  "dependencies": {
+    "preact": "11.1.0",
+    "@create-figma-plugin/utilities": "4.0.3"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.12",
+    "@figma/plugin-typings": "1.109.0"
+  }
+}

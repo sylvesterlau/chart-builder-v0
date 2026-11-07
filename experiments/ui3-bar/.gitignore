@@ -1,0 +1,5 @@
+dist/
+manifest.json
+output/
+node_modules
+*registration*/
