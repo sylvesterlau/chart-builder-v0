@@ -1,7 +1,7 @@
 import {build} from 'esbuild';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
-const compiled=await build({entryPoints:['model.ts'],bundle:true,write:false,format:'cjs',platform:'node'});
+const compiled=await build({tsconfigRaw:{compilerOptions:{target:"ES2017"}},entryPoints:['model.ts'],bundle:true,write:false,format:'cjs',platform:'node'});
 const sandbox={exports:{},module:{exports:{}}};sandbox.exports=sandbox.module.exports;vm.runInNewContext(compiled.outputFiles[0].text,sandbox);
 const {initialDraft,validateDraft,readSaved}=sandbox.module.exports;
 const d=initialDraft();d.rows[0].a='-175.25';d.series='1 series';d.rows[0].b='987';
