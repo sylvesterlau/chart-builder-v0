@@ -1,0 +1,13 @@
+import React from 'react';
+import {Button,Textbox,Dropdown,RangeSlider,SegmentedControl,Tabs} from '@create-figma-plugin/ui';
+import './node_modules/@create-figma-plugin/ui/lib/css/base.css';
+import './node_modules/@create-figma-plugin/ui/lib/css/theme.css';
+export const name=__SPIKE_LABEL__;
+export const Provider=({children}:any)=>children;
+export const Btn=({children,onClick,label,primary,disabled}:any)=><Button aria-label={label} secondary={!primary} disabled={disabled} onClick={onClick}>{children}</Button>;
+export const Field=({value,onChange,label}:any)=><Textbox aria-label={label} value={value} onValueInput={onChange}/>;
+export const Pick=({value,onChange,label,options}:any)=><Dropdown aria-label={label} value={value} onValueChange={onChange} options={options.map((value:string)=>({value,text:value}))}/>;
+export const Range=({value,onChange,max}:any)=><RangeSlider aria-label="Selected category" value={String(value)} minimum={1} maximum={Math.max(2,max)} disabled={max<=1} increment={1} onNumericValueInput={onChange}/>;
+export const Segment=({value,onChange,options}:any)=><SegmentedControl value={value} onValueChange={onChange} options={options.map((value:string)=>({value,children:value}))}/>;
+export const Navigation=({value,onChange}:any)=><Tabs value={value} onValueChange={onChange} options={['Data','Design'].map(value=>({value,children:null}))}/>;
+export const Tip=({children,text}:any)=><span title={text}>{children}</span>;

@@ -1,0 +1,102 @@
+{
+  "name": "Hive UI3 library spike",
+  "api": "1.0.0",
+  "main": "dist/code.js",
+  "editorType": [
+    "figma"
+  ],
+  "documentAccess": "dynamic-page",
+  "networkAccess": {
+    "allowedDomains": [
+      "none"
+    ]
+  },
+  "menu": [
+    {
+      "name": "Hive UI3 · Independent Preact components",
+      "menu": [
+        {
+          "name": "Continuous Bar flow",
+          "command": "hive-flow"
+        },
+        {
+          "name": "Components",
+          "command": "hive-components"
+        },
+        {
+          "name": "Data",
+          "command": "hive"
+        },
+        {
+          "name": "Design panels",
+          "command": "hive-panels"
+        }
+      ]
+    },
+    {
+      "name": "Figma Kit + React",
+      "menu": [
+        {
+          "name": "Data",
+          "command": "kit"
+        },
+        {
+          "name": "Design panels",
+          "command": "kit-panels"
+        }
+      ]
+    },
+    {
+      "name": "FigUI3 Core + Preact",
+      "menu": [
+        {
+          "name": "Data",
+          "command": "figui"
+        },
+        {
+          "name": "Design panels",
+          "command": "figui-panels"
+        }
+      ]
+    },
+    {
+      "name": "Existing UI 4.0.3 + Preact",
+      "menu": [
+        {
+          "name": "Data",
+          "command": "legacy"
+        },
+        {
+          "name": "Design panels",
+          "command": "legacy-panels"
+        }
+      ]
+    },
+    {
+      "name": "Native HTML controls + UI3 theme + Preact",
+      "menu": [
+        {
+          "name": "Data",
+          "command": "native"
+        },
+        {
+          "name": "Design panels",
+          "command": "native-panels"
+        }
+      ]
+    },
+    {
+      "name": "Figma Kit + Preact compat (experimental)",
+      "menu": [
+        {
+          "name": "Data",
+          "command": "kit-compat"
+        },
+        {
+          "name": "Design panels",
+          "command": "kit-compat-panels"
+        }
+      ]
+    }
+  ]
+}

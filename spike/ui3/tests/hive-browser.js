@@ -1,0 +1,10 @@
+async(page)=>{
+ page.setDefaultTimeout(5000);const checks=[];const check=(name,pass)=>{if(!pass)throw Error(name);checks.push(name)};
+ await page.goto('http://127.0.0.1:4173/hive-components.html');
+ await page.getByRole('button',{name:'Sample dropdown'}).click();await page.getByRole('listbox').press('End');await page.getByRole('listbox').press('Enter');check('Keyboard select',await page.getByRole('button',{name:'Sample dropdown'}).innerText()==='None');
+ await page.getByRole('button',{name:'Sample dropdown'}).click();await page.getByRole('listbox').press('Escape');check('Escape restores focus',await page.getByRole('button',{name:'Sample dropdown'}).evaluate(e=>e===document.activeElement));
+ await page.getByRole('button',{name:'Component help'}).focus();await page.getByRole('tooltip').waitFor();await page.keyboard.press('Escape');check('Tooltip keyboard dismissal',await page.getByRole('tooltip').count()===0);
+ await page.goto('http://127.0.0.1:4173/hive.html');await page.getByRole('textbox',{name:'A 1',exact:true}).fill('-');check('Invalid draft retains preview',await page.evaluate(()=>window.__previewConfig.series[0].values[0]===40));await page.getByRole('textbox',{name:'A 1',exact:true}).fill('-123.4567');check('Exact decimal preview',await page.evaluate(()=>window.__previewConfig.series[0].values[0]===-123.4567));
+ await page.getByRole('button',{name:'Import JSON',exact:true}).click();await page.locator('input[type=file]').setInputFiles({name:'bad.json',mimeType:'application/json',buffer:Buffer.from('{bad')});check('Error has no Apply',await page.getByRole('button',{name:'Apply dataset'}).count()===0);await page.locator('input[type=file]').setInputFiles({name:'good.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({categories:[{label:'Sample',a:12.34567,b:-20}]}))});await page.getByRole('button',{name:'Apply dataset'}).click();check('JSON exact value',await page.evaluate(()=>window.__previewConfig.series[0].values[0]===12.34567));
+ await page.getByRole('tab',{name:'Design',exact:true}).click();check('Single row slider disabled',await page.getByRole('slider').isDisabled());return checks;
+}

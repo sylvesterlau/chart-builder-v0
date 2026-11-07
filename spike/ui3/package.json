@@ -1,0 +1,25 @@
+{
+  "name": "hive-ui3-library-spike",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "preview": "python3 -m http.server 4173 --bind 127.0.0.1 --directory dist"
+  },
+  "dependencies": {
+    "@base-ui/react": "1.6.0",
+    "@create-figma-plugin/ui": "4.0.3",
+    "@create-figma-plugin/utilities": "4.0.3",
+    "@rogieking/figui3": "11.6.9",
+    "figma-kit": "1.0.0-beta.43",
+    "preact": "11.1.0",
+    "react": "19.2.0",
+    "react-dom": "19.2.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.12"
+  },
+  "engines": {
+    "node": ">=22 <26"
+  }
+}
