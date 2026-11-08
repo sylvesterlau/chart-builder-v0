@@ -110,10 +110,28 @@ for(const variation of ['Low','Medium','High']){
  const scale=autoLineScale(values,4);
  assert.ok(Math.max(...values)-Math.min(...values)<24);
  assert.ok(Math.max(...values.slice(1).map((n,i)=>Math.abs(n-values[i])))<=5);
- assert.ok((Math.max(...values)-Math.min(...values))/(scale.maxValue-scale.minValue)<.5);
+ assert.equal(scale.minValue,Math.min(...values));
+ assert.equal(scale.maxValue,Math.max(...values));
 }
 for(const values of [[101,105,109],[-109,-101],[-2,3],[.001,.003],[0,0],[1e12,1e12]]){
  const scale=autoLineScale(values,4);assert.ok(scale.minValue<=Math.min(...values));assert.ok(scale.maxValue>=Math.max(...values));assert.equal(scale.ticks.length,5);
 }
 assert.throws(()=>makeTimes('2026-01-01','2026-01-03',8,'Date'));
-console.log('Steady slow movement, padded data-only axis and configurable unique timestamps passed.');
+for(const values of [[0,200],[10,200],[101,109],[0.001,0.003],[0,0]]){
+ const scale=autoLineScale(values,4);assert.ok(scale.minValue>=0);assert.ok(scale.ticks.every(n=>n>=0));
+}
+console.log('Steady slow movement, unpadded data-only axis and configurable unique timestamps passed.');
+
+const {generateLineValues}=lc.module.exports;
+for(const trend of ['Rising','Falling','Rise–fall','Fall–rise','Steady','Random']){
+ const sparse=generateLineValues(31,-100,200,trend,'High',17).map(Number);
+ const dense=generateLineValues(91,-100,200,trend,'High',17).map(Number);
+ assert.deepEqual(sparse,dense.filter((_,i)=>i%3===0));
+ assert.ok(dense.every(n=>n>=-100&&n<=200));
+ assert.ok(Math.max(...dense.slice(1).map((n,i)=>Math.abs(n-dense[i])))<15);
+}
+for(const seed of [1,9,27]){
+ const spans=['Low','Medium','High'].map(v=>{const a=generateLineValues(91,10,200,'Steady',v,seed).map(Number);return Math.max(...a)-Math.min(...a)});
+ assert.ok(spans[0]<spans[1]&&spans[1]<spans[2]);assert.ok(spans[2]<24);
+}
+console.log('Continuous Line generator: sampling-invariant shape, bounded adjacent changes and variation amplitudes passed.');

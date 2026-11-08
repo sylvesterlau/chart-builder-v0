@@ -1,3 +1,4 @@
+import {resolveLineScale} from '../../src/helpers';
 import {lineChartConfig} from '../../src/config';
 import {buildLineKeyInfo,resolveContentLayout} from '../../src/utils/cartesianKeyInfo';
 import {buildLineTooltip} from '../../src/utils/cartesianTooltip';
@@ -17,7 +18,7 @@ export function makeTimes(start:string,end:string,count:number,type:string){
  if(Math.floor((b-a)/unit)<count-1)throw Error('Use fewer points or a wider time range to keep timestamps unique.');
  return Array.from({length:count},(_,i)=>new Date(a+Math.round((b-a)*i/(count-1)/unit)*unit).toISOString().slice(0,type==='Date'?10:19));
 }
-export {generateValues} from './data-generation';
+export {generateValues,generateLineValues} from './data-generation';
 // Labels anchor the grid. Subdivide wide gaps independently of data-point count.
 export function lineGridRatios(ratios:number[],labelIndices:number[],plotWidth:number){
  const anchors=Array.from(new Set([0,1,...labelIndices.map(i=>ratios[i]).filter(v=>Number.isFinite(v)&&v>0&&v<1)])).sort((a,b)=>a-b);
@@ -28,16 +29,9 @@ export function lineGridRatios(ratios:number[],labelIndices:number[],plotWidth:n
  }
  return result;
 }
-// Data-only automatic domain: narrow variation must not fill the entire plot.
+// Keep the original data-driven domain; do not add presentation padding.
 export function autoLineScale(values:number[],count:number){
- const low=Math.min(...values),high=Math.max(...values),center=(low+high)/2;
- const span=Math.max((high-low)*1.2,Math.max(Math.abs(low),Math.abs(high))*.5,1e-9);
- const lower=center-span/2,upper=center+span/2;
- const nice=(value:number)=>{const power=10**Math.floor(Math.log10(value));return ([1,2,2.5,5,10].find(n=>n*power>=value-Number.EPSILON*value)||10)*power};
- let step=nice(span/count),minValue=Math.floor(lower/step)*step;
- while(minValue+step*count<upper){step=nice(step*1.01);minValue=Math.floor(lower/step)*step}
- const clean=(v:number)=>Number(v.toPrecision(12));
- return {minValue:clean(minValue),maxValue:clean(minValue+step*count),ticks:Array.from({length:count+1},(_,i)=>clean(minValue+step*(count-i)))};
+ return resolveLineScale(values,NaN,NaN,count);
 }
 export function linePresentation(d:any){
  const s=d.settings,rows=d.rows,width=+s.width,height=+s.height;

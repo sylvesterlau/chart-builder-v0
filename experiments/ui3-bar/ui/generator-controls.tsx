@@ -1,7 +1,7 @@
+import {generationTrends as trends} from '../data-generation';
 import React from 'react';
 import {Btn,Field,Pick} from 'hive-adapter';
 type Props={count:number;single:boolean;names:string[];target:string;onTarget:(v:string)=>void;min:string;max:string;onMin:(v:string)=>void;onMax:(v:string)=>void;trend:string;onTrend:(v:string)=>void;variation:string;onVariation:(v:string)=>void;onGenerate:()=>void};
-const trends=['Rising','Falling','Rise–fall','Fall–rise','Steady','Random'];
 const paths=['M3 19L77 3','M3 3L77 19','M3 19L40 3L77 19','M3 3L40 19L77 3','M3 12L77 12','M3 18L20 3L40 16L60 8L77 13'];
 export function GeneratorControls(p:Props){
  const row=(label:string,node:any)=><div className="property"><label>{label}</label>{node}</div>;
