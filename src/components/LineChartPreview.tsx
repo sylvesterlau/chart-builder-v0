@@ -1,4 +1,5 @@
 import { h } from "preact";
+import {useRef,useState,useLayoutEffect} from "preact/hooks";
 import { chartBackground, dataVisColor, textColor } from "../config";
 import {
   cartesianRulerY,
@@ -33,6 +34,7 @@ import ChartTitlePreview from "./ChartTitlePreview";
 
 interface LineChartPreviewProps {
   config: LineChartConfig;
+  presentation?:any;
 }
 
 function createLinePath(
@@ -79,7 +81,9 @@ function markerStyle(seriesIndex: number, color: string, chartBgColor: string) {
   };
 }
 
-function LineChartPreview({ config }: LineChartPreviewProps) {
+function LineChartPreview({ config, presentation }: LineChartPreviewProps) {
+  const plotRef=useRef<HTMLDivElement>(null);const [measuredTop,setMeasuredTop]=useState(0);
+  useLayoutEffect(()=>{if(!presentation||!plotRef.current)return;const el=plotRef.current;const update=()=>setMeasuredTop(el.offsetTop);update();const observer=new ResizeObserver(update);observer.observe(el.parentElement!);return()=>observer.disconnect()},[JSON.stringify(config)]);
   const { values: resolvedColors } = useColorTokenResolved();
   const { values: resolvedTypography } = useTypographyTokenResolved();
 
@@ -89,7 +93,7 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
     minValue,
     maxValue,
     ticks,
-  } = resolveLineScale(
+  } = presentation ? {minValue:config.minValue,maxValue:config.maxValue,ticks:presentation.config.yTicks} : resolveLineScale(
     visibleSeries.reduce<number[]>(
       (values, series) => values.concat(series.values),
       [],
@@ -98,7 +102,7 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
     Number(config.maxValue),
     yAxisDivisions,
   );
-  const valueRange = Math.max(1, maxValue - minValue);
+  const valueRange = presentation ? maxValue-minValue : Math.max(1, maxValue - minValue);
   const { labelBg } = config.color.selected;
   const { typography: ty, yAxisLabel: yLab } = config.color;
   const yAxisDataType = config.yAxisDataType ?? "number";
@@ -118,7 +122,7 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
   const yAxisLabelCss = typographyTokenToPreviewCss(yLab, resolvedTypography);
   const measureYAxisLabelWidth = (text: string) =>
     measurePreviewTextWidth(text, yAxisLabelCss);
-  const labelGutter = measureYAxisLabelGutter(
+  const labelGutter = presentation ? Math.max(24,...ticks.map((n:number)=>measureYAxisLabelWidth(presentation.formatTick(n))))+16 : measureYAxisLabelGutter(
     ticks,
     yAxisDataType,
     measureYAxisLabelWidth,
@@ -126,7 +130,7 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
   const plotWidth = Math.max(1, contentWidth - labelGutter);
   const xAxisWidth = Math.max(1, plotWidth - 1);
   const lineWidth =
-    config.lineRange === "full" ? xAxisWidth : Math.round(plotWidth * 0.788);
+    presentation || config.lineRange === "full" ? xAxisWidth : Math.round(plotWidth * 0.788);
   const yAxisPosition = config.yAxisPosition ?? "right";
   const plotX = yAxisPosition === "right" ? 0 : labelGutter;
   const xAxisLabels = config.xAxisLabels.length
@@ -164,15 +168,15 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
   ).fontFamily;
   const selectedIndex = config.selectedIndex;
   const hasSelection = selectedIndex >= 0;
-  const markerIndex = hasSelection ? selectedIndex : config.pointCount - 1;
+  const markerIndex = hasSelection ? selectedIndex : (presentation?.visibleCount ?? config.pointCount) - 1;
   const markerRatio =
-    config.pointCount > 1 ? markerIndex / (config.pointCount - 1) : 0;
+    presentation?.ratios[markerIndex] ?? (config.pointCount > 1 ? markerIndex / (config.pointCount - 1) : 0);
   const markerX = markerRatio * lineWidth;
   const selectedLabel = hasSelection
     ? config.pointLabels[selectedIndex] || `P${selectedIndex + 1}`
     : "";
   const selectedAnchorX = 16 + plotX + markerX;
-  const chartTop = (config.chartTitle.trim() ? 46 : 0) + 100;
+  const chartTop = presentation ? measuredTop : (config.chartTitle.trim() ? 46 : 0) + 100;
 
   return (
     <div
@@ -188,11 +192,11 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
         anchorX={selectedAnchorX}
         chartTop={chartTop}
         chartWidth={config.width}
-        data={buildLineTooltip(config)}
+        data={presentation ? presentation.tooltip : buildLineTooltip(config)}
       />
       <ChartTitlePreview title={config.chartTitle} />
-      <CartesianKeyInfoPreview data={buildLineKeyInfo(config)} />
-      <div
+      <CartesianKeyInfoPreview data={presentation ? presentation.keyInfo : buildLineKeyInfo(config)} />
+      <div ref={plotRef}
         style={{
           background: chartBgColor,
           boxSizing: "border-box",
@@ -236,11 +240,11 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
               zIndex: 0,
             }}
           >
-            {ticks.map((tick, index) => {
+            {ticks.map((tick:number, index:number) => {
               const y =
                 clamp(1 - (tick - minValue) / valueRange, 0, 1) * plotHeight;
-              const labelText = formatAxisTickLabel(tick, yAxisDataType);
-              const labelWidth = measureYAxisTickLabelWidth(
+              const labelText = presentation ? presentation.formatTick(tick) : formatAxisTickLabel(tick, yAxisDataType);
+              const labelWidth = presentation ? measureYAxisLabelWidth(labelText) : measureYAxisTickLabelWidth(
                 tick,
                 yAxisDataType,
                 measureYAxisLabelWidth,
@@ -258,7 +262,7 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
                 >
                   <div
                     style={{
-                      background: showYAxisLine ? gridLineColor : "transparent",
+                      background: (presentation ? presentation.gridHorizontal : showYAxisLine) ? gridLineColor : "transparent",
                       height: "1px",
                       width: `${plotWidth}px`,
                     }}
@@ -287,7 +291,7 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
             })}
             <div
               style={{
-                background: axisLineColor,
+                background: presentation&&!showYAxisLine?"transparent":axisLineColor,
                 height: `${plotHeight + 1}px`,
                 left: yAxisPosition === "left" ? 0 : `${plotWidth - 1}px`,
                 position: "absolute",
@@ -310,7 +314,7 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
               const labelPosition =
                 xAxisLabels.length <= 1
                   ? 0
-                  : (index / (xAxisLabels.length - 1)) *
+                  : (presentation?.ratios[index] ?? index / (xAxisLabels.length - 1)) *
                     Math.max(0, xAxisWidth - 1);
               const isFirstLabel = index === 0;
               const isLastLabel = index === xAxisLabels.length - 1;
@@ -328,7 +332,7 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
                   <div
                   style={{
                     background:
-                      showXAxisLine && !isFirstLabel && !isLastLabel
+                      (presentation ? presentation.gridVertical : showXAxisLine) && !isFirstLabel && !isLastLabel
                         ? gridLineColor
                         : "transparent",
                     height: `${plotHeight}px`,
@@ -338,7 +342,7 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
                     width: "1px",
                   }}
                 />
-                {label ? (
+                {label && (!presentation || presentation.labelIndices.includes(index)) ? (
                   <div
                     style={{
                       bottom: "-22px",
@@ -366,7 +370,7 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
             })}
             <div
               style={{
-                background: axisLineColor,
+                background: presentation&&!showXAxisLine?"transparent":axisLineColor,
                 height: "1px",
                 left: 0,
                 position: "absolute",
@@ -407,7 +411,7 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
             >
               {visibleSeries.map((series, seriesIndex) => (
                 <path
-                  d={createLinePath(
+                  d={presentation ? series.values.slice(0,presentation.visibleCount).map((v:number,i:number)=>`${i?"L":"M"} ${presentation.ratios[i]*lineWidth} ${(1-(v-minValue)/(maxValue-minValue))*plotHeight}`).join(" ") : createLinePath(
                     series.values,
                     minValue,
                     maxValue,
@@ -472,7 +476,7 @@ function LineChartPreview({ config }: LineChartPreviewProps) {
                 minValue,
                 maxValue,
               );
-              const y = valueToY(value, minValue, maxValue, plotHeight);
+              const y = presentation ? (1-(value-minValue)/(maxValue-minValue))*plotHeight : valueToY(value, minValue, maxValue, plotHeight);
               const seriesColor = colorTokenSwatchHex(
                 dataVisColor.general[seriesIndex],
                 resolvedColors,

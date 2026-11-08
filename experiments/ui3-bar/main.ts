@@ -1,7 +1,11 @@
 import {resolveColorTokenPayload} from '../../src/utils/resolveColorTokenSwatches';
 import {resolveNumberTokenPayload} from '../../src/utils/resolveNumberTokenValues';
 import {resolveTypographyTokenPayload} from '../../src/utils/resolveTypographyTokenValues';
-import {STORAGE_KEY,validateDraft,readSaved} from './model';
+import {STORAGE_KEY} from './model';
+import {validateChart as validateDraft,readChart as readSaved} from './chart-model';
+import {drawLineChart} from '../../src/utils/drawLineChart';
+import {linePresentation} from './line-config';
+import {renderComposition} from './pie-render';
 import {renderBar} from './render';
 declare const __html__:string;
 figma.showUI(__html__,{width:900,height:760,themeColors:true});
@@ -28,18 +32,18 @@ figma.ui.onmessage=async m=>{
  if(n.locked)throw Error('Unlock the original chart before updating.');original=n;revision=saved.revision+1;
  }
  busy=true;
- const generated=await renderBar(draft);
- const metadata=JSON.stringify({schema:1,type:'standard-bar',revision,draft});
+ const generated=draft.kind==='line'?await (async()=>{const v=linePresentation(draft);return drawLineChart(v.config,{...v,normalized:v.config,independentGrid:true,select:false})})():draft.kind==='pie'||draft.kind==='donut'?await renderComposition(draft):await renderBar(draft);
+ const metadata=JSON.stringify({schema:1,type:draft.kind||'standard-bar',revision,draft});
  let result=generated;
  try{
  generated.setPluginData(STORAGE_KEY,metadata);
  if(original){
  // Render completely before touching the original; preserve its root ID and position.
  const old=[...original.children];const incoming=[...generated.children];
- const oldSize={width:original.width,height:original.height};
+ const oldName=original.name;const oldSize={width:original.width,height:original.height};
  const oldLayout={layoutMode:original.layoutMode,primaryAxisSizingMode:original.primaryAxisSizingMode,counterAxisSizingMode:original.counterAxisSizingMode};
  const oldData=original.getPluginData(STORAGE_KEY);
- try{original.layoutMode=generated.layoutMode;for(const c of incoming)original.appendChild(c);original.resize(generated.width,generated.height);original.setPluginData(STORAGE_KEY,metadata)}catch(e){for(const c of incoming)if(!c.removed)c.remove();original.resize(oldSize.width,oldSize.height);Object.assign(original,oldLayout);original.setPluginData(STORAGE_KEY,oldData);throw e}
+ try{original.name=generated.name;original.layoutMode=generated.layoutMode;for(const c of incoming)original.appendChild(c);original.resize(generated.width,generated.height);original.setPluginData(STORAGE_KEY,metadata)}catch(e){original.name=oldName;for(const c of incoming)if(!c.removed)c.remove();original.resize(oldSize.width,oldSize.height);Object.assign(original,oldLayout);original.setPluginData(STORAGE_KEY,oldData);throw e}
  for(const c of old)c.remove();original.primaryAxisSizingMode=generated.primaryAxisSizingMode;original.counterAxisSizingMode=generated.counterAxisSizingMode;generated.remove();result=original;
  }else {result.x=figma.viewport.center.x-result.width/2;result.y=figma.viewport.center.y-result.height/2}
  figma.currentPage.selection=[result];figma.viewport.scrollAndZoomIntoView([result]);

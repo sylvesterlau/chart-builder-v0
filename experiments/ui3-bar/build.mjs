@@ -10,5 +10,5 @@ const html='<!doctype html><html data-fixture="bar-plugin"><meta charset="utf-8"
 await fs.writeFile('dist/index.html',html);
 await build({tsconfigRaw:{compilerOptions:{target:"ES2017"}},entryPoints:['main.ts'],bundle:true,outfile:'dist/code.js',format:'iife',target:'es2017',define:{__html__:JSON.stringify(html)},nodePaths:[path.resolve('node_modules')],minify:true});
 let local={};try{local=JSON.parse(await fs.readFile('manifest.json','utf8'))}catch{}
-await fs.writeFile('manifest.json',JSON.stringify({name:'Hive UI3 · Experimental Bar',...(local.id?{id:local.id}:{}),api:'1.0.0',main:'dist/code.js',editorType:['figma'],documentAccess:'dynamic-page',networkAccess:{allowedDomains:['none']}},null,2));
+await fs.writeFile('manifest.json',JSON.stringify({name:'Hive UI3 · Experimental Charts',...(local.id?{id:local.id}:{}),api:'1.0.0',main:'dist/code.js',editorType:['figma'],documentAccess:'dynamic-page',networkAccess:{allowedDomains:['none']}},null,2));
 console.log('Built experimental plugin and browser preview. Local manifest ID preserved.');

@@ -56,3 +56,25 @@ density.settings.labelDensity='Auto';density.settings.width='260';density.rows=d
 assert.ok(barPresentation(density).labelIndices.length<6);assert.ok(barPresentation(density).labelIndices.includes(1));
 const densityRestored=readSaved(JSON.stringify({schema:1,type:'standard-bar',revision:1,draft:density}));assert.equal(densityRestored.draft.settings.gridHorizontal,false);
 console.log('Label density, independent grids and legacy grid migration passed.');
+const multiBundle=await build({tsconfigRaw:{compilerOptions:{target:'ES2017'}},entryPoints:['chart-model.ts'],bundle:true,write:false,format:'cjs',platform:'node'});
+const multi={exports:{},module:{exports:{}}};multi.exports=multi.module.exports;vm.runInNewContext(multiBundle.outputFiles[0].text,multi);
+const {initialChart,validateChart,readChart}=multi.module.exports;
+for(const kind of ['line','pie','donut']){const draft=initialChart(kind);const restored=readChart(JSON.stringify({schema:1,type:kind,revision:1,draft}));assert.equal(restored.draft.kind,kind);assert.equal(restored.draft.rows.length,draft.rows.length);}
+const line=initialChart('line');line.rows[1].label=line.rows[0].label;assert.throws(()=>validateChart(line));
+const pie=initialChart('pie');pie.rows[0].a='-1';assert.throws(()=>validateChart(pie));
+const layoutBundle=await build({entryPoints:['pie-layout.ts'],bundle:true,write:false,format:'cjs',platform:'node'});const layout={exports:{},module:{exports:{}}};layout.exports=layout.module.exports;vm.runInNewContext(layoutBundle.outputFiles[0].text,layout);
+const eight=initialChart('pie');eight.rows=[400,200,120,100,70,50,40,20].map((a,id)=>({id,label:'Item '+id,a:String(a),b:''}));const slices=layout.module.exports.composition(eight);assert.equal(slices.length,6);assert.equal(slices[5].label,'Others');assert.equal(slices[5].value,110);assert.equal(slices[4].value,70);
+const pv=layout.module.exports.pieLayout(eight);assert.equal(pv.slices.length,6);assert.ok(pv.slices[0].start.x<pv.cx);assert.ok(pv.legends.length===6);
+const lineBundle=await build({entryPoints:['line-config.ts'],bundle:true,write:false,format:'cjs',platform:'node'});const lc={exports:{},module:{exports:{}}};lc.exports=lc.module.exports;vm.runInNewContext(lineBundle.outputFiles[0].text,lc);const {makeTimes,linePresentation}=lc.module.exports;
+assert.equal(makeTimes('2026-01-01','2026-01-31',31,'Date').length,31);assert.throws(()=>makeTimes('2026-01-01','2026-01-31',8,'Date'));
+const irregular=initialChart('line');irregular.rows=[{id:0,label:'2026-01-01',a:'10',b:'20'},{id:1,label:'2026-01-02',a:'15',b:'30'},{id:2,label:'2026-01-11',a:'20',b:'40'}];irregular.extent='Partial';irregular.through=2;irregular.selected=3;
+const lv=linePresentation(irregular);assert.equal(lv.ratios[1],.1);assert.equal(lv.visibleCount,2);assert.equal(lv.config.selectedIndex,1);assert.equal(lv.config.pointCount,3);
+console.log('Line/Pie/Donut schema, irregular timestamps, Partial and Others rules passed.');
+
+const legendDraft=initialChart('pie');legendDraft.legendLayout='Horizontal';
+let legends=layout.module.exports.pieLayout(legendDraft).legends;
+assert.equal(legends.length,4);assert.ok(legends.every(x=>!x.stacked&&x.x===legends[0].x));assert.ok(legends[1].y>legends[0].bottom);assert.equal(legends[0].value,'400 USD');
+legendDraft.legendLayout='Rows';legends=layout.module.exports.pieLayout(legendDraft).legends;assert.ok(legends.every(x=>x.stacked&&x.valueY>x.y));
+legendDraft.legendLayout='Auto';legendDraft.rows[0].label='A very long category name for a narrow chart';assert.equal(layout.module.exports.pieLayout(legendDraft).legends[0].stacked,true);
+const zero=initialChart('pie');zero.rows.forEach(x=>x.a='0');assert.throws(()=>validateChart(zero));
+console.log('Original-plugin legend row layouts, Auto overflow and zero-total rejection passed.');

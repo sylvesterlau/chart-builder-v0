@@ -7,6 +7,7 @@ import {
 import { dataVisAt } from "./dataVisAt";
 import {
   cartesianRulerY,
+  valueToY,
   clamp,
   normalizeLineChartConfig,
 } from "../helpers";
@@ -321,6 +322,7 @@ async function drawLines(
   y: number,
   width: number,
   height: number,
+  options:any={},
 ) {
   const outerName = config.lineMode === "single" ? "Line" : "Frame 1";
   const outerHeight = config.lineMode === "single" ? height : height + 22;
@@ -343,7 +345,7 @@ async function drawLines(
     await createLineVector(
       lineFrame,
       `_Line-${index + 1}`,
-      createPathFromValues(
+      options.ratios ? series.values.slice(0,options.visibleCount).map((v:number,i:number)=>`${i?"L":"M"} ${options.ratios[i]*width} ${(1-(v-config.minValue)/(config.maxValue-config.minValue))*height}`).join(" ") : createPathFromValues(
         series.values,
         config.minValue,
         config.maxValue,
@@ -357,9 +359,9 @@ async function drawLines(
   const hasSelection = config.selectedIndex >= 0;
   const markerIndex = hasSelection
     ? config.selectedIndex
-    : config.pointCount - 1;
+    : (options.visibleCount ?? config.pointCount) - 1;
   const markerRatio =
-    config.pointCount <= 1 ? 0 : markerIndex / (config.pointCount - 1);
+    options.ratios?.[markerIndex] ?? (config.pointCount <= 1 ? 0 : markerIndex / (config.pointCount - 1));
   const markerX = markerRatio * width;
 
   if (hasSelection) {
@@ -389,14 +391,14 @@ async function drawLines(
       config.minValue,
       config.maxValue,
     );
-    const valueRange = Math.max(1, config.maxValue - config.minValue);
+    const valueRange = options.ratios ? config.maxValue-config.minValue : Math.max(1, config.maxValue - config.minValue);
     const selectedY =
       clamp(1 - (value - config.minValue) / valueRange, 0, 1) * height;
     await drawMarker(lineFrame, markerX, selectedY, dataVisAt(index), index);
   }
 }
 
-async function drawChart(parent: FrameNode, config: NormalizedLineChartConfig) {
+async function drawChart(parent: FrameNode, config: NormalizedLineChartConfig, options:any={}) {
   const yAxisDataType = config.yAxisDataType ?? "number";
   const showYAxisTitle =
     yAxisDataType !== "percentage" && config.yAxisTitle.trim().length > 0;
@@ -474,6 +476,7 @@ async function drawChart(parent: FrameNode, config: NormalizedLineChartConfig) {
     config.yAxisDataType ?? "number",
     config.color.yAxisLabel,
     textColor.primary,
+    options.formatTick,
   );
   const plotX = yAxisPosition === "right" ? 0 : labelGutter;
   const plotY = 9;
@@ -482,14 +485,14 @@ async function drawChart(parent: FrameNode, config: NormalizedLineChartConfig) {
   const xAxisTitle = String(config.xAxisTitle ?? "").trim();
   const plotHeight = contentFrame.height - (xAxisTitle ? 54 : 30);
   const lineWidth =
-    config.lineRange === "full" ? xAxisWidth : Math.round(yAxisWidth * 0.788);
+    options.ratios ? xAxisWidth : config.lineRange === "full" ? xAxisWidth : Math.round(yAxisWidth * 0.788);
   const selectedIndicatorX =
     config.selectedIndex >= 0
       ? 16 +
         plotX +
         (config.pointCount <= 1
           ? 0
-          : (config.selectedIndex / (config.pointCount - 1)) * lineWidth)
+          : (options.ratios?.[config.selectedIndex] ?? config.selectedIndex / (config.pointCount - 1)) * lineWidth)
       : null;
 
   if (yAxisWidth < 180 || plotHeight < 160) {
@@ -503,6 +506,7 @@ async function drawChart(parent: FrameNode, config: NormalizedLineChartConfig) {
       color: config.color,
       textColor: textColor.primary,
       ticks: config.yTicks,
+      formatTick:options.formatTick,independentGrid:options.independentGrid,gridVisible:options.gridHorizontal,
       yAxisDataType: config.yAxisDataType,
       yAxisPosition: config.yAxisPosition,
     },
@@ -519,6 +523,7 @@ async function drawChart(parent: FrameNode, config: NormalizedLineChartConfig) {
       continuous: true,
       labelYOffset: 4,
       labels: config.xAxisLabels,
+      pointRatios:options.ratios,labelIndices:options.labelIndices,independentGrid:options.independentGrid,gridVisible:options.gridVertical,
       rulerY: cartesianRulerY(
         config.minValue,
         config.maxValue,
@@ -533,12 +538,12 @@ async function drawChart(parent: FrameNode, config: NormalizedLineChartConfig) {
     xAxisWidth,
     plotHeight,
   );
-  await drawLines(contentFrame, config, plotX, plotY, lineWidth, plotHeight);
+  await drawLines(contentFrame, config, plotX, plotY, lineWidth, plotHeight, options);
   return { chart, indicatorX: selectedIndicatorX };
 }
 
-export async function drawLineChart(chartData: Partial<LineChartConfig>) {
-  const config = normalizeLineChartConfig(
+export async function drawLineChart(chartData: Partial<LineChartConfig>, options:any={}) {
+  const config = options.normalized ?? normalizeLineChartConfig(
     chartData,
     lineChartConfig as unknown as LineChartConfig,
   );
@@ -561,22 +566,24 @@ export async function drawLineChart(chartData: Partial<LineChartConfig>) {
 
   positionChart(chart);
   figma.currentPage.appendChild(chart);
+  try {
   const title = await createChartTitle(config.chartTitle);
   if (title) {
     chart.appendChild(title);
   }
-  const keyInfo = await createCartesianKeyInfo(buildLineKeyInfo(config));
+  const keyInfo = await createCartesianKeyInfo(options.keyInfo ?? buildLineKeyInfo(config));
   if (keyInfo) {
     chart.appendChild(keyInfo);
   }
-  const drawnChart = await drawChart(chart, config);
+  const drawnChart = await drawChart(chart, config, options);
   await createCartesianTooltip(
     chart,
-    buildLineTooltip(config),
+    options.tooltip === undefined ? buildLineTooltip(config) : options.tooltip,
     drawnChart.indicatorX ?? 0,
     drawnChart.chart.y,
   );
 
-  figma.currentPage.selection = [chart];
-  figma.viewport.scrollAndZoomIntoView([chart]);
+  if(options.select!==false){figma.currentPage.selection = [chart];figma.viewport.scrollAndZoomIntoView([chart]);}
+  return chart;
+  }catch(e){chart.remove();throw e;}
 }

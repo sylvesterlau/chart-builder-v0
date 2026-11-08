@@ -283,6 +283,7 @@ export interface CartesianXAxisOptions {
   formatTick?: (value:number)=>string;
   color: CartesianChartColorConfig;
   continuous?: boolean;
+  pointRatios?: number[];
   labels: string[];
   labelYOffset: number;
   rulerY: number;
@@ -316,7 +317,7 @@ export async function drawCartesianXAxis(
   for (let index = 0; index < options.labels.length; index++) {
     const labelText = options.labels[index];
     const continuousX = isContinuous
-      ? (index / (options.labels.length - 1)) * Math.max(0, width - 1)
+      ? (options.pointRatios?.[index] ?? index / (options.labels.length - 1)) * Math.max(0, width - 1)
       : 0;
     const frameWidth = isContinuous ? 1 : groupWidth;
     const lineFrame = await createCartesianFrameNode(
