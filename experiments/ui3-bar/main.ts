@@ -1,3 +1,6 @@
+import {resolveColorTokenPayload} from '../../src/utils/resolveColorTokenSwatches';
+import {resolveNumberTokenPayload} from '../../src/utils/resolveNumberTokenValues';
+import {resolveTypographyTokenPayload} from '../../src/utils/resolveTypographyTokenValues';
 import {STORAGE_KEY,validateDraft,readSaved} from './model';
 import {renderBar} from './render';
 declare const __html__:string;
@@ -8,6 +11,10 @@ function selectedChart(){if(figma.currentPage.selection.length!==1)return null;l
 function publish(){const v=selectedChart();post('selection',{chart:v?{id:v.node.id,name:v.node.name,revision:v.saved.revision}:null})}
 figma.on('selectionchange',()=>{if(!busy)publish()});
 figma.ui.onmessage=async m=>{
+ if(Array.isArray(m)){
+ const handlers:any={REQUEST_COLOR_TOKEN_SWATCH_VALUES:['COLOR_TOKEN_SWATCH_VALUES',resolveColorTokenPayload],REQUEST_NUMBER_TOKEN_RESOLVED_VALUES:['NUMBER_TOKEN_RESOLVED_VALUES',resolveNumberTokenPayload],REQUEST_TYPOGRAPHY_TOKEN_RESOLVED_VALUES:['TYPOGRAPHY_TOKEN_RESOLVED_VALUES',resolveTypographyTokenPayload]};
+ const handler=handlers[m[0]];if(handler){try{figma.ui.postMessage([handler[0],await handler[1]()])}catch{}}return;
+ }
  if(busy)return;
  try{
  if(m.type==='ready'){publish();return}
@@ -30,9 +37,10 @@ figma.ui.onmessage=async m=>{
  // Render completely before touching the original; preserve its root ID and position.
  const old=[...original.children];const incoming=[...generated.children];
  const oldSize={width:original.width,height:original.height};
+ const oldLayout={layoutMode:original.layoutMode,primaryAxisSizingMode:original.primaryAxisSizingMode,counterAxisSizingMode:original.counterAxisSizingMode};
  const oldData=original.getPluginData(STORAGE_KEY);
- try{for(const c of incoming)original.appendChild(c);original.resize(generated.width,generated.height);original.setPluginData(STORAGE_KEY,metadata)}catch(e){for(const c of incoming)if(!c.removed)c.remove();original.resize(oldSize.width,oldSize.height);original.setPluginData(STORAGE_KEY,oldData);throw e}
- for(const c of old)c.remove();generated.remove();result=original;
+ try{original.layoutMode=generated.layoutMode;for(const c of incoming)original.appendChild(c);original.resize(generated.width,generated.height);original.setPluginData(STORAGE_KEY,metadata)}catch(e){for(const c of incoming)if(!c.removed)c.remove();original.resize(oldSize.width,oldSize.height);Object.assign(original,oldLayout);original.setPluginData(STORAGE_KEY,oldData);throw e}
+ for(const c of old)c.remove();original.primaryAxisSizingMode=generated.primaryAxisSizingMode;original.counterAxisSizingMode=generated.counterAxisSizingMode;generated.remove();result=original;
  }else {result.x=figma.viewport.center.x-result.width/2;result.y=figma.viewport.center.y-result.height/2}
  figma.currentPage.selection=[result];figma.viewport.scrollAndZoomIntoView([result]);
  post('saved',{action:m.action,chart:{id:result.id,revision}});

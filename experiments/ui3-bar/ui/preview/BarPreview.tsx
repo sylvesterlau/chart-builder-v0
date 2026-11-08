@@ -1,6 +1,7 @@
-// Spike-only adaptation of the original Bar preview for display formatting.
+// Original Bar preview with shared experiment content and display formatting.
 import {formatAmount} from "../number-format";
 import { h } from "preact";
+import {useLayoutEffect,useRef,useState} from "preact/hooks";
 import { chartBackground, dataVisColor, textColor } from "../../../../src/config";
 import {
   cartesianRulerY,
@@ -30,10 +31,13 @@ import CartesianTooltipPreview from "../../../../src/components/CartesianTooltip
 import ChartTitlePreview from "../../../../src/components/ChartTitlePreview";
 
 interface VerticalBarChartPreviewProps {
-  config: VerticalBarChartConfig & { displayFormat?: any };
+  config: VerticalBarChartConfig;
+  presentation: any;
 }
 
-function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
+function VerticalBarChartPreview({ config, presentation }: VerticalBarChartPreviewProps) {
+ const chartRef=useRef<HTMLDivElement>(null);const [chartTop,setChartTop]=useState(0);
+ useLayoutEffect(()=>{const el=chartRef.current;if(!el)return;const update=()=>setChartTop(el.offsetTop);update();const observer=new ResizeObserver(update);observer.observe(el.parentElement!);return()=>observer.disconnect()},[JSON.stringify([config,presentation.keyInfo])]);
   const { values: resolvedColors } = useColorTokenResolved();
   const { values: resolvedTypography } = useTypographyTokenResolved();
 
@@ -66,7 +70,7 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
   );
   const yAxisPosition = config.yAxisPosition ?? "right";
   const yAxisLabelCss = typographyTokenToPreviewCss(yLab, resolvedTypography);
-  const labelGutter = Math.max(24,...ticks.map(tick=>measurePreviewTextWidth(formatAmount(tick,config.displayFormat,true),yAxisLabelCss)))+16;
+  const labelGutter = Math.max(24,...ticks.map(tick=>measurePreviewTextWidth(presentation.formatTick(tick),yAxisLabelCss)))+16;
   const plotWidth = Math.max(1, contentWidth - labelGutter);
   const plotX = yAxisPosition === "right" ? 0 : labelGutter;
   const yAxisLabelX = yAxisPosition === "right" ? plotWidth + 8 : -8;
@@ -116,19 +120,10 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
     config.selectedIndex >= 0 && config.selectedIndex < labels.length
       ? 16 + plotX + groupWidth * config.selectedIndex + groupWidth / 2
       : 0;
-  const previewScale = 0.9;
+  const previewScale = 1;
   const selectedAnchorX =
     config.width / 2 + (rawSelectedAnchorX - config.width / 2) * previewScale;
-  const chartTop = (config.chartTitle.trim() ? 46 : 0) + 100;
-
-  const keyInfoData=buildBarKeyInfo({...config,xAxisTitle:config.displayFormat?.xTitle??config.xAxisTitle});
-  keyInfoData.items=keyInfoData.items.map((item,i)=>{
-    const values=visibleSeries[i].values.slice(0,config.periodCount);
-    return {...item,value:formatAmount(Math.min(...values),config.displayFormat)+' – '+formatAmount(Math.max(...values),config.displayFormat),unit:''};
-  });
-  keyInfoData.layout='rows';
-  const tooltipData=buildBarTooltip({...config,xAxisTitle:config.displayFormat?.xTitle??config.xAxisTitle});
-  if(tooltipData)tooltipData.items=tooltipData.items.map((item,i)=>({...item,value:formatAmount(visibleSeries[i].values[config.selectedIndex]||0,config.displayFormat)}));
+  const keyInfoData=presentation.keyInfo,tooltipData=presentation.tooltip;
   return (
     <div
       style={{
@@ -141,15 +136,16 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
     >
       <ChartTitlePreview title={config.chartTitle} />
       <CartesianKeyInfoPreview data={keyInfoData} />
-      {tooltipData && <div style={{position:"relative",height:"140px",flexShrink:0}}>
+      {tooltipData && <>
       <CartesianTooltipPreview
         anchorX={selectedAnchorX}
-        chartTop={140}
+        chartTop={chartTop}
         chartWidth={config.width}
         data={tooltipData}
       />
-      </div>}
+      </>}
       <div
+        ref={chartRef}
         style={{
           background: chartBgColor,
           boxSizing: "border-box",
@@ -158,7 +154,7 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
           height: `${config.height}px`,
           overflow: "hidden",
           padding: "0 16px 16px",
-          transform: "scale(0.9)",
+          flexShrink: 0,
           transformOrigin: "top center",
           width: `${config.width}px`,
         }}
@@ -236,7 +232,7 @@ function VerticalBarChartPreview({ config }: VerticalBarChartPreviewProps) {
                       ...yAxisLabelCss,
                     }}
                   >
-                    {formatAmount(tick,config.displayFormat,true)}
+                    {presentation.formatTick(tick)}
                   </div>
                 </div>
               );

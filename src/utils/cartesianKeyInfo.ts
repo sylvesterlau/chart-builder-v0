@@ -193,3 +193,11 @@ export function buildLineKeyInfo(
     items,
   };
 }
+
+/** Shared summary/tooltip layout policy, based on real content rather than series count alone. */
+export function resolveContentLayout(items: Array<{label:string,value:string,unit?:string}>, width:number, preference='Auto'): 'inline'|'rows' {
+ if(preference==='Horizontal')return 'inline';
+ if(preference==='Rows')return 'rows';
+ const column=(width-64)/Math.max(1,items.length);
+ return items.length<=2 && items.every(item=>Math.max(26+estimateTextWidth(item.label,14),estimateTextWidth(item.value+(item.unit||''),20))<=column)?'inline':'rows';
+}

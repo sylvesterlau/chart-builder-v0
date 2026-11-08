@@ -114,11 +114,12 @@ export function measureYAxisLabelGutter(
   ticks: number[],
   measureLabelWidth: (label: string) => number,
   yAxisDataType: YAxisDataType = "number",
+  formatTick?: (value:number)=>string,
 ): number {
   const widestLabel = ticks.reduce((maxWidth, tick) => {
     return Math.max(
       maxWidth,
-      measureLabelWidth(formatAxisTickLabel(tick, yAxisDataType)),
+      measureLabelWidth(formatTick ? formatTick(tick) : formatAxisTickLabel(tick, yAxisDataType)),
     );
   }, 0);
   return Math.max(1, Math.ceil(widestLabel + Y_AXIS_LABEL_AXIS_GAP));
@@ -158,6 +159,8 @@ export async function drawCartesianYAxisTitle(
 
 export interface CartesianYAxisOptions {
   axisLineVisibility?: CartesianAxisLineVisibility;
+  independentGrid?: boolean;
+  formatTick?: (value:number)=>string;
   color: CartesianChartColorConfig;
   textColor: ColorToken;
   ticks: number[];
@@ -206,12 +209,12 @@ export async function drawCartesianYAxis(
       options.color.gridLine,
       1,
     );
-    axisLine.opacity = isCartesianYAxisLineVisible(options.axisLineVisibility)
+    axisLine.opacity = options.independentGrid || isCartesianYAxisLineVisible(options.axisLineVisibility)
       ? 1
       : 0;
 
     const label = await createCartesianText(
-      formatAxisTickLabel(tick, yAxisDataType),
+      options.formatTick ? options.formatTick(tick) : formatAxisTickLabel(tick, yAxisDataType),
       yLabelStyle,
       options.textColor,
     );
@@ -239,6 +242,7 @@ export async function drawCartesianYAxis(
   ruler.layoutPositioning = "ABSOLUTE";
   ruler.x = rulerX;
   ruler.y = -1;
+  if(options.independentGrid)ruler.visible=isCartesianYAxisLineVisible(options.axisLineVisibility);
 }
 
 export async function measureYAxisLabelGutterFigma(
@@ -246,6 +250,7 @@ export async function measureYAxisLabelGutterFigma(
   yAxisDataType: YAxisDataType,
   yLabelStyle: TypographyToken,
   textColor: ColorToken,
+  formatTick?: (value:number)=>string,
 ): Promise<number> {
   if (ticks.length === 0) {
     return Y_AXIS_LABEL_AXIS_GAP;
@@ -261,6 +266,7 @@ export async function measureYAxisLabelGutterFigma(
       return measurer.width;
     },
     yAxisDataType,
+    formatTick,
   );
 
   measurer.remove();
@@ -269,6 +275,8 @@ export async function measureYAxisLabelGutterFigma(
 
 export interface CartesianXAxisOptions {
   axisLineVisibility?: CartesianAxisLineVisibility;
+  independentGrid?: boolean;
+  formatTick?: (value:number)=>string;
   color: CartesianChartColorConfig;
   continuous?: boolean;
   labels: string[];
@@ -337,7 +345,7 @@ export async function drawCartesianXAxis(
       1,
       height,
       options.color.gridLine,
-      isCartesianXAxisLineVisible(options.axisLineVisibility) &&
+      (options.independentGrid || isCartesianXAxisLineVisible(options.axisLineVisibility)) &&
         !(isContinuous && (index === 0 || index === options.labels.length - 1))
         ? 1
         : 0,
@@ -401,4 +409,5 @@ export async function drawCartesianXAxis(
   ruler.layoutPositioning = "ABSOLUTE";
   ruler.x = 0;
   ruler.y = options.rulerY;
+  if(options.independentGrid)ruler.visible=isCartesianXAxisLineVisible(options.axisLineVisibility);
 }

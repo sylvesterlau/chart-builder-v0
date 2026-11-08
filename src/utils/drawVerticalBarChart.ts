@@ -355,6 +355,7 @@ async function drawBars(
 async function drawBarChart(
   parent: FrameNode,
   config: NormalizedVerticalBarChartConfig,
+  options: BarRenderOptions = {},
 ): Promise<{ chart: FrameNode; indicatorX: number | null }> {
   const yTitleRowHeight = config.color.typography.yAxisTitle.lineHeight;
   const contentStackOffset = 24 + yTitleRowHeight;
@@ -426,6 +427,7 @@ async function drawBarChart(
     "number",
     config.color.yAxisLabel,
     textColor.primary,
+    options.formatTick,
   );
   const plotX = yAxisPosition === "right" ? 0 : labelGutter;
   const plotY = 9;
@@ -455,6 +457,8 @@ async function drawBarChart(
       color: config.color,
       textColor: textColor.primary,
       ticks: config.yTicks,
+      formatTick: options.formatTick,
+      independentGrid: options.independentGrid,
       yAxisPosition: config.yAxisPosition,
     },
     plotX,
@@ -468,6 +472,7 @@ async function drawBarChart(
       axisLineVisibility: config.axisLineVisibility,
       color: config.color,
       labelYOffset: 4,
+      independentGrid: options.independentGrid,
       labels: config.labels,
       rulerY: zeroBaselineY,
       textColor: textColor.primary,
@@ -483,10 +488,19 @@ async function drawBarChart(
   return { chart, indicatorX: selectedIndicatorX };
 }
 
+export interface BarRenderOptions {
+  normalized?: NormalizedVerticalBarChartConfig;
+  keyInfo?: ReturnType<typeof buildBarKeyInfo>;
+  tooltip?: ReturnType<typeof buildBarTooltip>;
+  formatTick?: (value: number) => string;
+  independentGrid?: boolean;
+  select?: boolean;
+}
 export async function drawVerticalBarChart(
   chartData: Partial<VerticalBarChartConfig>,
+  options: BarRenderOptions = {},
 ) {
-  const config = normalizeVerticalBarChartConfig(
+  const config = options.normalized ?? normalizeVerticalBarChartConfig(
     chartData,
     verticalBarChartConfig as unknown as VerticalBarChartConfig,
   );
@@ -509,22 +523,25 @@ export async function drawVerticalBarChart(
 
   positionChart(chart);
   figma.currentPage.appendChild(chart);
+  try {
   const title = await createChartTitle(config.chartTitle);
   if (title) {
     chart.appendChild(title);
   }
-  const keyInfo = await createCartesianKeyInfo(buildBarKeyInfo(config));
+  const keyInfo = await createCartesianKeyInfo(options.keyInfo ?? buildBarKeyInfo(config));
   if (keyInfo) {
     chart.appendChild(keyInfo);
   }
-  const drawnChart = await drawBarChart(chart, config);
+  const drawnChart = await drawBarChart(chart, config, options);
   await createCartesianTooltip(
     chart,
-    buildBarTooltip(config),
+    options.tooltip === undefined ? buildBarTooltip(config) : options.tooltip,
     drawnChart.indicatorX ?? 0,
     drawnChart.chart.y,
   );
 
-  figma.currentPage.selection = [chart];
-  figma.viewport.scrollAndZoomIntoView([chart]);
+  if(options.select !== false){figma.currentPage.selection = [chart];
+  figma.viewport.scrollAndZoomIntoView([chart]);}
+  return chart;
+  } catch(error){chart.remove();throw error;}
 }

@@ -125,6 +125,7 @@ async function createTooltipRow(
   item: CartesianTooltipData["items"][number],
   width: number,
   kind: CartesianTooltipData["kind"],
+  horizontal = false,
 ): Promise<FrameNode> {
   const row = await createFrame("Text line");
   row.resize(width, 20);
@@ -163,6 +164,7 @@ async function createTooltipRow(
   );
   value.textAlignHorizontal = "RIGHT";
   row.appendChild(value);
+  if(horizontal){row.layoutMode="VERTICAL";main.layoutGrow=0;main.layoutSizingHorizontal="FILL";}
   await applyItemSpacing(row, cartesianTooltipConfig.spacing.itemGap);
   await applyItemSpacing(main, cartesianTooltipConfig.spacing.itemGap);
   return row;
@@ -287,9 +289,17 @@ export async function createCartesianTooltip(
   title.textAutoResize = "HEIGHT";
   panel.appendChild(title);
 
+  const horizontal=data.layout==='inline';
+  let rowsParent=panel;
+  if(horizontal){
+    rowsParent=await createFrame('Tooltip items');rowsParent.resize(panelContentWidth,20);
+    Object.assign(rowsParent,{layoutMode:'HORIZONTAL',primaryAxisSizingMode:'FIXED',counterAxisSizingMode:'AUTO',itemSpacing:numberTokenValue(itemGap)});
+    panel.appendChild(rowsParent);rowsParent.layoutSizingHorizontal='FILL';
+  }
   for (const item of data.items) {
-    const row = await createTooltipRow(item, panelContentWidth, data.kind);
-    panel.appendChild(row);
+    const width=horizontal?(panelContentWidth-numberTokenValue(itemGap)*(data.items.length-1))/data.items.length:panelContentWidth;
+    const row = await createTooltipRow(item,width,data.kind,horizontal);
+    rowsParent.appendChild(row);
     row.layoutSizingHorizontal = "FILL";
   }
 

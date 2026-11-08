@@ -23,10 +23,13 @@ Optional browser preview: `npm run preview --prefix experiments/ui3-bar`, then o
 - Single/dual grouped bar; editable category and series names, generated or imported JSON data, preview, number format and axes controls.
 - Persisted chart dataset and display settings use a versioned plugin-data schema. Generator controls reset on reopening; the generated dataset is preserved.
 - Reopening recognizes only charts made by this experimental plugin ID, not legacy charts.
-- The preview reuses the existing Bar preview. The experimental canvas renderer creates native text and rectangles with fallback styling; exact layout parity, design-token binding, stacked bars and other chart types remain unfinished.
+- Preview and canvas now share the same normalized dataset and presentation model. Canvas uses the original Bar renderer and token binding helpers; Desktop preview resolves the same token payloads. Browser-only preview uses fallback tokens. Stacked bars and other chart types remain unfinished.
+- Width and chart-area Height are configurable. Title and summary add to total card height. Top information and Tooltip share Auto / Horizontal / Rows; Auto evaluates each block independently from its actual text and available width.
 - Large datasets and long labels still need layout refinement. Test on a duplicate before using in production.
 - No network access requested. Chart data is stored in the Figma document, not sent to an external service.
 
 ## Verification
 
 Model checks cover schema validation, persistence, negative decimals, preserved second-series values, invalid numbers, and bounded selection. Browser startup and live preview were verified without runtime errors. Desktop testing verified insert, update, close/reopen restoring an edited value, and Save as new. Update retained the original root ID and position.
+
+Renderer repair validation: original plugin typecheck/build and experiment tests pass. Desktop insert/update tested at 480×320 and 640×400 chart-area sizes, including shared Rows. Browser checked 800×440 fit-to-panel and state retention across tabs. Persisted size/layout and legacy defaults have model regression coverage. Browser and Figma font metrics can still differ slightly.

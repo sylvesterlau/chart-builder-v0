@@ -15,3 +15,15 @@ assert.throws(()=>validateDraft({...d,settings:{...d.settings,divisions:'Custom'
 assert.equal(validateDraft({...d,debugSecret:'exclude'}).debugSecret,undefined);
 assert.equal(validateDraft({...d,selected:999}).selected,6);
 console.log('Model checks passed: persistence, hidden series, negative decimals, invalid input, schema whitelist, selection bounds.');
+const viewBundle=await build({tsconfigRaw:{compilerOptions:{target:'ES2017'}},entryPoints:['chart-config.ts'],bundle:true,write:false,format:'cjs',platform:'node'});
+const viewSandbox={exports:{},module:{exports:{}}};viewSandbox.exports=viewSandbox.module.exports;vm.runInNewContext(viewBundle.outputFiles[0].text,viewSandbox);
+const {barPresentation}=viewSandbox.module.exports;
+const sized=initialDraft();sized.settings.width='800';sized.settings.height='440';sized.settings.topLayout='Horizontal';
+let v=barPresentation(sized);assert.equal(v.config.width,800);assert.equal(v.config.height,440);assert.equal(v.keyInfo.layout,'inline');assert.equal(v.tooltip.layout,'inline');
+sized.settings.topLayout='Rows';v=barPresentation(sized);assert.equal(v.keyInfo.layout,'rows');assert.equal(v.tooltip.layout,'rows');
+sized.settings.topLayout='Auto';v=barPresentation(sized);assert.equal(v.keyInfo.layout,'inline');
+sized.settings.width='260';sized.seriesNames=['A very long product name','Another very long product name'];v=barPresentation(sized);assert.equal(v.keyInfo.layout,'rows');assert.equal(v.tooltip.layout,'rows');
+sized.settings.tooltip=false;sized.settings.yTitleVisible=false;v=barPresentation(sized);assert.equal(v.tooltip,null);assert.equal(v.config.yAxisTitle,'');
+const restored=readSaved(JSON.stringify({schema:1,type:'standard-bar',revision:1,draft:sized}));assert.equal(restored.draft.settings.width,'260');assert.equal(restored.draft.settings.topLayout,'Auto');
+const legacy=initialDraft();delete legacy.settings.width;delete legacy.settings.height;delete legacy.settings.topLayout;assert.equal(validateDraft(legacy).settings.width,'480');
+console.log('Presentation checks passed: size, shared layouts, Auto overflow, visibility, restore and old chart defaults.');

@@ -164,7 +164,8 @@ function CartesianTooltipPreview({
     resolvedNumbers,
   );
   const pointerWidth = cartesianTooltipConfig.pointerWidth;
-  const tooltipTop = Math.max(0, chartTop - tooltipHeight(data.items.length) - 16);
+  const horizontal=data.layout === "inline";
+  const tooltipTop = Math.max(0, chartTop - tooltipHeight(horizontal ? 2 : data.items.length));
   const pointerLeft = clamp(
     anchorX - outerPadding - pointerWidth / 2,
     0,
@@ -226,7 +227,7 @@ function CartesianTooltipPreview({
           <div
             style={{
               display: "flex",
-              flexDirection: "column",
+              flexDirection: horizontal ? "row" : "column",
               gap: `${itemGap}px`,
               width: "100%",
             }}
@@ -242,8 +243,11 @@ function CartesianTooltipPreview({
                   style={{
                     alignItems: "flex-start",
                     display: "flex",
+                    flexDirection: horizontal ? "column" : "row",
+                    flex: horizontal ? "1 1 0" : undefined,
+                    minWidth: 0,
                     gap: `${itemGap}px`,
-                    width: "100%",
+                    width: horizontal ? undefined : "100%",
                   }}
                 >
                 <div

@@ -18,6 +18,7 @@ export interface CartesianTooltipItem {
 
 export interface CartesianTooltipData {
   kind: CartesianTooltipKind;
+  layout?: "inline" | "rows";
   title: string;
   items: CartesianTooltipItem[];
 }
