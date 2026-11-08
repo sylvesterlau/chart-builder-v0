@@ -25,5 +25,5 @@ sized.settings.topLayout='Auto';v=barPresentation(sized);assert.equal(v.keyInfo.
 sized.settings.width='260';sized.seriesNames=['A very long product name','Another very long product name'];v=barPresentation(sized);assert.equal(v.keyInfo.layout,'rows');assert.equal(v.tooltip.layout,'rows');
 sized.settings.tooltip=false;sized.settings.yTitleVisible=false;v=barPresentation(sized);assert.equal(v.tooltip,null);assert.equal(v.config.yAxisTitle,'');
 const restored=readSaved(JSON.stringify({schema:1,type:'standard-bar',revision:1,draft:sized}));assert.equal(restored.draft.settings.width,'260');assert.equal(restored.draft.settings.topLayout,'Auto');
-const legacy=initialDraft();delete legacy.settings.width;delete legacy.settings.height;delete legacy.settings.topLayout;assert.equal(validateDraft(legacy).settings.width,'480');
+const legacy=initialDraft();delete legacy.settings.width;delete legacy.settings.height;delete legacy.settings.topLayout;assert.equal(validateDraft(legacy).settings.width,'390');
 console.log('Presentation checks passed: size, shared layouts, Auto overflow, visibility, restore and old chart defaults.');

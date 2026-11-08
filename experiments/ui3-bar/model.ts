@@ -1,7 +1,7 @@
 import {formatAmount} from './ui/number-format';
 export {formatAmount};
 export const STORAGE_KEY='hive_ui3_bar_v1';
-export function initialDraft():any{return {rows:['Jan','Feb','Mar','Apr','May','Jun'].map((label,id)=>({id,label,a:String(40+id*20),b:String(30+id*20)})),series:'2 series',seriesNames:['Product A','Product B'],title:'Monthly performance',titleVisible:true,selected:3,arrangement:'Grouped',prefix:'',suffix:' USD',separator:'Comma',settings:{width:'480',height:'320',topLayout:'Auto',tooltip:true,position:'Right',axes:'both',divisions:'Auto',count:'4',yTitle:'Revenue',yTitleVisible:true,xTitle:'Year 2026',xTitleVisible:true,grid:true,shorthand:'Auto'}}}
+export function initialDraft():any{return {rows:['Jan','Feb','Mar','Apr','May','Jun'].map((label,id)=>({id,label,a:String(40+id*20),b:String(30+id*20)})),series:'2 series',seriesNames:['Product A','Product B'],title:'Monthly performance',titleVisible:true,selected:3,arrangement:'Grouped',prefix:'',suffix:' USD',separator:'Comma',settings:{width:'390',height:'320',topLayout:'Auto',tooltip:true,position:'Right',axes:'both',divisions:'Auto',count:'4',yTitle:'Revenue',yTitleVisible:true,xTitle:'Year 2026',xTitleVisible:true,grid:true,shorthand:'Auto'}}}
 export function validateDraft(input:any):any{
  if(!input||typeof input!=='object'||JSON.stringify(input).length>100000)throw Error('Invalid chart data.');
  const d={...initialDraft(),...input,settings:{...initialDraft().settings,...input.settings}};

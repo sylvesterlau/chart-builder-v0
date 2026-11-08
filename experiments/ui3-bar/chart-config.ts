@@ -4,7 +4,7 @@ import {buildBarKeyInfo,resolveContentLayout} from '../../src/utils/cartesianKey
 import {buildBarTooltip} from '../../src/utils/cartesianTooltip';
 import {formatAmount} from './ui/number-format';
 export function barPresentation(d:any){
- const s=d.settings||{}, width=Math.max(260,Math.min(1200,Number(s.width)||480)),height=Math.max(220,Math.min(900,Number(s.height)||320));
+ const s=d.settings||{}, width=Math.max(260,Math.min(1200,Number(s.width)||390)),height=Math.max(220,Math.min(900,Number(s.height)||320));
  const raw:any=JSON.parse(JSON.stringify(verticalBarChartConfig));
  Object.assign(raw,{width,height,chartTitle:d.titleVisible?d.title:'',barMode:d.series==='1 series'?'single':'dual',periodCount:d.rows.length,labels:d.rows.map((r:any)=>r.label),selectedIndex:s.tooltip===false?-1:Math.min(d.rows.length-1,Math.max(0,d.selected-1)),yAxisPosition:String(s.position||'Right').toLowerCase(),axisLineVisibility:s.axes||'both',yAxisDivisions:s.divisions==='Custom'?+s.count:3});
  raw.series=raw.series.slice(0,raw.barMode==='single'?1:2).map((v:any,i:number)=>({...v,name:d.seriesNames[i],values:d.rows.map((r:any)=>Number(r[i?'b':'a'])||0)}));
