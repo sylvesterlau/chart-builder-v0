@@ -43,3 +43,6 @@ Verification: model regressions cover persistence, single/dual JSON bounds, sele
 
 
 Label/grid follow-up: Apply to displays current series names while retaining stable A/B targets. Axes & grid offers Auto or Every N categories (1–100); all data remains rendered and the selected category label stays visible. Auto uses a conservative text-width estimate and available chart width, so custom font metrics and unusually long labels still require visual review. Horizontal and vertical grids have independent visibility, separate from axis lines. Legacy grid=false migrates to both directions hidden. Model tests and browser checks cover these controls; original-plugin typecheck/build passes. A fresh Desktop visual check of these new grid/density combinations remains pending.
+
+
+Horizontal canvas resizing: new experimental Bar charts distribute category containers evenly, stretch axes/grids, retain label font sizes, and keep the floating tooltip pointer aligned with the selected category. Verified in Figma Desktop at 390→780 px: six 115 px category slots in a 690 px plot, 12 px axis labels, screenshot checked. Tick counts and label density do not recalculate on canvas resize; vertical resizing is outside this change. Existing charts need Update to receive these constraints. Saved plugin size settings still control regeneration.
