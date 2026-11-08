@@ -1,10 +1,18 @@
 import {pieChartConfig,typography,chartBackground,textColor,legendSpacingConfig,legendShapeConfig,dividerColor} from '../../src/config';
 import {dataVisAt} from '../../src/utils/dataVisAt';
 import {formatAmount} from './ui/number-format';
+export function compositionRows(d:any){
+ return d.rows.map((r:any,index:number)=>({id:r.id??index,index,label:r.label,value:+r.a,colorIndex:index,kind:'item'})).sort((a:any,b:any)=>b.value-a.value||a.index-b.index);
+}
 export function composition(d:any){
- const sorted=d.rows.map((r:any,i:number)=>({id:r.id??i,label:r.label,value:+r.a,colorIndex:i})).sort((a:any,b:any)=>b.value-a.value);
+ const sorted=compositionRows(d);
  if(sorted.length<=6)return sorted;
- return [...sorted.slice(0,5),{id:'others',label:'Others',value:sorted.slice(5).reduce((n:number,r:any)=>n+r.value,0),colorIndex:5}];
+ return [...sorted.slice(0,5),{id:'others',label:'Others',value:sorted.slice(5).reduce((n:number,r:any)=>n+r.value,0),colorIndex:sorted[5].colorIndex,kind:'others'}];
+}
+export function compositionLegend(d:any){
+ const sorted=compositionRows(d);
+ if(sorted.length<=6)return sorted;
+ return [...sorted.slice(0,5),{...composition(d)[5],kind:'others'},...sorted.slice(5).map((r:any)=>({...r,kind:'nested'}))];
 }
 export function contentText(item:any,content:string,total:number,d:any){return [item.label,...(content.includes('value')?[formatAmount(item.value,d)]:[]),...(content.includes('share')?[(item.value/total*100).toFixed(1).replace(/\.0$/,'')+'%']:[])].join('\n')}
 const point=(cx:number,cy:number,r:number,a:number)=>({x:cx+Math.cos(a)*r,y:cy+Math.sin(a)*r});
@@ -19,7 +27,7 @@ export function pieLayout(d:any){
  const labelWidth=Math.max(50,cx-radius-24),gap=8;
  const wrap=(text:string)=>text.split('\n').flatMap(line=>{const chars=Math.max(4,Math.floor(labelWidth/7));const out=[];for(let i=0;i<line.length;i+=chars)out.push(line.slice(i,i+chars));return out.length?out:[''];}).join('\n');
  let angle=-Math.PI/2;
- const slices=items.filter((r:any)=>r.value>0).map((item:any)=>{const end=angle-item.value/total*Math.PI*2,mid=(angle+end)/2;const side=Math.cos(mid)<0?'left':'right';const text=wrap(contentText(item,d.directContent,total,d));const h=text.split('\n').length*20;
+ const slices=items.filter((r:any)=>r.value>0).map((item:any)=>{const end=angle+item.value/total*Math.PI*2,mid=(angle+end)/2;const side=Math.cos(mid)<0?'left':'right';const text=wrap(contentText(item,d.directContent,total,d));const h=text.split('\n').length*20;
  const value={...item,path:slicePath(cx,cy,radius,inner,angle,end),color:dataVisAt(item.colorIndex),side,start:point(cx,cy,radius+3,mid),outer:point(cx,cy,radius+12,mid),text,h,y:cy+Math.sin(mid)*(radius+20)-h/2};angle=end;return value;});
  for(const side of ['left','right']){
   const labels=slices.filter((r:any)=>r.side===side).sort((a:any,b:any)=>a.y-b.y);
@@ -36,14 +44,14 @@ export function pieLayout(d:any){
  const pad=legendSpacingConfig.horizontalPadding.value;
  const legendPad=legendSpacingConfig.verticalPadding.value;
  const shapeSize=legendShapeConfig.size.value;
- const textOffset=shapeSize+legendSpacingConfig.gap.value;
+ const textOffset=18+legendSpacingConfig.gap.value;
  const available=width-pad*2-textOffset;
  const wrapLegend=(value:string,w:number)=>{const cap=Math.max(4,Math.floor(w/8));return value.split('\n').flatMap(line=>{const result=[];for(let i=0;i<line.length;i+=cap)result.push(line.slice(i,i+cap));return result.length?result:[''];}).join('\n');};
  let legendHeight=0;
- const legends=items.map((item:any)=>{
+ const legends=compositionLegend(d).map((item:any)=>{
   const share=(item.value/total*100).toFixed(1).replace(/\.0$/,'')+'%';
-  const amount=d.legendContent.includes('value')?formatAmount(item.value,d):'';
-  const showShare=d.legendContent.includes('share');
+  const amount=item.kind!=='others'&&d.legendContent.includes('value')?formatAmount(item.value,d):'';
+  const showShare=item.kind!=='others'&&d.legendContent.includes('share');
   const inlineLabel=item.label+(showShare?' ('+share+')':'');
   const stacked=d.legendLayout==='Rows'||(d.legendLayout==='Auto'&&(inlineLabel.length+amount.length)*8+16>available);
   const value=stacked?[amount,showShare?'('+share+')':''].filter(Boolean).join(' '):amount;

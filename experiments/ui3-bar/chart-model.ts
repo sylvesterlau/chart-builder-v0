@@ -11,7 +11,7 @@ export function initialChart(kind:ChartKind):any{
  }
  if(kind==='pie'||kind==='donut'){
   d.title='Monthly expenses';d.rows=['Housing','Food','Travel','Leisure'].map((label,id)=>({id,label,a:String(400-id*100),b:''}));d.series='1 series';
-  d.directContent='Name + share';d.legendContent='Name + value';d.legendLayout='Auto';d.centerContent='Total';d.centerCategory=0;d.centerCaption='Total';
+  d.directContent='Name + share';d.legendContent='Name + value + share';d.legendLayout='Auto';d.centerContent='Total';d.centerCategory=0;d.centerCaption='Total';
  }
  return d;
 }

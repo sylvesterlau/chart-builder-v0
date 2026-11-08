@@ -64,7 +64,7 @@ const line=initialChart('line');line.rows[1].label=line.rows[0].label;assert.thr
 const pie=initialChart('pie');pie.rows[0].a='-1';assert.throws(()=>validateChart(pie));
 const layoutBundle=await build({entryPoints:['pie-layout.ts'],bundle:true,write:false,format:'cjs',platform:'node'});const layout={exports:{},module:{exports:{}}};layout.exports=layout.module.exports;vm.runInNewContext(layoutBundle.outputFiles[0].text,layout);
 const eight=initialChart('pie');eight.rows=[400,200,120,100,70,50,40,20].map((a,id)=>({id,label:'Item '+id,a:String(a),b:''}));const slices=layout.module.exports.composition(eight);assert.equal(slices.length,6);assert.equal(slices[5].label,'Others');assert.equal(slices[5].value,110);assert.equal(slices[4].value,70);
-const pv=layout.module.exports.pieLayout(eight);assert.equal(pv.slices.length,6);assert.ok(pv.slices[0].start.x<pv.cx);assert.ok(pv.legends.length===6);
+const pv=layout.module.exports.pieLayout(eight);assert.equal(pv.slices.length,6);assert.ok(pv.slices[0].start.x>pv.cx);assert.equal(pv.legends.length,9);
 const lineBundle=await build({entryPoints:['line-config.ts'],bundle:true,write:false,format:'cjs',platform:'node'});const lc={exports:{},module:{exports:{}}};lc.exports=lc.module.exports;vm.runInNewContext(lineBundle.outputFiles[0].text,lc);const {makeTimes,linePresentation}=lc.module.exports;
 assert.equal(makeTimes('2026-01-01','2026-01-31',31,'Date').length,31);assert.throws(()=>makeTimes('2026-01-01','2026-01-31',8,'Date'));
 const irregular=initialChart('line');irregular.rows=[{id:0,label:'2026-01-01',a:'10',b:'20'},{id:1,label:'2026-01-02',a:'15',b:'30'},{id:2,label:'2026-01-11',a:'20',b:'40'}];irregular.extent='Partial';irregular.through=2;irregular.selected=3;
@@ -78,3 +78,12 @@ legendDraft.legendLayout='Rows';legends=layout.module.exports.pieLayout(legendDr
 legendDraft.legendLayout='Auto';legendDraft.rows[0].label='A very long category name for a narrow chart';assert.equal(layout.module.exports.pieLayout(legendDraft).legends[0].stacked,true);
 const zero=initialChart('pie');zero.rows.forEach(x=>x.a='0');assert.throws(()=>validateChart(zero));
 console.log('Original-plugin legend row layouts, Auto overflow and zero-total rejection passed.');
+
+const ref=initialChart('pie');ref.rows=[412,252,159,112,12,12,12].map((a,id)=>({id,label:['Shopping','Travel','Food','Transportation','Item 5','Item 6','Item 7'][id],a:String(a),b:''}));
+const rv=layout.module.exports.pieLayout(ref);
+assert.equal(rv.slices.length,6);assert.equal(rv.legends.length,8);
+assert.equal(rv.legends[5].label,'Others');assert.equal(rv.legends[5].value,'');
+assert.equal(rv.legends[6].kind,'nested');assert.ok(rv.legends[6].label.includes('1.2%'));assert.equal(rv.legends[6].value,'12 USD');
+assert.equal(rv.slices[5].value,24);
+ref.rows[6].a='500';const regroup=layout.module.exports.compositionLegend(ref);assert.equal(regroup[0].index,6);assert.equal(regroup[0].id,6);assert.equal(ref.rows[0].label,'Shopping');
+console.log('Others header/details and stable row mapping passed.');
