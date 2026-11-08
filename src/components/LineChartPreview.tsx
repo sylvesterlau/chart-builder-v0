@@ -310,6 +310,7 @@ function LineChartPreview({ config, presentation }: LineChartPreviewProps) {
               zIndex: 1,
             }}
           >
+            {presentation?.gridVertical && presentation.gridRatios?.map((ratio:number,i:number)=><div key={'grid-'+i} style={{position:'absolute',left:ratio*Math.max(0,xAxisWidth-1),top:0,width:1,height:plotHeight,background:gridLineColor}}/>)}
             {xAxisLabels.map((label, index) => {
               const labelPosition =
                 xAxisLabels.length <= 1
@@ -332,7 +333,7 @@ function LineChartPreview({ config, presentation }: LineChartPreviewProps) {
                   <div
                   style={{
                     background:
-                      (presentation ? presentation.gridVertical : showXAxisLine) && !isFirstLabel && !isLastLabel
+                      (presentation ? presentation.gridVertical && !presentation.gridRatios : showXAxisLine) && !isFirstLabel && !isLastLabel
                         ? gridLineColor
                         : "transparent",
                     height: `${plotHeight}px`,

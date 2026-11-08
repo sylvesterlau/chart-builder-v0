@@ -66,7 +66,7 @@ const layoutBundle=await build({entryPoints:['pie-layout.ts'],bundle:true,write:
 const eight=initialChart('pie');eight.rows=[400,200,120,100,70,50,40,20].map((a,id)=>({id,label:'Item '+id,a:String(a),b:''}));const slices=layout.module.exports.composition(eight);assert.equal(slices.length,6);assert.equal(slices[5].label,'Others');assert.equal(slices[5].value,110);assert.equal(slices[4].value,70);
 const pv=layout.module.exports.pieLayout(eight);assert.equal(pv.slices.length,6);assert.ok(pv.slices[0].start.x>pv.cx);assert.equal(pv.legends.length,9);
 const lineBundle=await build({entryPoints:['line-config.ts'],bundle:true,write:false,format:'cjs',platform:'node'});const lc={exports:{},module:{exports:{}}};lc.exports=lc.module.exports;vm.runInNewContext(lineBundle.outputFiles[0].text,lc);const {makeTimes,linePresentation}=lc.module.exports;
-assert.equal(makeTimes('2026-01-01','2026-01-31',31,'Date').length,31);assert.throws(()=>makeTimes('2026-01-01','2026-01-31',8,'Date'));
+assert.equal(makeTimes('2026-01-01','2026-01-31',31,'Date').length,31);assert.equal(new Set(makeTimes('2026-01-01','2026-01-31',8,'Date')).size,8);
 const irregular=initialChart('line');irregular.rows=[{id:0,label:'2026-01-01',a:'10',b:'20'},{id:1,label:'2026-01-02',a:'15',b:'30'},{id:2,label:'2026-01-11',a:'20',b:'40'}];irregular.extent='Partial';irregular.through=2;irregular.selected=3;
 const lv=linePresentation(irregular);assert.equal(lv.ratios[1],.1);assert.equal(lv.visibleCount,2);assert.equal(lv.config.selectedIndex,1);assert.equal(lv.config.pointCount,3);
 console.log('Line/Pie/Donut schema, irregular timestamps, Partial and Others rules passed.');
@@ -87,3 +87,33 @@ assert.equal(rv.legends[6].kind,'nested');assert.ok(rv.legends[6].label.includes
 assert.equal(rv.slices[5].value,24);
 ref.rows[6].a='500';const regroup=layout.module.exports.compositionLegend(ref);assert.equal(regroup[0].index,6);assert.equal(regroup[0].id,6);assert.equal(ref.rows[0].label,'Shopping');
 console.log('Others header/details and stable row mapping passed.');
+
+const {generateValues,lineGridRatios}=lc.module.exports;
+for(const trend of ['Rising','Falling','Rise–fall','Fall–rise','Steady','Random']){
+ const low=generateValues(31,-100,200,trend,'Low',4).map(Number),high=generateValues(31,-100,200,trend,'High',4).map(Number);
+ assert.notEqual(JSON.stringify(low),JSON.stringify(high));
+ assert.ok([...low,...high].every(n=>n>=-100&&n<=200));
+}
+assert.throws(()=>generateValues(31,10,10,'Rising','Low',1));
+const sparseGrid=lineGridRatios([0,1],[],280);
+assert.equal(sparseGrid.length,3);
+const denseRatios=Array.from({length:100},(_,i)=>i/99);
+const adaptiveGrid=lineGridRatios(denseRatios,[0,40,80],280);
+assert.ok(adaptiveGrid.length<8);assert.ok(adaptiveGrid.includes(denseRatios[40]));assert.ok(adaptiveGrid.includes(denseRatios[80]));
+const edges=[0,...adaptiveGrid,1];assert.ok(edges.slice(1).every((n,i)=>(n-edges[i])*280<=80.000001));
+assert.ok(lineGridRatios([0,1],[],700).length>sparseGrid.length);
+console.log('Shared Bar/Line generation: variation, bounds; Line grid: sparse/dense points, labels and width passed.');
+
+const {autoLineScale}=lc.module.exports;
+for(const variation of ['Low','Medium','High']){
+ const values=generateValues(31,10,200,'Steady',variation,4).map(Number);
+ const scale=autoLineScale(values,4);
+ assert.ok(Math.max(...values)-Math.min(...values)<24);
+ assert.ok(Math.max(...values.slice(1).map((n,i)=>Math.abs(n-values[i])))<=5);
+ assert.ok((Math.max(...values)-Math.min(...values))/(scale.maxValue-scale.minValue)<.5);
+}
+for(const values of [[101,105,109],[-109,-101],[-2,3],[.001,.003],[0,0],[1e12,1e12]]){
+ const scale=autoLineScale(values,4);assert.ok(scale.minValue<=Math.min(...values));assert.ok(scale.maxValue>=Math.max(...values));assert.equal(scale.ticks.length,5);
+}
+assert.throws(()=>makeTimes('2026-01-01','2026-01-03',8,'Date'));
+console.log('Steady slow movement, padded data-only axis and configurable unique timestamps passed.');

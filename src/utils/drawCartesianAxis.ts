@@ -284,6 +284,7 @@ export interface CartesianXAxisOptions {
   color: CartesianChartColorConfig;
   continuous?: boolean;
   pointRatios?: number[];
+  gridRatios?: number[];
   labels: string[];
   labelYOffset: number;
   rulerY: number;
@@ -313,6 +314,14 @@ export async function drawCartesianXAxis(
   const groupWidth = width / options.labels.length;
   const xLabelStyle = options.color.typography.xAxisLabel;
   const xTitleStyle = options.color.typography.xAxisTitle;
+
+  if(isContinuous && options.gridRatios && options.gridVisible!==false){
+    for(const ratio of options.gridRatios){
+      const grid=await createCartesianRect(axis,"Vertical grid",ratio*Math.max(0,width-1),0,1,height,options.color.gridLine,1);
+      grid.layoutPositioning="ABSOLUTE";
+      grid.x=ratio*Math.max(0,width-1);grid.y=0;
+    }
+  }
 
   for (let index = 0; index < options.labels.length; index++) {
     const labelText = options.labels[index];
@@ -350,7 +359,7 @@ export async function drawCartesianXAxis(
       1,
       height,
       options.color.gridLine,
-      options.gridVisible!==false && (options.independentGrid || isCartesianXAxisLineVisible(options.axisLineVisibility)) &&
+      !options.gridRatios && options.gridVisible!==false && (options.independentGrid || isCartesianXAxisLineVisible(options.axisLineVisibility)) &&
         !(isContinuous && (index === 0 || index === options.labels.length - 1))
         ? 1
         : 0,

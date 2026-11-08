@@ -3,3 +3,5 @@
 html{font-size:16px}body,#root{font-size:12px}
 /* FigUI3 global button styles also affect app-owned trend cards. */
 .trends button{display:flex;flex-direction:column;height:auto;min-height:54px;white-space:normal;line-height:14px;justify-content:center;align-items:center}
+
+.paired-fields{display:flex;gap:8px;min-width:0;width:100%}.paired-fields>*{flex:1;min-width:0;width:0}.generator-label{display:block;margin:8px 0}.paired-fields input{min-width:0;width:100%}

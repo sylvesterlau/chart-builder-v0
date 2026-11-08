@@ -523,7 +523,7 @@ async function drawChart(parent: FrameNode, config: NormalizedLineChartConfig, o
       continuous: true,
       labelYOffset: 4,
       labels: config.xAxisLabels,
-      pointRatios:options.ratios,labelIndices:options.labelIndices,independentGrid:options.independentGrid,gridVisible:options.gridVertical,
+      pointRatios:options.ratios,gridRatios:options.gridRatios,labelIndices:options.labelIndices,independentGrid:options.independentGrid,gridVisible:options.gridVertical,
       rulerY: cartesianRulerY(
         config.minValue,
         config.maxValue,
