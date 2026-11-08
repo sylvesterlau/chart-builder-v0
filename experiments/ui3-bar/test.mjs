@@ -20,10 +20,10 @@ const viewSandbox={exports:{},module:{exports:{}}};viewSandbox.exports=viewSandb
 const {barPresentation}=viewSandbox.module.exports;
 const sized=initialDraft();sized.settings.width='800';sized.settings.height='440';sized.settings.topLayout='Horizontal';
 let v=barPresentation(sized);assert.equal(v.config.width,800);assert.equal(v.config.height,440);assert.equal(v.keyInfo.layout,'inline');assert.equal(v.tooltip.layout,'inline');
-sized.settings.topLayout='Rows';v=barPresentation(sized);assert.equal(v.keyInfo.layout,'rows');assert.equal(v.tooltip.layout,'rows');
+sized.settings.topLayout='Rows';v=barPresentation(sized);assert.equal(v.keyInfo.layout,'inline');assert.equal(v.tooltip.layout,'inline'); // Legacy overrides are ignored.
 sized.settings.topLayout='Auto';v=barPresentation(sized);assert.equal(v.keyInfo.layout,'inline');
 sized.settings.width='260';sized.seriesNames=['A very long product name','Another very long product name'];v=barPresentation(sized);assert.equal(v.keyInfo.layout,'rows');assert.equal(v.tooltip.layout,'rows');
 sized.settings.tooltip=false;sized.settings.yTitleVisible=false;v=barPresentation(sized);assert.equal(v.tooltip,null);assert.equal(v.config.yAxisTitle,'');
-const restored=readSaved(JSON.stringify({schema:1,type:'standard-bar',revision:1,draft:sized}));assert.equal(restored.draft.settings.width,'260');assert.equal(restored.draft.settings.topLayout,'Auto');
+const restored=readSaved(JSON.stringify({schema:1,type:'standard-bar',revision:1,draft:sized}));assert.equal(restored.draft.settings.width,'260');assert.equal(restored.draft.settings.topLayout,undefined);
 const legacy=initialDraft();delete legacy.settings.width;delete legacy.settings.height;delete legacy.settings.topLayout;assert.equal(validateDraft(legacy).settings.width,'390');
 console.log('Presentation checks passed: size, shared layouts, Auto overflow, visibility, restore and old chart defaults.');

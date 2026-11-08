@@ -164,7 +164,17 @@ async function createTooltipRow(
   );
   value.textAlignHorizontal = "RIGHT";
   row.appendChild(value);
-  if(horizontal){row.layoutMode="VERTICAL";main.layoutGrow=0;main.layoutSizingHorizontal="FILL";}
+  if (horizontal) {
+    // Switching axes also changes what the sizing modes control. Hug the
+    // vertical stack instead of retaining the old fixed 20px primary axis.
+    row.layoutMode = "VERTICAL";
+    row.primaryAxisSizingMode = "AUTO";
+    row.counterAxisSizingMode = "FIXED";
+    main.layoutGrow = 0;
+    main.layoutSizingHorizontal = "FILL";
+    main.layoutSizingVertical = "HUG";
+    value.textAlignHorizontal = "LEFT";
+  }
   await applyItemSpacing(row, cartesianTooltipConfig.spacing.itemGap);
   await applyItemSpacing(main, cartesianTooltipConfig.spacing.itemGap);
   return row;

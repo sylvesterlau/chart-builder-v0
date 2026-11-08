@@ -254,7 +254,7 @@ function CartesianTooltipPreview({
                   style={{
                     alignItems: "center",
                     display: "flex",
-                    flex: "1 1 0",
+                    flex: horizontal ? "0 0 auto" : "1 1 0",
                     gap: `${itemGap}px`,
                     minWidth: 0,
                   }}

@@ -16,8 +16,8 @@ export function barPresentation(d:any){
  const format={prefix:d.prefix,suffix:d.suffix,separator:d.separator,shorthand:s.shorthand};
  const keyInfo=buildBarKeyInfo({...config,xAxisTitle:s.xTitle});
  keyInfo.items=keyInfo.items.map((v,i)=>{const values=config.series[i].values;return {...v,value:formatAmount(Math.min(...values),format)+' – '+formatAmount(Math.max(...values),format),unit:''}});
- keyInfo.layout=resolveContentLayout(keyInfo.items,width,s.topLayout||'Auto');
+ keyInfo.layout=resolveContentLayout(keyInfo.items,width,'Auto');
  const tooltip=buildBarTooltip({...config,xAxisTitle:s.xTitle});
- if(tooltip){tooltip.items=tooltip.items.map((v,i)=>({...v,value:formatAmount(config.series[i].values[config.selectedIndex],format)}));tooltip.layout=resolveContentLayout(tooltip.items,width,s.topLayout||'Auto');}
+ if(tooltip){tooltip.items=tooltip.items.map((v,i)=>({...v,value:formatAmount(config.series[i].values[config.selectedIndex],format)}));tooltip.layout=resolveContentLayout(tooltip.items,width,'Auto');}
  return {config,keyInfo,tooltip,formatTick:(v:number)=>formatAmount(v,format,true)};
 }
