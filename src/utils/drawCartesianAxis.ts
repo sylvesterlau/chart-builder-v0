@@ -160,6 +160,8 @@ export async function drawCartesianYAxisTitle(
 export interface CartesianYAxisOptions {
   axisLineVisibility?: CartesianAxisLineVisibility;
   independentGrid?: boolean;
+  gridVisible?: boolean;
+  labelIndices?: number[];
   formatTick?: (value:number)=>string;
   color: CartesianChartColorConfig;
   textColor: ColorToken;
@@ -209,7 +211,7 @@ export async function drawCartesianYAxis(
       options.color.gridLine,
       1,
     );
-    axisLine.opacity = options.independentGrid || isCartesianYAxisLineVisible(options.axisLineVisibility)
+    axisLine.opacity = options.gridVisible!==false && (options.independentGrid || isCartesianYAxisLineVisible(options.axisLineVisibility))
       ? 1
       : 0;
 
@@ -276,6 +278,8 @@ export async function measureYAxisLabelGutterFigma(
 export interface CartesianXAxisOptions {
   axisLineVisibility?: CartesianAxisLineVisibility;
   independentGrid?: boolean;
+  gridVisible?: boolean;
+  labelIndices?: number[];
   formatTick?: (value:number)=>string;
   color: CartesianChartColorConfig;
   continuous?: boolean;
@@ -345,13 +349,13 @@ export async function drawCartesianXAxis(
       1,
       height,
       options.color.gridLine,
-      (options.independentGrid || isCartesianXAxisLineVisible(options.axisLineVisibility)) &&
+      options.gridVisible!==false && (options.independentGrid || isCartesianXAxisLineVisible(options.axisLineVisibility)) &&
         !(isContinuous && (index === 0 || index === options.labels.length - 1))
         ? 1
         : 0,
     );
 
-    if (labelText) {
+    if (labelText && (!options.labelIndices || options.labelIndices.includes(index))) {
       const label = await createCartesianText(labelText, xLabelStyle, options.textColor);
       const measuredLabelWidth = Math.max(
         measureAxisLabelWidth(labelText),

@@ -24,12 +24,17 @@ export function barPresentation(d:any){
  // The new dataset supports up to 100 rows; do not silently truncate to legacy 24.
  Object.assign(config,{labels:raw.labels,series:raw.series,periodCount:raw.periodCount,selectedIndex:raw.selectedIndex,chartTitle:raw.chartTitle,yAxisTitle:s.yTitleVisible===false?'':s.yTitle,xAxisTitle:s.xTitleVisible===false?'':s.xTitle});
  const values=raw.series.flatMap((v:any)=>v.values); const scale=s.divisions==='Custom'?resolveBarScale(values,raw.yAxisDivisions):autoBarScale(values,height); config.yAxisDivisions=s.divisions==='Custom'?raw.yAxisDivisions:scale.count;Object.assign(config,{minValue:scale.minValue,maxValue:scale.maxValue,yTicks:scale.ticks});
- if(s.grid===false)config.color.gridLine={...config.color.gridLine,opacity:0};
+
  const format={prefix:d.prefix,suffix:d.suffix,separator:d.separator,shorthand:s.shorthand};
  const keyInfo=buildBarKeyInfo({...config,xAxisTitle:s.xTitle});
  keyInfo.items=keyInfo.items.map((v,i)=>{const values=config.series[i].values;return {...v,value:formatAmount(Math.min(...values),format)+' – '+formatAmount(Math.max(...values),format),unit:''}});
  keyInfo.layout=resolveContentLayout(keyInfo.items,width,'Auto');
  const tooltip=buildBarTooltip({...config,xAxisTitle:s.xTitle});
  if(tooltip){tooltip.items=tooltip.items.map((v,i)=>({...v,value:formatAmount(config.series[i].values[config.selectedIndex],format)}));tooltip.layout=resolveContentLayout(tooltip.items,width,'Auto');}
- return {config,keyInfo,tooltip,formatTick:(v:number)=>formatAmount(v,format,true)};
+ const longest=Math.max(1,...config.labels.map((label:string)=>Array.from(label).reduce((n:number,c:string)=>n+(c.charCodeAt(0)>255?14:7),0)));
+ const plotEstimate=Math.max(1,width-110);
+ const interval=s.labelDensity==='Every N categories'?Math.max(1,Math.min(100,Math.round(+s.labelEvery)||1)):Math.max(1,Math.ceil((longest+16)*config.labels.length/plotEstimate));
+ const labelIndices=config.labels.map((_:string,i:number)=>i).filter((i:number)=>i===config.selectedIndex||(i%interval===0&&(s.labelDensity==='Every N categories'||config.selectedIndex<0||Math.abs(i-config.selectedIndex)>=interval)));
+ const gridHorizontal=s.gridHorizontal??s.grid!==false,gridVertical=s.gridVertical??s.grid!==false;
+ return {config,keyInfo,tooltip,labelIndices,gridHorizontal,gridVertical,formatTick:(v:number)=>formatAmount(v,format,true)};
 }

@@ -210,7 +210,7 @@ function VerticalBarChartPreview({ config, presentation }: VerticalBarChartPrevi
                 >
                   <div
                     style={{
-                      background: gridLineColor,
+                      background: presentation.gridHorizontal ? gridLineColor : "transparent",
                       height: "1px",
                       width: `${plotWidth}px`,
                     }}
@@ -272,7 +272,7 @@ function VerticalBarChartPreview({ config, presentation }: VerticalBarChartPrevi
                 >
                   <div
                     style={{
-                      background: gridLineColor,
+                      background: presentation.gridVertical ? gridLineColor : "transparent",
                       height: `${plotHeight}px`,
                       left: `${groupWidth / 2}px`,
                       position: "absolute",
@@ -280,7 +280,7 @@ function VerticalBarChartPreview({ config, presentation }: VerticalBarChartPrevi
                       width: "1px",
                     }}
                   />
-                  {isSelected ? null : (
+                  {isSelected || !presentation.labelIndices.includes(labelIndex) ? null : (
                     <div
                       style={{
                         bottom: `-${xAxisLabelBottomOffset}px`,

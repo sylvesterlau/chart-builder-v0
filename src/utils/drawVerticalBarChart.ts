@@ -457,6 +457,7 @@ async function drawBarChart(
       color: config.color,
       textColor: textColor.primary,
       ticks: config.yTicks,
+      gridVisible: options.gridHorizontal,
       formatTick: options.formatTick,
       independentGrid: options.independentGrid,
       yAxisPosition: config.yAxisPosition,
@@ -474,6 +475,8 @@ async function drawBarChart(
       labelYOffset: 4,
       independentGrid: options.independentGrid,
       labels: config.labels,
+      gridVisible: options.gridVertical,
+      labelIndices: options.labelIndices?.filter(i=>i!==config.selectedIndex),
       rulerY: zeroBaselineY,
       textColor: textColor.primary,
       titleText: config.xAxisTitle,
@@ -494,6 +497,9 @@ export interface BarRenderOptions {
   tooltip?: ReturnType<typeof buildBarTooltip>;
   formatTick?: (value: number) => string;
   independentGrid?: boolean;
+  gridHorizontal?: boolean;
+  gridVertical?: boolean;
+  labelIndices?: number[];
   select?: boolean;
 }
 export async function drawVerticalBarChart(

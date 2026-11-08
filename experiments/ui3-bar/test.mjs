@@ -43,3 +43,16 @@ for(const values of [[0,0],[-100,200],[-99,-1],[0.001,0.004],[1e12]]){
 }
 const custom=initialDraft();custom.settings.divisions='Custom';custom.settings.count='4';assert.equal(barPresentation(custom).config.yTicks.length,5);
 console.log('Regression checks passed: hidden B persistence, single/dual imports, selection clamp, adaptive axis divisions.');
+
+const density=initialDraft();density.settings.labelDensity='Every N categories';density.settings.labelEvery='2';density.selected=2;
+assert.equal(JSON.stringify(barPresentation(density).labelIndices),JSON.stringify([0,1,2,4]));
+assert.equal(barPresentation(density).config.series[0].values.length,6);
+density.settings.gridHorizontal=false;density.settings.gridVertical=true;
+assert.equal(barPresentation(density).gridHorizontal,false);assert.equal(barPresentation(density).gridVertical,true);
+const gridLegacy=initialDraft();delete gridLegacy.settings.gridHorizontal;delete gridLegacy.settings.gridVertical;gridLegacy.settings.grid=false;
+assert.equal(validateDraft(gridLegacy).settings.gridHorizontal,false);assert.equal(validateDraft(gridLegacy).settings.gridVertical,false);
+assert.throws(()=>validateDraft({...density,settings:{...density.settings,labelEvery:'0'}}));
+density.settings.labelDensity='Auto';density.settings.width='260';density.rows=density.rows.map(r=>({...r,label:'Long category label'}));
+assert.ok(barPresentation(density).labelIndices.length<6);assert.ok(barPresentation(density).labelIndices.includes(1));
+const densityRestored=readSaved(JSON.stringify({schema:1,type:'standard-bar',revision:1,draft:density}));assert.equal(densityRestored.draft.settings.gridHorizontal,false);
+console.log('Label density, independent grids and legacy grid migration passed.');

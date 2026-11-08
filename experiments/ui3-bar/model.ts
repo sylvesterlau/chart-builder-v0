@@ -1,10 +1,13 @@
 import {formatAmount} from './ui/number-format';
 export {formatAmount};
 export const STORAGE_KEY='hive_ui3_bar_v1';
-export function initialDraft():any{return {rows:['Jan','Feb','Mar','Apr','May','Jun'].map((label,id)=>({id,label,a:String(40+id*20),b:String(30+id*20)})),series:'2 series',seriesNames:['Product A','Product B'],title:'Monthly performance',titleVisible:true,selected:3,arrangement:'Grouped',prefix:'',suffix:' USD',separator:'Comma',settings:{width:'390',height:'320',tooltip:true,position:'Right',axes:'both',divisions:'Auto',count:'4',yTitle:'Revenue',yTitleVisible:true,xTitle:'Year 2026',xTitleVisible:true,grid:true,shorthand:'Auto'}}}
+export function initialDraft():any{return {rows:['Jan','Feb','Mar','Apr','May','Jun'].map((label,id)=>({id,label,a:String(40+id*20),b:String(30+id*20)})),series:'2 series',seriesNames:['Product A','Product B'],title:'Monthly performance',titleVisible:true,selected:3,arrangement:'Grouped',prefix:'',suffix:' USD',separator:'Comma',settings:{width:'390',height:'320',tooltip:true,position:'Right',axes:'both',divisions:'Auto',count:'4',yTitle:'Revenue',yTitleVisible:true,xTitle:'Year 2026',xTitleVisible:true,grid:true,gridHorizontal:true,gridVertical:true,labelDensity:'Auto',labelEvery:'2',shorthand:'Auto'}}}
 export function validateDraft(input:any):any{
  if(!input||typeof input!=='object'||JSON.stringify(input).length>100000)throw Error('Invalid chart data.');
  const d={...initialDraft(),...input,settings:{...initialDraft().settings,...input.settings}};
+ if(input.settings?.gridHorizontal===undefined)d.settings.gridHorizontal=input.settings?.grid!==false;
+ if(input.settings?.gridVertical===undefined)d.settings.gridVertical=input.settings?.grid!==false;
+ if(!['Auto','Every N categories'].includes(d.settings.labelDensity)||!Number.isInteger(+d.settings.labelEvery)||+d.settings.labelEvery<1||+d.settings.labelEvery>100)throw Error('Use a label interval from 1 to 100.');
  const str=(x:any,max=120)=>typeof x==='string'&&x.length<=max;
  if(!Array.isArray(d.rows)||d.rows.length<1||d.rows.length>100||!d.rows.every((r:any)=>r&&str(r.label)&&r.label.trim()&&(d.series==='1 series'?['a']:['a','b']).every(k=>typeof r[k]==='string'&&r[k].trim()&&Number.isFinite(Number(r[k]))&&Math.abs(Number(r[k]))<=1e12)))throw Error('Use 1–100 categories with names and finite values up to ±1 trillion.');
  if(!['1 series','2 series'].includes(d.series)||!Array.isArray(d.seriesNames)||d.seriesNames.length!==2||!d.seriesNames.every((v:any)=>str(v)))throw Error('Invalid series configuration.');
