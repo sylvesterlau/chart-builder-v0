@@ -6,7 +6,7 @@ export function validateDraft(input:any):any{
  if(!input||typeof input!=='object'||JSON.stringify(input).length>100000)throw Error('Invalid chart data.');
  const d={...initialDraft(),...input,settings:{...initialDraft().settings,...input.settings}};
  const str=(x:any,max=120)=>typeof x==='string'&&x.length<=max;
- if(!Array.isArray(d.rows)||d.rows.length<1||d.rows.length>100||!d.rows.every((r:any)=>r&&str(r.label)&&r.label.trim()&&['a','b'].every(k=>typeof r[k]==='string'&&r[k].trim()&&Number.isFinite(Number(r[k]))&&Math.abs(Number(r[k]))<=1e12)))throw Error('Use 1–100 categories with names and finite values up to ±1 trillion.');
+ if(!Array.isArray(d.rows)||d.rows.length<1||d.rows.length>100||!d.rows.every((r:any)=>r&&str(r.label)&&r.label.trim()&&(d.series==='1 series'?['a']:['a','b']).every(k=>typeof r[k]==='string'&&r[k].trim()&&Number.isFinite(Number(r[k]))&&Math.abs(Number(r[k]))<=1e12)))throw Error('Use 1–100 categories with names and finite values up to ±1 trillion.');
  if(!['1 series','2 series'].includes(d.series)||!Array.isArray(d.seriesNames)||d.seriesNames.length!==2||!d.seriesNames.every((v:any)=>str(v)))throw Error('Invalid series configuration.');
  if(!str(d.title)||!str(d.prefix,24)||!str(d.suffix,24)||!str(d.settings.xTitle)||!str(d.settings.yTitle))throw Error('Title or format text is too long.');
  if(d.arrangement!=='Grouped')throw Error('This experimental build supports grouped bars only.');
@@ -15,6 +15,13 @@ export function validateDraft(input:any):any{
  for(const key of ['width','height']){const v=Number(d.settings[key]);if(!Number.isFinite(v)||v<(key==='width'?260:220)||v>(key==='width'?1200:900))throw Error('Width must be 260–1200; chart height must be 220–900.');}
  d.selected=Math.min(d.rows.length,Math.max(1,Math.round(Number(d.selected)||1)));
  // Store only the schema we own, never UI debugging objects or external metadata.
- const base=initialDraft();return Object.fromEntries(Object.keys(base).map(k=>[k,k==='settings'?Object.fromEntries(Object.keys(base.settings).map(sk=>[sk,d.settings[sk]])):k==='rows'?d.rows.map((r:any,i:number)=>({id:i,label:r.label,a:r.a,b:r.b})):d[k]]));
+ const base=initialDraft();return Object.fromEntries(Object.keys(base).map(k=>[k,k==='settings'?Object.fromEntries(Object.keys(base.settings).map(sk=>[sk,d.settings[sk]])):k==='rows'?d.rows.map((r:any,i:number)=>({id:i,label:r.label,a:r.a,b:d.series==='1 series'?'':r.b})):k==='seriesNames'&&d.series==='1 series'?[d.seriesNames[0],'Product B']:d[k]]));
 }
 export function readSaved(raw:string){try{const v=JSON.parse(raw);if(v.schema!==1||v.type!=='standard-bar'||!Number.isInteger(v.revision)||v.revision<1)return null;return {...v,draft:validateDraft(v.draft)}}catch{return null}}
+
+export function parseDataset(input:any,series:string){
+ const keys=series==='1 series'?['a']:['a','b'];
+ if(!input||!Array.isArray(input.categories)||input.categories.length<1||input.categories.length>100||!input.categories.every((r:any)=>r&&typeof r.label==='string'&&r.label.trim()&&r.label.length<=120&&keys.every(k=>typeof r[k]==='number'&&Number.isFinite(r[k])&&Math.abs(r[k])<=1e12)))throw Error('Could not import dataset. Use the JSON template and try again.');
+ return input.categories.map((r:any,id:number)=>({id,label:r.label,a:String(r.a),b:series==='1 series'?'':String(r.b)}));
+}
+export function clampSelection(selected:number,count:number){return Math.min(count,Math.max(1,Math.round(Number(selected)||1)))}

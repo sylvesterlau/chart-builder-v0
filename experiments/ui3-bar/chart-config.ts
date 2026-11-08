@@ -3,6 +3,18 @@ import {normalizeVerticalBarChartConfig,resolveBarScale} from '../../src/helpers
 import {buildBarKeyInfo,resolveContentLayout} from '../../src/utils/cartesianKeyInfo';
 import {buildBarTooltip} from '../../src/utils/cartesianTooltip';
 import {formatAmount} from './ui/number-format';
+export function autoBarScale(values:number[],height:number){
+ // Aim for readable vertical spacing, then prefer a tight zero-anchored domain.
+ const target=Math.max(2,Math.min(10,Math.round((height-80)/60)));
+ const lo=Math.min(0,...values),hi=Math.max(0,...values),span=hi-lo||1;
+ let best:any=null,score=Infinity;
+ for(let count=2;count<=10;count++){
+  const scale=resolveBarScale(values,count);
+  const candidate=Math.abs(count-target)*0.35+(scale.maxValue-scale.minValue-span)/span;
+  if(candidate<score){score=candidate;best={...scale,count};}
+ }
+ return best;
+}
 export function barPresentation(d:any){
  const s=d.settings||{}, width=Math.max(260,Math.min(1200,Number(s.width)||390)),height=Math.max(220,Math.min(900,Number(s.height)||320));
  const raw:any=JSON.parse(JSON.stringify(verticalBarChartConfig));
@@ -11,7 +23,7 @@ export function barPresentation(d:any){
  const config=normalizeVerticalBarChartConfig(raw,verticalBarChartConfig as any);
  // The new dataset supports up to 100 rows; do not silently truncate to legacy 24.
  Object.assign(config,{labels:raw.labels,series:raw.series,periodCount:raw.periodCount,selectedIndex:raw.selectedIndex,chartTitle:raw.chartTitle,yAxisTitle:s.yTitleVisible===false?'':s.yTitle,xAxisTitle:s.xTitleVisible===false?'':s.xTitle});
- const scale=resolveBarScale(raw.series.flatMap((v:any)=>v.values),raw.yAxisDivisions);Object.assign(config,{minValue:scale.minValue,maxValue:scale.maxValue,yTicks:scale.ticks});
+ const values=raw.series.flatMap((v:any)=>v.values); const scale=s.divisions==='Custom'?resolveBarScale(values,raw.yAxisDivisions):autoBarScale(values,height); config.yAxisDivisions=s.divisions==='Custom'?raw.yAxisDivisions:scale.count;Object.assign(config,{minValue:scale.minValue,maxValue:scale.maxValue,yTicks:scale.ticks});
  if(s.grid===false)config.color.gridLine={...config.color.gridLine,opacity:0};
  const format={prefix:d.prefix,suffix:d.suffix,separator:d.separator,shorthand:s.shorthand};
  const keyInfo=buildBarKeyInfo({...config,xAxisTitle:s.xTitle});
